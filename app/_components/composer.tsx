@@ -14,14 +14,14 @@ import {
   Reader,
   Table,
   Upload,
-} from "@viliha/vui-react/icons";
+} from "@/app/_vendor/icons";
 import { type ReactNode, useState } from "react";
 
 import { Choice, Divider, Panel, useAnchor, useFilePicker } from "./menu";
 import { ModelPicker } from "./model-picker";
 import type { ModelRow } from "./models";
 
-import { FONT } from "./type";
+import { BUTTON_PRIMARY, FONT } from "./type";
 
 /**
  * The prompt card, which both the opening screen and the conversation render (`SD-216`).
@@ -442,7 +442,7 @@ export function Composer({
             type="submit"
             disabled={empty || busy}
             aria-busy={busy}
-            className={`${FONT} inline-flex h-[30px] shrink-0 items-center justify-center gap-[6px] rounded-[8px] bg-[var(--store-primary-40)] px-[12px] text-[length:var(--store-body-2)] font-semibold leading-none text-white transition-colors duration-200 hover:bg-[var(--store-primary-50)] active:bg-[var(--store-primary-60)] disabled:cursor-not-allowed disabled:bg-[var(--store-primary-30)]`}
+            className={`${BUTTON_PRIMARY} disabled:cursor-not-allowed disabled:bg-[var(--store-primary-30)]`}
           >
             {/* **The reference's own markup, not a measurement off a screenshot.** Its generate
                 button is `btn btn-primary` at `border-radius: 8px` with a `width="16"` glyph, which

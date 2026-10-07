@@ -17,11 +17,11 @@ import {
   Reader,
   Rocket,
   Star,
-} from "@viliha/vui-react/icons";
+} from "@/app/_vendor/icons";
 import Link from "next/link";
 import { type ComponentType, useState } from "react";
 
-import { FONT } from "./type";
+import { BUTTON_PRIMARY, FONT } from "./type";
 
 /**
  * The left rail: 350px open, 60px collapsed, down every page with the top bar to its
@@ -286,7 +286,7 @@ export function Rail() {
         <Link
           href="/pricing"
           title={collapsed ? "Upgrade" : undefined}
-          className={`${FONT} flex h-[30px] w-full items-center justify-center gap-[6px] rounded-[8px] bg-[var(--store-primary-40)] px-[12px] text-[length:var(--store-body-2)] font-semibold leading-none text-white transition-colors duration-150 hover:bg-[var(--store-primary-50)] active:bg-[var(--store-primary-60)]`}
+          className={`${BUTTON_PRIMARY} w-full`}
         >
           <Bolt width={18} height={18} aria-hidden className="shrink-0" />
           <Label collapsed={collapsed} index={1} grow={false}>

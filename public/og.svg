@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <!-- Open Graph card at the 1200x630 every platform expects.
+       **SVG is not enough on its own**: X, Facebook, LinkedIn and Slack will not render an SVG
+       og:image, so this needs converting to PNG before it works. It is here as the design,
+       and the conversion is one command:
+         npx sharp-cli -i public/og.svg -o public/og.png resize 1200 630
+       See Q-WEB-08 in the website spec. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0c0c0c"/>
+      <stop offset="1" stop-color="#343434"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g transform="translate(96,150)">
+    <!-- The second design's three bars, matching the favicon, the header mark and /logo.svg. The
+         previous glyph here was the old abstract lockup, so the share card showed a different mark
+         from every other surface once the brand changed. Caught in review. -->
+    <rect width="56" height="56" rx="14" fill="#0058ee"/>
+    <rect x="14.9" y="21.9" width="5.25" height="20.1" rx="2.6" fill="#fff"/>
+    <rect x="25.4" y="12.3" width="5.25" height="29.7" rx="2.6" fill="#fff" opacity="0.9"/>
+    <rect x="35.9" y="17.5" width="5.25" height="24.5" rx="2.6" fill="#fff" opacity="0.75"/>
+    <text x="76" y="40" font-family="Outfit, system-ui, -apple-system, Segoe UI, sans-serif"
+          font-size="34" font-weight="650" fill="#ffffff">Viliha</text>
+    <text x="0" y="150" font-family="Outfit, system-ui, -apple-system, Segoe UI, sans-serif"
+          font-size="62" font-weight="700" fill="#ffffff">Admin dashboards that</text>
+    <text x="0" y="222" font-family="Outfit, system-ui, -apple-system, Segoe UI, sans-serif"
+          font-size="62" font-weight="700" fill="#ffffff">already look finished</text>
+    <text x="0" y="290" font-family="Outfit, system-ui, -apple-system, Segoe UI, sans-serif"
+          font-size="28" fill="#98a2b3">One design system, every framework you ship in.</text>
+  </g>
+</svg>

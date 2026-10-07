@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 168 32" role="img" aria-label="Viliha">
+  <!-- The brand lockup, served at /logo.svg and published as this site's Organization logo in the
+       JSON-LD (src/data/seo.ts). It read "Vui Starter" until 2026-08-22, which is the name that was
+       superseded, so a search engine was being handed the wrong one while every page said VuiAdmin.
+       Caught in review. **It said VuiAdmin and drew #465fff until 2026-09-24**, a day after
+       SD-159 renamed the site to Viliha and SD-158 moved the primary to #0058ee. This file is
+       served at /logo.svg and published as the Organization logo, so the one asset a search
+       engine reads carried the superseded name and the superseded brand for a day. The same
+       rename is owed to og.png, which is generated from og.svg and is not regenerated here.
+
+       The mark is the second design's three bars, matching the favicon, the header and the OG card.
+       Text is `currentColor`, so a dark surface needs no second file. -->
+  <rect width="32" height="32" rx="8" fill="#0058ee"/>
+  <rect x="8.5" y="12.5" width="3" height="11.5" rx="1.5" fill="#ffffff"/>
+  <rect x="14.5" y="7" width="3" height="17" rx="1.5" fill="#ffffff" opacity=".9"/>
+  <rect x="20.5" y="10" width="3" height="14" rx="1.5" fill="#ffffff" opacity=".75"/>
+  <text x="42" y="22" font-family="Outfit, system-ui, -apple-system, Segoe UI, sans-serif"
+        font-size="16" font-weight="650" fill="currentColor" letter-spacing="-0.3">Viliha</text>
+</svg>

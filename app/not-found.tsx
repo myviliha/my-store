@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ERROR_PAGES } from "@/src/data/content";
 import { EDITIONS } from "@/src/data/products";
+import { BUTTON_PRIMARY, BUTTON_SECONDARY } from "./_components/type";
 
 export const metadata: Metadata = {
   title: ERROR_PAGES.notFound.title,
@@ -39,13 +40,13 @@ export default function NotFound() {
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link
           href={primary.href}
-          className="rounded-control bg-primary px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
+          className={BUTTON_PRIMARY}
         >
           {primary.label}
         </Link>
         <Link
           href={secondary.href}
-          className="rounded-control border border-border px-5 py-3 text-sm font-semibold text-heading transition-colors hover:bg-surface-muted"
+          className={BUTTON_SECONDARY}
         >
           {secondary.label}
         </Link>
@@ -58,7 +59,7 @@ export default function NotFound() {
             <li key={edition.slug}>
               <Link
                 href={`/products/${edition.slug}`}
-                className="inline-flex rounded-full border border-border px-4 py-2 text-sm font-medium text-heading transition-colors hover:bg-surface-muted"
+                className={`${BUTTON_SECONDARY} rounded-full font-medium`}
               >
                 {edition.name}
               </Link>

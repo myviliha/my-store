@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-import { FONT } from "./type";
+import { BUTTON_PRIMARY, FONT } from "./type";
 
 /**
  * The bar above the content, which is not the storefront's navigation (`SD-208`).
@@ -89,7 +89,7 @@ export function TopBar() {
           than anybody's brand, so it stays. */}
       <Link
         href="/pricing"
-        className={`${FONT} flex h-[30px] shrink-0 items-center gap-[6px] rounded-[8px] bg-[var(--store-primary-40)] px-[12px] text-[length:var(--store-body-2)] font-semibold leading-none text-white transition-colors duration-150 hover:bg-[var(--store-primary-50)] active:bg-[var(--store-primary-60)]`}
+        className={BUTTON_PRIMARY}
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path
