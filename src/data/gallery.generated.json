@@ -1,0 +1,700 @@
+{
+  "screens": [
+    {
+      "route": "/",
+      "file": "index.jpg",
+      "width": 1440,
+      "height": 1659
+    },
+    {
+      "route": "/add-product",
+      "file": "add-product.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/ai",
+      "file": "ai.jpg",
+      "width": 1440,
+      "height": 1760
+    },
+    {
+      "route": "/ai-settings",
+      "file": "ai-settings.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/alerts",
+      "file": "alerts.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/analytics",
+      "file": "analytics.jpg",
+      "width": 1440,
+      "height": 2040
+    },
+    {
+      "route": "/api-keys",
+      "file": "api-keys.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/avatars",
+      "file": "avatars.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/badge",
+      "file": "badge.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/bar-chart",
+      "file": "bar-chart.jpg",
+      "width": 1440,
+      "height": 2502
+    },
+    {
+      "route": "/basic-tables",
+      "file": "basic-tables.jpg",
+      "width": 1440,
+      "height": 2834
+    },
+    {
+      "route": "/billing",
+      "file": "billing.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/blank",
+      "file": "blank.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/blocks/chrome",
+      "file": "blocks-chrome.jpg",
+      "width": 1440,
+      "height": 1542
+    },
+    {
+      "route": "/blocks/content",
+      "file": "blocks-content.jpg",
+      "width": 1440,
+      "height": 2671
+    },
+    {
+      "route": "/blocks/features",
+      "file": "blocks-features.jpg",
+      "width": 1440,
+      "height": 2519
+    },
+    {
+      "route": "/blocks/hero",
+      "file": "blocks-hero.jpg",
+      "width": 1440,
+      "height": 2448
+    },
+    {
+      "route": "/blocks/media",
+      "file": "blocks-media.jpg",
+      "width": 1440,
+      "height": 3217
+    },
+    {
+      "route": "/blocks/pricing",
+      "file": "blocks-pricing.jpg",
+      "width": 1440,
+      "height": 1651
+    },
+    {
+      "route": "/blocks/proof",
+      "file": "blocks-proof.jpg",
+      "width": 1440,
+      "height": 3042
+    },
+    {
+      "route": "/blog",
+      "file": "blog.jpg",
+      "width": 1440,
+      "height": 1511
+    },
+    {
+      "route": "/blog-author",
+      "file": "blog-author.jpg",
+      "width": 1440,
+      "height": 1463
+    },
+    {
+      "route": "/blog-editor",
+      "file": "blog-editor.jpg",
+      "width": 1440,
+      "height": 1476
+    },
+    {
+      "route": "/blog-post",
+      "file": "blog-post.jpg",
+      "width": 1440,
+      "height": 2137
+    },
+    {
+      "route": "/blog-posts",
+      "file": "blog-posts.jpg",
+      "width": 1440,
+      "height": 1463
+    },
+    {
+      "route": "/breadcrumb",
+      "file": "breadcrumb.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/buttons",
+      "file": "buttons.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/buttons-group",
+      "file": "buttons-group.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/calendar",
+      "file": "calendar.jpg",
+      "width": 1440,
+      "height": 1264
+    },
+    {
+      "route": "/candidate-profile",
+      "file": "candidate-profile.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/candidates",
+      "file": "candidates.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/cards",
+      "file": "cards.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/careers",
+      "file": "careers.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/carousel",
+      "file": "carousel.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/cart",
+      "file": "cart.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/catalogue",
+      "file": "catalogue.jpg",
+      "width": 1440,
+      "height": 3085
+    },
+    {
+      "route": "/chat",
+      "file": "chat.jpg",
+      "width": 1440,
+      "height": 1264
+    },
+    {
+      "route": "/checkout",
+      "file": "checkout.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/code-generator",
+      "file": "code-generator.jpg",
+      "width": 1440,
+      "height": 4332
+    },
+    {
+      "route": "/coming-soon",
+      "file": "coming-soon.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/compare",
+      "file": "compare.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/create-invoice",
+      "file": "create-invoice.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/crm",
+      "file": "crm.jpg",
+      "width": 1440,
+      "height": 1659
+    },
+    {
+      "route": "/data-table",
+      "file": "data-table.jpg",
+      "width": 1440,
+      "height": 2707
+    },
+    {
+      "route": "/departments",
+      "file": "departments.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/dropdowns",
+      "file": "dropdowns.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/empty-states",
+      "file": "empty-states.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/error-404",
+      "file": "error-404.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/error-500",
+      "file": "error-500.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/faq",
+      "file": "faq.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/file-manager",
+      "file": "file-manager.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/finance",
+      "file": "finance.jpg",
+      "width": 1440,
+      "height": 1659
+    },
+    {
+      "route": "/forgot-password",
+      "file": "forgot-password.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/form-elements",
+      "file": "form-elements.jpg",
+      "width": 1440,
+      "height": 2808
+    },
+    {
+      "route": "/form-layout",
+      "file": "form-layout.jpg",
+      "width": 1440,
+      "height": 1606
+    },
+    {
+      "route": "/help-centre",
+      "file": "help-centre.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/image-generator",
+      "file": "image-generator.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/images",
+      "file": "images.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/inbox",
+      "file": "inbox.jpg",
+      "width": 1440,
+      "height": 1346
+    },
+    {
+      "route": "/inbox-details",
+      "file": "inbox-details.jpg",
+      "width": 1440,
+      "height": 1346
+    },
+    {
+      "route": "/integrations",
+      "file": "integrations.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/invoices",
+      "file": "invoices.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/job-apply",
+      "file": "job-apply.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/job-detail",
+      "file": "job-detail.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/jobs",
+      "file": "jobs.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/line-chart",
+      "file": "line-chart.jpg",
+      "width": 1440,
+      "height": 1982
+    },
+    {
+      "route": "/links",
+      "file": "links.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/list",
+      "file": "list.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/logistics",
+      "file": "logistics.jpg",
+      "width": 1440,
+      "height": 1659
+    },
+    {
+      "route": "/maintenance",
+      "file": "maintenance.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/maps",
+      "file": "maps.jpg",
+      "width": 1440,
+      "height": 2131
+    },
+    {
+      "route": "/marketing",
+      "file": "marketing.jpg",
+      "width": 1440,
+      "height": 1659
+    },
+    {
+      "route": "/modals",
+      "file": "modals.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/notifications",
+      "file": "notifications.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/order-confirmation",
+      "file": "order-confirmation.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/orders",
+      "file": "orders.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/organizations",
+      "file": "organizations.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/pagination",
+      "file": "pagination.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/pie-chart",
+      "file": "pie-chart.jpg",
+      "width": 1440,
+      "height": 1751
+    },
+    {
+      "route": "/popovers",
+      "file": "popovers.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/pricing-tables",
+      "file": "pricing-tables.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/product-detail",
+      "file": "product-detail.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/products-list",
+      "file": "products-list.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/profile",
+      "file": "profile.jpg",
+      "width": 1440,
+      "height": 1264
+    },
+    {
+      "route": "/progress-bar",
+      "file": "progress-bar.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/radar-chart",
+      "file": "radar-chart.jpg",
+      "width": 1440,
+      "height": 1496
+    },
+    {
+      "route": "/radial-chart",
+      "file": "radial-chart.jpg",
+      "width": 1440,
+      "height": 1622
+    },
+    {
+      "route": "/reset-password",
+      "file": "reset-password.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/reviews",
+      "file": "reviews.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/ribbons",
+      "file": "ribbons.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/saas",
+      "file": "saas.jpg",
+      "width": 1440,
+      "height": 1659
+    },
+    {
+      "route": "/sales",
+      "file": "sales.jpg",
+      "width": 1440,
+      "height": 1742
+    },
+    {
+      "route": "/search",
+      "file": "search.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/signin",
+      "file": "signin.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/signin-split",
+      "file": "signin-split.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/signup",
+      "file": "signup.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/signup-split",
+      "file": "signup-split.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/single-invoice",
+      "file": "single-invoice.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/single-transaction",
+      "file": "single-transaction.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/spinners",
+      "file": "spinners.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/steps",
+      "file": "steps.jpg",
+      "width": 1440,
+      "height": 2012
+    },
+    {
+      "route": "/stocks",
+      "file": "stocks.jpg",
+      "width": 1440,
+      "height": 1659
+    },
+    {
+      "route": "/success",
+      "file": "success.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/support-ticket-reply",
+      "file": "support-ticket-reply.jpg",
+      "width": 1440,
+      "height": 1346
+    },
+    {
+      "route": "/support-tickets",
+      "file": "support-tickets.jpg",
+      "width": 1440,
+      "height": 1346
+    },
+    {
+      "route": "/tabs",
+      "file": "tabs.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/task-kanban",
+      "file": "task-kanban.jpg",
+      "width": 1440,
+      "height": 1346
+    },
+    {
+      "route": "/task-list",
+      "file": "task-list.jpg",
+      "width": 1440,
+      "height": 1346
+    },
+    {
+      "route": "/text-generator",
+      "file": "text-generator.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/tooltips",
+      "file": "tooltips.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/transactions",
+      "file": "transactions.jpg",
+      "width": 1440,
+      "height": 1855
+    },
+    {
+      "route": "/two-step-verification",
+      "file": "two-step-verification.jpg",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "route": "/vector-maps",
+      "file": "vector-maps.jpg",
+      "width": 1440,
+      "height": 1428
+    },
+    {
+      "route": "/video-generator",
+      "file": "video-generator.jpg",
+      "width": 1440,
+      "height": 1502
+    },
+    {
+      "route": "/videos",
+      "file": "videos.jpg",
+      "width": 1440,
+      "height": 2129
+    },
+    {
+      "route": "/wishlist",
+      "file": "wishlist.jpg",
+      "width": 1440,
+      "height": 1855
+    }
+  ]
+}

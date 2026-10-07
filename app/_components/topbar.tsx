@@ -47,7 +47,7 @@ export function TopBar() {
      * the content by space rather than a line, which is why a line reads as an extra band: with the
      * rail beside it there is already an edge doing that work.
      */
-    <div className="flex h-[56px] w-full items-center justify-end gap-[24px] px-[24px]">
+    <div className="flex h-[56px] w-full items-center justify-end gap-[16px] px-[24px]">
       {/* `justify-end` inside, so the field's right edge stays under the icon and the box grows to
           the left rather than pushing the controls beside it. */}
       <div

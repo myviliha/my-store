@@ -1,6 +1,6 @@
 "use client";
 
-import { Search as SearchIcon } from "../_vendor/icons";
+import { Search as SearchIcon } from "@/app/_vendor/icons";
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { AVAILABLE, labelOf } from "@/src/configurator-core";

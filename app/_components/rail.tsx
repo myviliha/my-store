@@ -1,6 +1,6 @@
 "use client";
 
-import { VoiletWordmark } from "../_vendor/voilet-wordmark";
+import { VoiletWordmark } from "@/app/_vendor/voilet-wordmark";
 import {
   Bolt,
   Box,
@@ -17,7 +17,7 @@ import {
   Reader,
   Rocket,
   Star,
-} from "../_vendor/icons";
+} from "@viliha/vui-react/icons";
 import Link from "next/link";
 import { type ComponentType, useState } from "react";
 
@@ -32,8 +32,13 @@ import { FONT } from "./type";
  *
  * **The collapsed width is 60px, and it is derived, not copied** (`SD-205`'s rule, as in
  * `../../voilet/_components/sidebar.tsx`). An icon's centre is rail padding + item padding + half the
- * icon: 12 + 11 + 7 = 30. The collapsed rail is twice that, 60, so the icons stay exactly where they
- * were and the rail narrows around them. It happens to equal the reference's own 60.
+ * icon: **12 + 9 + 9 = 30**. The collapsed rail is twice that, 60, so the icons stay exactly where
+ * they were and the rail narrows around them. It happens to equal the reference's own 60.
+ *
+ * **The three numbers move together, and twice now they have not.** The comment read `12 + 11 + 7`
+ * while the row carried 10px of padding and a 24px glyph, which is 34: the icons jumped 4px on every
+ * collapse and the arithmetic that was supposed to prevent it was describing a rail from two changes
+ * ago. Change the glyph and you change the padding, or the sum stops being true.
  *
  * **Motion is `SD-205`'s too**: width 260ms on a decelerating curve, labels lead out and follow in
  * staggered, and both are empty under `prefers-reduced-motion`.
@@ -101,7 +106,7 @@ const MORE: readonly Item[] = [
   { label: "Account", href: "/account", icon: Person },
 ];
 
-const ROW = `${FONT} flex w-full shrink-0 items-center gap-[10px] rounded-[8px] px-[10px] py-[8px] text-[length:var(--store-body-3)] font-normal leading-[1.5] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-20)] focus-visible:bg-[var(--store-primary-20)] focus-visible:outline-none`;
+const ROW = `${FONT} flex w-full shrink-0 items-center gap-[10px] rounded-[8px] px-[9px] py-[8px] text-[length:var(--store-body-3)] font-normal leading-[1.5] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-20)] focus-visible:bg-[var(--store-primary-20)] focus-visible:outline-none`;
 
 function Label({
   collapsed,
@@ -135,14 +140,16 @@ function RailItem({ item, collapsed, index }: { item: Item; collapsed: boolean; 
   const Glyph = item.icon;
   const body = (
     <>
-      {/* 24, from the reference's own `<svg height="24" width="24" class="nav-icon">`. A
-          `.nav-icon { width: 14px }` rule exists in its stylesheet and belongs to a different
-          element; reading it as this one made every rail glyph two thirds too small (`SD-207`). */}
+      {/* **18.** The reference's markup says 24 and this was 24 for that reason, but its labels are
+          14 and ours are 12: a 24px glyph beside 12px text is twice the height of the word it
+          belongs to, which is what reads as unaligned however centred the row is (`SD-223`). At 18
+          the glyph's box and the label's 1.5 line box are both 18px, so they share one centre line
+          by construction rather than by eye. */}
       {/* **`shrink-0`, or the icon is what gives way** (`SD-208`). The row is a flex container and
           the label beside it is `whitespace-nowrap`, so the label cannot shrink and the glyph can:
           at 60px the icons were squeezed to nothing while an invisible label kept its width. The
           reference's own markup carries `class="shrink-0 nav-icon"` for exactly this. */}
-      <Glyph width={24} height={24} className="shrink-0" aria-hidden />
+      <Glyph width={18} height={18} className="shrink-0" aria-hidden />
       <Label collapsed={collapsed} index={index}>
         {item.label}
       </Label>

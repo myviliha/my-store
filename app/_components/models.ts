@@ -37,7 +37,7 @@ export interface ModelGroup {
 /** The two rows the reference puts above every group, with ours in place of theirs. */
 export const TOP_ROWS: readonly ModelRow[] = [
   { id: "web", mono: "W", name: "Web search", note: "Search the web for information" },
-  { id: "voilet", mono: "V", name: "Voilet AI", note: "Free, multilingual, for text and image" },
+  { id: "voilet", mono: "V", name: "Voilet", note: "Free, multilingual, for text and image" },
 ];
 
 export const MODEL_GROUPS: readonly ModelGroup[] = [

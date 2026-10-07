@@ -42,7 +42,7 @@ export function Hero({
           aria-hidden="true"
           className="size-[9px] rounded-full bg-[var(--store-primary-40)] shadow-[0_0_0_2.5px_white]"
         />
-        Voilet AI
+        Voilet
       </p>
       {/* 23px and 32px are the reference's own, set on the element at 600 then overridden to 800 by
           its `font-extrabold`; no step of ours carries 23, and the change is at 1024px (`lg`), not

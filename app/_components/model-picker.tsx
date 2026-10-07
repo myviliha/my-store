@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Lock } from "../_vendor/icons";
+import { Check, Lock } from "@/app/_vendor/icons";
 import { useState } from "react";
 
 import { Group, Panel, Search, SeeAll } from "./menu";

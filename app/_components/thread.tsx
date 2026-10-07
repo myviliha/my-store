@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Copy, Edit, Reload } from "../_vendor/icons";
+import { Check, Copy, Edit, Reload } from "@/app/_vendor/icons";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { Composer, Glyph } from "./composer";

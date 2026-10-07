@@ -14,7 +14,7 @@ import {
   Reader,
   Table,
   Upload,
-} from "../_vendor/icons";
+} from "@viliha/vui-react/icons";
 import { type ReactNode, useState } from "react";
 
 import { Choice, Divider, Panel, useAnchor, useFilePicker } from "./menu";
@@ -258,7 +258,7 @@ export function Composer({
       {/* `prompt-actions`: the reference's row is space-between with a 10px gap, pushed to the
           card's foot by `margin-top: auto`; here the textarea's `flex-1` does the pushing. */}
       <div className="mt-auto flex shrink-0 items-center justify-between gap-[10px] border-t border-[var(--store-neutral-40)] px-[var(--tn-space-sm)] md:h-[60px]">
-        <div className="flex flex-wrap items-center gap-x-[var(--tn-space-xs)] gap-y-[var(--tn-space-2xs)] md:gap-x-[40px]">
+        <div className="flex flex-wrap items-center gap-x-[var(--tn-space-2xs)] gap-y-[var(--tn-space-2xs)] md:gap-x-[20px]">
           <div>
             <button
               ref={addA.trigger}
@@ -412,7 +412,7 @@ export function Composer({
               onClick={() => toggle("model", modelA)}
               className={ROW_BUTTON}
             >
-              <span className="max-w-[140px] truncate">{model?.name ?? "Voilet AI"}</span>
+              <span className="max-w-[140px] truncate">{model?.name ?? "Voilet"}</span>
               <ChevronDown width={16} height={16} aria-hidden="true" />
             </button>
             <ModelPicker

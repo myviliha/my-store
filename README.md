@@ -6,16 +6,18 @@ sections under it. Next.js 16, React 19, Tailwind 4, TypeScript.
 ## Run it
 
 ```bash
-npm install          # or pnpm install
-npm run dev          # http://localhost:3000
+pnpm install
+pnpm dev             # http://localhost:3000
 ```
 
 ```bash
-npm run build && npm start
-npm run check-types
+pnpm build && pnpm start
+pnpm check-types
 ```
 
-Node 20 or newer.
+Node 20 or newer, pnpm 10. **pnpm, not npm**: the lockfile is `pnpm-lock.yaml` and `package.json`
+allows `sharp` to run its build script, which pnpm 10 otherwise refuses with
+`ERR_PNPM_IGNORED_BUILDS`.
 
 ## What is in here
 
@@ -25,8 +27,12 @@ app/
   layout.tsx          the shell: rail, top bar, footer
   globals.css         the whole stylesheet, tokens first then base rules
   _components/        every section and control, one file each
-  _vendor/            three files copied in from our internal packages (see below)
+  _vendor/            four files generated from our internal packages (see below)
+src/, lib/            the catalogue the page reads: themes, styles, products, copy, SEO
 ```
+
+`src/` and `lib/` are data, not screens. The page reads them; changing a number there changes what
+the page says it sells, so leave them alone unless the task is about the content itself.
 
 **`app/_components` is the work.** Each file opens with a docblock saying what it is, which
 measurements it is built from and why anything surprising is the way it is. Read that before
@@ -70,6 +76,7 @@ Three files copied out of our internal packages so this project stands alone:
 | `icons.tsx` | `@viliha/vui-react/icons`, a named re-export of `@radix-ui/react-icons` |
 | `voilet-wordmark.tsx` | `@repo/web-chrome`. The V is drawn, so the wordmark is a component |
 | `store.css` | `@viliha/vui-tokens/store.css`, the token contract |
+| `vui-core.ts` | The eleven designs, read out of `@viliha/vui-core` and written back as data |
 
 **Treat these as read-only.** They are maintained upstream; a change made here is lost on the next
 hand-off. If one of them is wrong or missing something, say so and we will change it at the source.

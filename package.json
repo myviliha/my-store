@@ -4,6 +4,12 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp"
+    ]
+  },
+  "packageManager": "pnpm@10.18.1",
   "scripts": {
     "dev": "next dev --port 3000",
     "build": "next build",
