@@ -6,6 +6,8 @@ import { H2, LEAD, SECTION } from "./type";
  *
  * **The frame is a token-coloured placeholder.** There is no walkthrough video to point at, and the
  * reference's frame is a `<video>` with a poster. When one exists it replaces the inner block.
+ * Until then it is a soft mesh of four accents rather than one blue, so the largest block on the
+ * page is not also the plainest.
  */
 export function How() {
   return (
@@ -25,7 +27,15 @@ export function How() {
       >
         <div
           aria-hidden="true"
-          className="aspect-video w-full bg-gradient-to-br from-[var(--store-primary-10)] to-[var(--store-primary-30)]"
+          className="aspect-video w-full bg-[var(--tn-accent-blue-soft)]"
+          style={{
+            backgroundImage: [
+              "radial-gradient(at 15% 20%, color-mix(in oklab, var(--tn-accent-violet-solid) 45%, transparent) 0, transparent 50%)",
+              "radial-gradient(at 85% 15%, color-mix(in oklab, var(--tn-accent-pink-solid) 40%, transparent) 0, transparent 50%)",
+              "radial-gradient(at 80% 85%, color-mix(in oklab, var(--tn-accent-amber-solid) 40%, transparent) 0, transparent 50%)",
+              "radial-gradient(at 20% 85%, color-mix(in oklab, var(--tn-accent-teal-solid) 40%, transparent) 0, transparent 50%)",
+            ].join(", "),
+          }}
         />
       </div>
     </section>

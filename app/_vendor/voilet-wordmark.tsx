@@ -32,8 +32,9 @@ const INNER = {
 };
 
 export interface VoiletWordmarkProps {
-  /** `lg` is the navigation and the desktop footer, `sm` the tablet and mobile footer, `xs` a rail. */
-  size?: "lg" | "sm" | "xs" | "2xs";
+  /** `lg` is the navigation and the desktop footer, `sm` the tablet and mobile footer, `xs` a rail,
+      `rail` the expanded rail's brand row. */
+  size?: "lg" | "sm" | "xs" | "rail" | "2xs";
   /**
    * The drawn V alone, without the five set letters (`SD-207`).
    *
@@ -74,6 +75,18 @@ const SIZES = {
     ml: 15.472,
     outer: { w: 14.563, h: 13.681, mt: 0.472, ml: 0 },
     inner: { w: 10.185, h: 13.645, mt: 0.505, ml: 4.394 },
+  },
+  /**
+   * **`rail` is the expanded rail's wordmark at 19px**, a step up from `2xs`'s 15 by request
+   * (2026-10-07): at 15 it read smaller than the 18px icons beneath it. Every number is `lg` scaled
+   * by `19 / 50.829` (0.3738), computed rather than eyeballed, so the drawn V keeps its proportions.
+   */
+  rail: {
+    text: 19,
+    tracking: 0.38,
+    ml: 19.598,
+    outer: { w: 18.446, h: 17.329, mt: 0.598, ml: 0 },
+    inner: { w: 12.901, h: 17.283, mt: 0.639, ml: 5.566 },
   },
   /*
    * **`xs` is `lg` halved, and it is the only size here that is derived rather than measured**

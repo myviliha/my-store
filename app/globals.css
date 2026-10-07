@@ -198,14 +198,14 @@
 
   /* ─── Type (`SD-163`) ────────────────────────────────────────────────────────────────────────
    *
-   * **Two families, which is what the guideline specifies**: Plus Jakarta Sans for headlines and
-   * Inter for body. Both are loaded by `next/font` in the root layout, which is the only thing that
-   * makes a family name mean anything: naming a face nothing loads falls through the stack in
-   * silence, and this repository has paid for that three times (`PD-1046` most recently).
+   * **One family, Plus Jakarta Sans, for headlines and body alike.** The guideline paired it with
+   * Inter for body; the store now sets both in Jakarta. It is loaded by `next/font` in the root
+   * layout, which is the only thing that makes a family name mean anything: naming a face nothing
+   * loads falls through the stack in silence, and this repository has paid for that three times (`PD-1046` most recently).
    *
    * Outfit is gone. It was the store's own choice before there was a brand guideline. */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 
   /* The headline scale, twelve steps, all at the guideline's 120%. `--text-h*` rather than
      remapping Tailwind's `text-4xl` family: those keep their own pairing for body copy, and one
@@ -342,9 +342,16 @@
     /* The header is sticky, so an anchor target would otherwise land underneath it. `scroll-margin`
        on each target would be the same number written many times; this is it written once. */
     scroll-padding-top: calc(var(--spacing-header-xl) + 1rem);
+    /* **No rubber-band at either end** (2026-10-07). macOS and iOS stretch the whole document past
+       its top and bottom, and the sticky rail and top bar went with it, so the "fixed" chrome visibly
+       slid. `none` stops the bounce and the scroll-chaining with it; nothing on this page relies on
+       pull-to-refresh. Set on both elements because Chrome reads it from `html` and Safari from
+       `body`, depending on which is the scrolling element. */
+    overscroll-behavior-y: none;
   }
 
   body {
+    overscroll-behavior-y: none;
     background: var(--color-surface);
     color: var(--color-text);
     font-family: var(--font-sans);
@@ -619,6 +626,26 @@
   --tn-radius-2xl: 1rem;
   --tn-radius-3xl: 1.5rem;
   --tn-radius-4xl: 2rem;
+
+  /* **Accents, so the page is not one blue.** Each has a `soft` ground, an `ink` for text and
+     marks on that ground, and a `solid` for fills and glows. Every ink clears WCAG AA (4.5:1) on its
+     own soft and on white, checked rather than eyeballed; blue is the brand's own steps. Reach for
+     them through `ACCENTS` in `_components/type.ts`, which rotates them in one fixed order. */
+  --tn-accent-blue-soft: var(--store-primary-10);
+  --tn-accent-blue-ink: var(--store-primary-40);
+  --tn-accent-blue-solid: var(--store-primary-40);
+  --tn-accent-violet-soft: #efe9fe;
+  --tn-accent-violet-ink: #6d28d9;
+  --tn-accent-violet-solid: #7c3aed;
+  --tn-accent-pink-soft: #fde7f1;
+  --tn-accent-pink-ink: #be185d;
+  --tn-accent-pink-solid: #ec4899;
+  --tn-accent-amber-soft: #fdf1d6;
+  --tn-accent-amber-ink: #a14a06;
+  --tn-accent-amber-solid: #f59e0b;
+  --tn-accent-teal-soft: #d9f5ee;
+  --tn-accent-teal-ink: #0f6b63;
+  --tn-accent-teal-solid: #14b8a6;
 }
 
 /* The slow ambient drift, the reference's `marquee` and its mirror: a vertical sway between -5% and
@@ -772,6 +799,63 @@ html[data-thread="open"] [data-chrome="footer"] {
 .tn-spark {
   display: inline-flex;
   animation: tn-spark 1.3s ease-in-out infinite;
+}
+
+/* The hero headline's moving gradient. The band is twice the text's width, ink to blue to deep blue
+ * and back again so both ends match, and it slides across and returns on a slow ease. The text is
+ * the clip, so the colour drifts through the words rather than the words moving.
+ *
+ * **Its own reduced-motion rule, not the global clamp.** The clamp shortens animations to 0.01ms,
+ * and an infinite alternate at 0.01ms flickers between its ends; here the animation is removed and
+ * the band rests at its start, which is the still gradient this headline had before. */
+@keyframes tn-gradient-pan {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.tn-gradient-text {
+  background-image: linear-gradient(
+    90deg,
+    var(--store-neutral-100),
+    var(--store-primary-40),
+    var(--store-primary-80),
+    var(--store-primary-40),
+    var(--store-neutral-100)
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  animation: tn-gradient-pan 6s ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-gradient-text {
+    animation: none;
+  }
+}
+
+/* The typing caret on the prompt card's animated placeholder. `steps(1)` so it blinks rather than
+ * fades, which is what a text caret does. Clamped by the global reduced-motion rule, and the
+ * typewriter itself stops there too, so the caret is never left blinking after a still example. */
+@keyframes tn-caret {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.tn-caret {
+  animation: tn-caret 1s steps(1) infinite;
 }
 
 /* The hand-off from the prompt card to the conversation.

@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { AVAILABLE, labelOf } from "@/src/configurator-core";
 import { THEMES } from "@/src/data/themes";
 
-import { BODY_2, BODY_3, FONT } from "./type";
+import { accentAt, BODY_2, BODY_3, FONT } from "./type";
 
 /**
  * The search field and the chip strip under the prompt card.
@@ -53,7 +53,7 @@ export function Search() {
          gallery beneath it takes `lg`, 40px, so the search read as attached to the prompt card and
          detached from the results it filters. It belongs to neither more than the other, so the two
          gaps are the same. */
-      className="tn-rise relative z-20 mx-auto mt-[var(--tn-space-lg)] flex w-full max-w-[1180px] items-start gap-[8px] px-[var(--tn-space-sm)]"
+      className="tn-rise relative z-20 mt-[var(--tn-space-lg)] grid grid-cols-1 md:mx-[var(--tn-space-xs)] lg:mx-[var(--tn-space-md)] items-start gap-[8px] px-[var(--tn-space-sm)] md:grid-cols-[minmax(0,390px)_minmax(0,1fr)] md:gap-x-[16px]"
       style={{ ["--i" as string]: 3 }}
       /* Closes when focus leaves the whole box rather than the input, so a click on a row inside
          the panel is not cancelled by the blur that precedes it. */
@@ -66,7 +66,11 @@ export function Search() {
           where the box starts at `width: 0`; here the field is already at its size and the only
           thing that changes is the panel beneath it. Two searches, two behaviours, and conflating
           them made the chips beside this one dodge out of the way for no reason. */}
-      <div className="relative mr-[8px] w-[390px] shrink-0">
+      {/* **Near full width, laid out by grid** rather than a 1180px flex row, with the same small
+          side margin as the gallery so their edges line up. Below `md` the field takes
+          the whole row and the chips scroll on the line under it; from `md` the field is a column
+          of up to 390px, the reference's width, and the chips take the rest. */}
+      <div className="relative min-w-0">
         <form action="/themes" method="get" role="search" className="relative">
           <label htmlFor="search" className="sr-only">
             Search themes
@@ -143,12 +147,15 @@ export function Search() {
 
       <div className="min-w-0 flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         <ul className="flex flex-nowrap items-center gap-[8px]">
-          {THEMES.map((theme) => (
+          {THEMES.map((theme, i) => (
             <li key={theme.id} className="shrink-0">
+              {/* Each chip carries a dot in the next accent, so the strip reads as a palette of
+                  themes; the hover tints the chip in that same accent. */}
               <Link
                 href={`/themes/${theme.id}`}
-                className={`${BODY_2} inline-block whitespace-nowrap rounded-[8px] border border-[var(--store-card-border)] bg-white px-[12px] py-[8px] font-medium text-[var(--store-neutral-100)] transition-colors duration-150 hover:border-[var(--store-primary-40)] hover:text-[var(--store-primary-40)]`}
+                className={`${BODY_2} inline-flex items-center gap-[6px] whitespace-nowrap rounded-[8px] border border-[var(--store-card-border)] bg-white px-[12px] py-[8px] font-medium text-[var(--store-neutral-100)] transition-colors duration-150 ${accentAt(i).border} ${accentAt(i).hoverSoft}`}
               >
+                <span aria-hidden="true" className={`${accentAt(i).solid} size-[8px] shrink-0 rounded-full`} />
                 {theme.label}
               </Link>
             </li>

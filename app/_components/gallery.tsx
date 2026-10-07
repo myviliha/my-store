@@ -1,52 +1,68 @@
 import Link from "next/link";
 
-import { THEMES } from "@/src/data/themes";
+import { ASSETS, type AssetKind, KIND_COLLECTION } from "@/src/data/assets";
 
-import { BODY_3 } from "./type";
+import { Masonry, type MasonryCard } from "./masonry";
 
 /**
- * The gallery under the hero: a masonry of cards, one per theme, then a "browse all" button.
+ * The gallery under the hero: a loose wall of screenshot cards, then a "browse all" button.
  *
- * The reference's is a CSS grid of 36 template cards of mixed heights. This is CSS multi-column
- * rather than a JS masonry, so it stays a server component and keeps source order readable.
+ * **The card faces are the real captures in `public/gallery/`**, taken from `ASSETS`, so every card
+ * is a screen that exists. Screenshots are per screen, not per theme, so the cards name the screen
+ * and link to its page. Dashboards and application screens lead; the single-element demo pages and
+ * the layout shells are left out, because a card of a lone button sells nothing.
  *
- * **The card faces are token-coloured placeholder blocks** (no `<img>`): there is no screenshot per
- * theme at a known path, and a missing file is worse than a flat block. The aspect ratio cycles so
- * the columns stagger the way the reference's do. Cards come from `THEMES`, so a twelfth theme
- * appears here without an edit.
+ * **It takes the parent's width less a small side margin** (16px from `md`, 32px from `lg`, on top
+ * of the 24px padding), no `max-w`; `Masonry` decides how many columns that is. The margin is
+ * matched on `Search` so the two edges line up.
+ *
+ * **Each card's shape comes from its slug**, so it is the same on every render and every deploy,
+ * and the six shapes are the spread the reference's wall shows: a 16:9 deck, a 4:3 page, a square
+ * logo, and three portraits down to a 2:3 poster. Cycling them in order would line the same shape
+ * up across a row, which reads as a pattern rather than a wall. The captures are all 1440px wide
+ * and taller than they are wide, so each is cropped from the top to its card.
  */
-const RATIOS = ["aspect-[4/3]", "aspect-[3/4]", "aspect-square", "aspect-[4/5]"] as const;
-const FACES = [
-  "bg-[var(--store-primary-10)]",
-  "bg-[var(--store-primary-20)]",
-  "bg-[var(--store-neutral-40)]",
-  "bg-[var(--store-primary-30)]",
-] as const;
+const COUNT = 36;
+const KIND_ORDER: readonly AssetKind[] = ["dashboard", "application", "page"];
+const SHAPES: readonly (readonly [number, number])[] = [
+  [16, 9],
+  [4, 3],
+  [1, 1],
+  [4, 5],
+  [3, 4],
+  [2, 3],
+];
+
+/** A small, stable string hash (FNV-1a), so a slug always picks the same shape. */
+const hash = (text: string): number => {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+};
+
+const CARDS: readonly MasonryCard[] = KIND_ORDER.flatMap((kind) =>
+  ASSETS.filter((asset) => asset.kind === kind && asset.pattern !== "UI element"),
+)
+  .slice(0, COUNT)
+  .map((screen) => ({
+    key: screen.slug,
+    href: `${KIND_COLLECTION[screen.kind]}/${screen.slug}`,
+    /* There is no per-screen download: a screen ships inside a theme. `/download` is the page
+       that explains what a download contains and starts one. */
+    download: "/download",
+    src: screen.src,
+    title: screen.title,
+    tier: screen.tier,
+    ratio: SHAPES[hash(screen.slug) % SHAPES.length] ?? [1, 1],
+  }));
 
 export function Gallery() {
   return (
-    <section className="mx-auto mt-[var(--tn-space-lg)] w-full max-w-[1200px] px-[var(--tn-space-sm)]">
-      <ul className="columns-2 gap-[var(--tn-space-xs)] md:columns-3 lg:columns-4">
-        {THEMES.map((theme, index) => (
-          <li
-            key={theme.id}
-            className="tn-reveal mb-[var(--tn-space-xs)] break-inside-avoid"
-            style={{ ["--i" as string]: index % 4 }}
-          >
-            <Link href={`/themes/${theme.id}`} className="group block">
-              <div
-                aria-hidden="true"
-                className={`${RATIOS[index % RATIOS.length]} ${FACES[(index + (index >> 2)) % FACES.length]} overflow-hidden rounded-[var(--tn-radius-xl)] border border-[var(--store-neutral-50)] transition-transform duration-200 group-hover:-translate-y-0.5`}
-              />
-              <span
-                className={`${BODY_3} mt-[var(--tn-space-2xs)] block truncate text-left font-medium text-[var(--store-neutral-100)]`}
-              >
-                {theme.label}
-              </span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+    <section className="mt-[var(--tn-space-lg)] px-[var(--tn-space-sm)] md:mx-[var(--tn-space-xs)] lg:mx-[var(--tn-space-md)]">
+      <Masonry cards={CARDS} />
       <div className="mt-[var(--tn-space-sm)] flex justify-center">
         <Link
           href="/themes"

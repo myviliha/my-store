@@ -15,7 +15,7 @@ import {
   Table,
   Upload,
 } from "@/app/_vendor/icons";
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
 import { Choice, Divider, Panel, useAnchor, useFilePicker } from "./menu";
 import { ModelPicker } from "./model-picker";
@@ -118,11 +118,69 @@ export function Glyph({ size, children }: { size: number; children: ReactNode })
   );
 }
 
+/**
+ * **The animated placeholder**: types an example prompt, holds it, deletes it, types the next.
+ *
+ * It shows what a good prompt looks like better than one static line can, because the reader sees
+ * several in the time it takes to look at the card. The speeds are a person's, not a ticker's:
+ * 45ms a character in, 20ms out, a 1.8s hold to read it.
+ *
+ * **Reduced motion gets the first example, still.** The global CSS clamp cannot reach this, because
+ * it is a timer rather than an animation, so it reads the media query itself and stops.
+ */
+const TYPE_MS = 45;
+const DELETE_MS = 20;
+const HOLD_MS = 1800;
+
+function useTypewriter(examples: readonly string[] | undefined, running: boolean): string {
+  const [text, setText] = useState(examples?.[0] ?? "");
+  const [index, setIndex] = useState(0);
+  const [deleting, setDeleting] = useState(false);
+  const [still, setStill] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setStill(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
+  }, []);
+
+  useEffect(() => {
+    if (!examples?.length || !running) return;
+    if (still) {
+      setText(examples[0] ?? "");
+      return;
+    }
+    const target = examples[index % examples.length] ?? "";
+    const done = !deleting && text === target;
+    const gone = deleting && text === "";
+    const timer = window.setTimeout(
+      () => {
+        if (done) setDeleting(true);
+        else if (gone) {
+          setDeleting(false);
+          setIndex((i) => i + 1);
+        } else setText(deleting ? text.slice(0, -1) : target.slice(0, text.length + 1));
+      },
+      done ? HOLD_MS : deleting ? DELETE_MS : TYPE_MS,
+    );
+    return () => window.clearTimeout(timer);
+  }, [examples, running, still, text, index, deleting]);
+
+  return text;
+}
+
 export interface ComposerProps {
   value: string;
   onChange: (next: string) => void;
   onSubmit: () => void;
   placeholder: string;
+  /**
+   * Example prompts to type out in place of `placeholder` while the box is empty. The static
+   * `placeholder` is still what a screen reader hears, through the label and `aria-placeholder`.
+   */
+  examples?: readonly string[];
   /** The opening card is taller; the one under a thread only needs its two rows. */
   tall?: boolean;
   /** Voilet is writing. The card says so and will not take another prompt until it stops. */
@@ -136,12 +194,17 @@ export function Composer({
   onChange,
   onSubmit,
   placeholder,
+  examples,
   tall = false,
   busy = false,
   className,
   style,
 }: ComposerProps) {
   const empty = value.trim() === "";
+  /* Only while the box is truly empty: a space typed is the reader starting, so the example gets
+     out of the way rather than drawing over their cursor. */
+  const typing = useTypewriter(examples, value === "");
+  const animated = Boolean(examples?.length) && value === "";
   const [menu, setMenu] = useState<"add" | "tools" | "brand" | "model" | null>(null);
   const [tool, setTool] = useState<(typeof TOOLS)[number]["id"] | null>(null);
   const [brand, setBrand] = useState("");
@@ -188,11 +251,13 @@ export function Composer({
       }}
       /* **A border, not a glow** (`SD-220`). The reference's focused card is a 1px brand border and
          nothing else; the 3px ring was mine, and on a card this wide it reads as a halo. */
-      /* **850 x 182 exactly**, which is `#chat-island-root` in the reference (`SD-222`). `min-h` left the
+      /* **720 x 150 on the opening screen**, smaller than the reference's 850 x 182 (`#chat-island-root`,
+   `SD-222`) by request: the card was the heaviest thing above the fold. Still a fixed height rather
+   than a `min-h`. `min-h` left the
    height to whatever the rows added up to, which is how it kept coming back taller. `isolate` and
    `z-20` because the menus hang out of this card over the sections below it, and a panel losing to
    a later sibling is `SD-212` happening a second time. */
-      className={`relative isolate z-20 flex w-full flex-col rounded-[var(--tn-radius-lg)] border border-[var(--store-card-border)] bg-white text-left transition-colors duration-200 focus-within:border-[var(--store-primary-40)] ${tall ? "h-[182px]" : ""} ${className ?? ""}`}
+      className={`relative isolate z-20 flex w-full flex-col rounded-[var(--tn-radius-lg)] border border-[var(--store-card-border)] bg-white text-left transition-colors duration-200 focus-within:border-[var(--store-primary-40)] ${tall ? "h-[150px]" : ""} ${className ?? ""}`}
       style={style}
     >
       {/* **A tile each, as the reference draws them**: the image itself at 88px with its name on a
@@ -237,24 +302,38 @@ export function Composer({
       <label htmlFor="prompt" className="sr-only">
         Describe the admin theme you want to generate
       </label>
-      <textarea
-        id="prompt"
-        name="prompt"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        /* Enter sends and Shift+Enter breaks the line, which is what a composer that looks like a
-           chat box is expected to do. Without it the only way to send is the button, and a reader
-           who presses Enter gets a newline and no answer. */
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            if (!empty && !busy) onSubmit();
-          }
-        }}
-        placeholder={placeholder}
-        readOnly={busy}
-        className={`${FONT} min-h-0 flex-1 resize-none bg-transparent p-[var(--tn-space-sm)] text-[length:var(--store-body-2)] leading-[1.5] text-[var(--store-neutral-100)] outline-none placeholder:text-[var(--store-neutral-70)] ${tall ? "" : "min-h-[56px]"}`}
-      />
+      {/* The wrapper is what the animated placeholder is positioned against; it takes the
+          textarea's old place in the column, so the card's height maths is unchanged. */}
+      <div className={`relative flex min-h-0 flex-1 ${tall ? "" : "min-h-[56px]"}`}>
+        <textarea
+          id="prompt"
+          name="prompt"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          /* Enter sends and Shift+Enter breaks the line, which is what a composer that looks like a
+             chat box is expected to do. Without it the only way to send is the button, and a reader
+             who presses Enter gets a newline and no answer. */
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              if (!empty && !busy) onSubmit();
+            }
+          }}
+          placeholder={animated ? "" : placeholder}
+          aria-placeholder={animated ? placeholder : undefined}
+          readOnly={busy}
+          className={`${FONT} min-h-0 w-full flex-1 resize-none bg-transparent p-[var(--tn-space-sm)] text-[length:var(--store-body-2)] leading-[1.5] text-[var(--store-neutral-100)] outline-none placeholder:text-[var(--store-neutral-70)]`}
+        />
+        {animated ? (
+          <span
+            aria-hidden="true"
+            className={`${FONT} pointer-events-none absolute inset-0 p-[var(--tn-space-sm)] text-[length:var(--store-body-2)] leading-[1.5] text-[var(--store-neutral-70)]`}
+          >
+            {typing}
+            <span className="tn-caret ml-[1px] inline-block h-[1.1em] w-[2px] translate-y-[3px] rounded-full bg-[var(--tn-accent-violet-solid)]" />
+          </span>
+        ) : null}
+      </div>
       {/* `prompt-actions`: the reference's row is space-between with a 10px gap, pushed to the
           card's foot by `margin-top: auto`; here the textarea's `flex-1` does the pushing. */}
       <div className="mt-auto flex shrink-0 items-center justify-between gap-[10px] border-t border-[var(--store-neutral-40)] px-[var(--tn-space-sm)] md:h-[60px]">

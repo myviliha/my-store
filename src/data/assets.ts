@@ -1,3 +1,5 @@
+import { FREE_DESIGN, type Marked, type Tier, tierOf } from "@/src/entitlement-core";
+
 import gallery from "./gallery.generated.json";
 
 /**
@@ -19,7 +21,7 @@ import gallery from "./gallery.generated.json";
  */
 export type AssetKind = "dashboard" | "application" | "layout" | "page";
 
-export interface Asset {
+export interface Asset extends Marked {
   /** `/products-list` in the app; `products-list` in this storefront's URLs. */
   readonly slug: string;
   readonly route: string;
@@ -32,6 +34,8 @@ export interface Asset {
   readonly src: string;
   readonly width: number;
   readonly height: number;
+  /** Free or Pro, from `tierOf` and never decided here; see `pro` below. */
+  readonly tier: Tier;
 }
 
 /** Title-case a route: `/support-ticket-reply` becomes `Support Ticket Reply`. */
@@ -120,9 +124,18 @@ const classify = (route: string): { kind: AssetKind; family?: string; pattern: s
   return { kind: "page", pattern };
 };
 
+/**
+ * **Application screens are Pro; dashboards, layouts and pages are Free.** The owner's call,
+ * 2026-10-07, recorded as the `pro` mark `entitlement-core` reads, so the tier still comes from
+ * the one rule (`tierOf`) rather than from a second opinion here. The captures are all Voilet's,
+ * the Free design, so an unmarked screen is Free and a marked one is Pro.
+ */
+const isPro = (kind: AssetKind): boolean => kind === "application";
+
 export const ASSETS: readonly Asset[] = gallery.screens
   .map((shot) => {
     const { kind, family, pattern } = classify(shot.route);
+    const pro = isPro(kind);
     return {
       slug: shot.route.replace(/^\//, "") || "dashboard",
       route: shot.route,
@@ -133,6 +146,8 @@ export const ASSETS: readonly Asset[] = gallery.screens
       src: `/gallery/${shot.file}`,
       width: shot.width,
       height: shot.height,
+      pro,
+      tier: tierOf(FREE_DESIGN, { pro }),
     };
   })
   .sort((a, b) => a.title.localeCompare(b.title));

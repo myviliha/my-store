@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { H2, LEAD } from "./type";
+import { ACCENTS, H2, LEAD } from "./type";
 
 /**
  * The closing section: a headline, a four-word line, one button, and slow columns behind them.
@@ -28,17 +28,15 @@ const COLUMNS = [
   },
 ] as const;
 
-const TINTS = [
-  "bg-[var(--store-primary-10)]",
-  "bg-[var(--store-primary-20)]",
-  "bg-[var(--store-neutral-40)]",
-] as const;
+/* The accents' soft grounds, so the drifting columns carry the page's whole palette. Offset per
+   column below so no two neighbours start on the same colour. */
+const TINTS = ACCENTS.map((accent) => accent.soft);
 
 export function Closing() {
   return (
     <section className="relative mx-auto mt-[var(--tn-space-3xl)] flex min-h-[clamp(26rem,35vw,36rem)] w-full max-w-[1440px] flex-col items-center justify-center overflow-hidden px-[var(--tn-space-sm)] text-center">
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 hidden md:block">
-        {COLUMNS.map((column) => (
+        {COLUMNS.map((column, c) => (
           <div
             key={column.side}
             className={`${column.side} ${column.motion} absolute top-0 flex w-[8%] min-w-[96px] flex-col gap-[var(--tn-space-xs)]`}
@@ -46,7 +44,7 @@ export function Closing() {
             {column.heights.map((height, index) => (
               <div
                 key={index}
-                className={`${height} ${TINTS[index % TINTS.length]} rounded-[var(--tn-radius-2xl)]`}
+                className={`${height} ${TINTS[(index + c * 2) % TINTS.length]} rounded-[var(--tn-radius-2xl)]`}
               />
             ))}
           </div>
@@ -57,7 +55,7 @@ export function Closing() {
         <p className={LEAD}>Describe. Generate. Download. Connect.</p>
         <Link
           href="/themes"
-          className="mt-[var(--tn-space-xs)] rounded-[var(--tn-radius-lg)] bg-[var(--store-primary-40)] px-[var(--tn-space-md)] py-[var(--tn-space-2xs)] text-[length:var(--store-body-1)] font-semibold text-white transition-colors duration-200 hover:bg-[var(--store-primary-50)] active:bg-[var(--store-primary-60)]"
+          className="mt-[var(--tn-space-xs)] rounded-[var(--tn-radius-lg)] bg-gradient-to-r from-[var(--tn-accent-blue-solid)] to-[var(--tn-accent-violet-solid)] px-[var(--tn-space-md)] py-[var(--tn-space-2xs)] text-[length:var(--store-body-1)] font-semibold text-white shadow-[0_8px_24px_-8px_var(--tn-accent-violet-solid)] transition-[filter,transform] duration-200 hover:-translate-y-0.5 hover:brightness-110 active:brightness-95"
         >
           Start for free
         </Link>

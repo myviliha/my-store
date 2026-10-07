@@ -1,11 +1,12 @@
-import { BODY_2, FONT, H2, LEAD, SECTION } from "./type";
+import { accentAt, BODY_2, FONT, H2, LEAD, SECTION } from "./type";
 
 /**
  * Five capability cards, as the reference has five, in one row from desktop with a 16px gap.
  *
  * Each card is a number tile, a title and one sentence. The reference's cards carry an illustration
  * each; ours carry the step number as text, in a token-coloured tile, rather than imagery we do not
- * have. Every sentence states something the product does and nothing it does not: **the last one
+ * have. **Each card takes the next accent** for its tile, the bar along its top edge and its hover
+ * border, so the five read as five things. Every sentence states something the product does and nothing it does not: **the last one
  * says it is frontend only, because discovering that after payment is a refund.**
  */
 const CARDS = [
@@ -45,12 +46,16 @@ export function Capabilities() {
         {CARDS.map((card, index) => (
           <li
             key={card.title}
-            className="tn-reveal flex flex-col gap-[var(--tn-space-2xs)] rounded-[var(--tn-radius-2xl)] border border-[var(--store-neutral-50)] p-[var(--tn-space-sm)] text-left transition-colors duration-200 hover:border-[var(--store-primary-40)]"
+            className={`tn-reveal relative flex flex-col gap-[var(--tn-space-2xs)] overflow-hidden rounded-[var(--tn-radius-2xl)] border border-[var(--store-neutral-50)] bg-white p-[var(--tn-space-sm)] text-left transition-colors duration-200 ${accentAt(index).border}`}
             style={{ ["--i" as string]: index }}
           >
             <span
               aria-hidden="true"
-              className={`${FONT} grid size-10 place-items-center rounded-[var(--tn-radius-xl)] bg-[var(--store-primary-10)] text-[length:var(--store-body-1)] font-bold text-[var(--store-primary-40)]`}
+              className={`${accentAt(index).solid} absolute inset-x-0 top-0 h-[4px]`}
+            />
+            <span
+              aria-hidden="true"
+              className={`${FONT} ${accentAt(index).soft} ${accentAt(index).ink} grid size-10 place-items-center rounded-[var(--tn-radius-xl)] text-[length:var(--store-body-1)] font-bold`}
             >
               {index + 1}
             </span>

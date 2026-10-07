@@ -1,8 +1,8 @@
 /**
  * The class strings every section of the home page shares, so a size changes in one place.
  *
- * The reference sets everything in Inter at weights 400 to 900, which is `--store-font-body`; the
- * Plus Jakarta headline family is deliberately not used here. Sizes are our `--store-*` steps where
+ * Everything is set in `--store-font-body`, which is Plus Jakarta Sans at weights 400 to 800 (the
+ * reference used Inter; the store moved to Jakarta throughout). Sizes are our `--store-*` steps where
  * the value matches the reference's scale; `--tn-text-lg` and `--tn-text-2xl` are the two that
  * have no step of ours (see `globals.css`).
  */
@@ -38,3 +38,55 @@ export const BUTTON =
 export const BUTTON_PRIMARY = `${FONT} ${BUTTON} bg-[var(--store-primary-40)] text-white hover:bg-[var(--store-primary-50)] active:bg-[var(--store-primary-60)]`;
 
 export const BUTTON_SECONDARY = `${FONT} ${BUTTON} border border-[var(--store-card-border)] bg-white text-[var(--store-neutral-100)] hover:bg-[var(--store-neutral-30)]`;
+
+/**
+ * **The five accents, in the order every section rotates them** (tokens in `globals.css`).
+ *
+ * Written out whole rather than built from the name, because Tailwind finds classes by reading the
+ * source: `bg-[var(--tn-accent-${name}-soft)]` would never be generated. `name` reaches the raw tokens through a CSS variable, `soft` is a tinted ground,
+ * `ink` is text or a mark on it, `solid` is a fill, `border` and `hoverSoft` are hover states.
+ */
+export const ACCENTS = [
+  {
+    name: "blue",
+    soft: "bg-[var(--tn-accent-blue-soft)]",
+    ink: "text-[var(--tn-accent-blue-ink)]",
+    solid: "bg-[var(--tn-accent-blue-solid)]",
+    border: "hover:border-[var(--tn-accent-blue-solid)]",
+    hoverSoft: "hover:bg-[var(--tn-accent-blue-soft)]",
+  },
+  {
+    name: "violet",
+    soft: "bg-[var(--tn-accent-violet-soft)]",
+    ink: "text-[var(--tn-accent-violet-ink)]",
+    solid: "bg-[var(--tn-accent-violet-solid)]",
+    border: "hover:border-[var(--tn-accent-violet-solid)]",
+    hoverSoft: "hover:bg-[var(--tn-accent-violet-soft)]",
+  },
+  {
+    name: "pink",
+    soft: "bg-[var(--tn-accent-pink-soft)]",
+    ink: "text-[var(--tn-accent-pink-ink)]",
+    solid: "bg-[var(--tn-accent-pink-solid)]",
+    border: "hover:border-[var(--tn-accent-pink-solid)]",
+    hoverSoft: "hover:bg-[var(--tn-accent-pink-soft)]",
+  },
+  {
+    name: "amber",
+    soft: "bg-[var(--tn-accent-amber-soft)]",
+    ink: "text-[var(--tn-accent-amber-ink)]",
+    solid: "bg-[var(--tn-accent-amber-solid)]",
+    border: "hover:border-[var(--tn-accent-amber-solid)]",
+    hoverSoft: "hover:bg-[var(--tn-accent-amber-soft)]",
+  },
+  {
+    name: "teal",
+    soft: "bg-[var(--tn-accent-teal-soft)]",
+    ink: "text-[var(--tn-accent-teal-ink)]",
+    solid: "bg-[var(--tn-accent-teal-solid)]",
+    border: "hover:border-[var(--tn-accent-teal-solid)]",
+    hoverSoft: "hover:bg-[var(--tn-accent-teal-soft)]",
+  },
+] as const;
+
+export const accentAt = (index: number) => ACCENTS[index % ACCENTS.length] ?? ACCENTS[0];
