@@ -1,0 +1,278 @@
+/**
+ * **The storefront's palette, as the Figma file specifies it** (`SD-199`).
+ *
+ * Extracted from `P0uz7pu7REAPZQhaXgiGPd`, page "Design System", frame `6:2`. Five families of ten
+ * steps, which is every colour that file declares. The reference extraction and the per-swatch
+ * provenance are `reference/figma/foundations/`; this is the only place the values are declared.
+ *
+ * **Not in `src/themes/`, and that placement is deliberate.** `themeCssFiles()` globs that directory
+ * and six guards read what it returns — `check:layer-order`, `check:themeable`, `check:tw-chain`,
+ * `check:design-scale`, `check:theme-docs` — every one of them written to police a **product theme a
+ * buyer downloads**. The storefront is the customer-facing application (`PD-1032`), not something in
+ * the catalogue, so a file in there would have six guards asserting the opposite. Sibling of
+ * `theme.css`, same package, outside the glob.
+ *
+ * **Hex rather than `oklch()`, to stay comparable with the source.** `theme.css` already declares
+ * `--success` and `--warning` as hex, so this is in-house rather than an exception, and a reviewer
+ * holding the Figma file beside this one can check fifty values by eye. A converted value is a value
+ * nobody can check without running the conversion.
+ *
+ * **The step is the state.** `40` is the resting colour, `50` is its hover and `60` its active, in
+ * all five families without exception; `10`/`20`/`30` are the same three for the tinted surface and
+ * `70`/`80`/`90` for the deep one. The designer named them that way (`Primary/Normal :hover`) and
+ * numbered them in parallel, so the interaction states are **specified rather than inferred**. The
+ * role aliases below are that rule written out: a hover is never a separate decision here, and
+ * nothing downstream should reach for `color-mix` to invent one.
+ */
+
+:root {
+  /* Primary */
+  --store-primary-10: #e6eefd;
+  --store-primary-20: #d9e6fc;
+  --store-primary-30: #b0cbfa;
+  --store-primary-40: #0058ee;
+  --store-primary-50: #004fd6;
+  --store-primary-60: #0046be;
+  --store-primary-70: #0042b3;
+  --store-primary-80: #00358f;
+  --store-primary-90: #00286b;
+  --store-primary-100: #001f53;
+
+  /* Neutral */
+  --store-neutral-10: #ffffff;
+  --store-neutral-20: #fdfdfd;
+  --store-neutral-30: #f8f8f8;
+  --store-neutral-40: #f1f1f1;
+  --store-neutral-50: #cecece;
+  --store-neutral-60: #aeaeae;
+  --store-neutral-70: #858585;
+  --store-neutral-80: #5d5d5d;
+  --store-neutral-90: #343434;
+  --store-neutral-100: #0c0c0c;
+
+  /* Success */
+  --store-success-10: #edfcf3;
+  --store-success-20: #e4faec;
+  --store-success-30: #c6f5d8;
+  --store-success-40: #48df82;
+  --store-success-50: #41c975;
+  --store-success-60: #3ab268;
+  --store-success-70: #36a762;
+  --store-success-80: #2b864e;
+  --store-success-90: #20643a;
+  --store-success-100: #194e2e;
+
+  /* Warning */
+  --store-warning-10: #fef9e9;
+  --store-warning-20: #fef6de;
+  --store-warning-30: #fdecbb;
+  --store-warning-40: #f7c123;
+  --store-warning-50: #deae20;
+  --store-warning-60: #c69a1c;
+  --store-warning-70: #b9911a;
+  --store-warning-80: #947415;
+  --store-warning-90: #6f5710;
+  --store-warning-100: #56440c;
+
+  /* Destructive */
+  --store-destructive-10: #fef1f1;
+  --store-destructive-20: #feeaea;
+  --store-destructive-30: #fdd3d3;
+  --store-destructive-40: #f77170;
+  --store-destructive-50: #de6665;
+  --store-destructive-60: #c65a5a;
+  --store-destructive-70: #b95554;
+  --store-destructive-80: #944443;
+  --store-destructive-90: #6f3332;
+  --store-destructive-100: #562827;
+
+  /*
+   * The roles, mapped onto the steps above. Every line is a mapping and none invents a value, which
+   * is the same rule `adapters/bootstrap.css` follows and for the same reason: one source, many
+   * sinks, never the reverse.
+   */
+  --store-primary-light: var(--store-primary-10);
+  --store-primary-light-hover: var(--store-primary-20);
+  --store-primary-light-active: var(--store-primary-30);
+  --store-primary-normal: var(--store-primary-40);
+  --store-primary-normal-hover: var(--store-primary-50);
+  --store-primary-normal-active: var(--store-primary-60);
+  --store-primary-dark: var(--store-primary-70);
+  --store-primary-dark-hover: var(--store-primary-80);
+  --store-primary-dark-active: var(--store-primary-90);
+  --store-primary-darker: var(--store-primary-100);
+
+  --store-neutral-light: var(--store-neutral-10);
+  --store-neutral-light-hover: var(--store-neutral-20);
+  --store-neutral-light-active: var(--store-neutral-30);
+  --store-neutral-normal: var(--store-neutral-40);
+  --store-neutral-normal-hover: var(--store-neutral-50);
+  --store-neutral-normal-active: var(--store-neutral-60);
+  --store-neutral-dark: var(--store-neutral-70);
+  --store-neutral-dark-hover: var(--store-neutral-80);
+  --store-neutral-dark-active: var(--store-neutral-90);
+  --store-neutral-darker: var(--store-neutral-100);
+
+  --store-success-light: var(--store-success-10);
+  --store-success-light-hover: var(--store-success-20);
+  --store-success-light-active: var(--store-success-30);
+  --store-success-normal: var(--store-success-40);
+  --store-success-normal-hover: var(--store-success-50);
+  --store-success-normal-active: var(--store-success-60);
+  --store-success-dark: var(--store-success-70);
+  --store-success-dark-hover: var(--store-success-80);
+  --store-success-dark-active: var(--store-success-90);
+  --store-success-darker: var(--store-success-100);
+
+  --store-warning-light: var(--store-warning-10);
+  --store-warning-light-hover: var(--store-warning-20);
+  --store-warning-light-active: var(--store-warning-30);
+  --store-warning-normal: var(--store-warning-40);
+  --store-warning-normal-hover: var(--store-warning-50);
+  --store-warning-normal-active: var(--store-warning-60);
+  --store-warning-dark: var(--store-warning-70);
+  --store-warning-dark-hover: var(--store-warning-80);
+  --store-warning-dark-active: var(--store-warning-90);
+  --store-warning-darker: var(--store-warning-100);
+
+  --store-destructive-light: var(--store-destructive-10);
+  --store-destructive-light-hover: var(--store-destructive-20);
+  --store-destructive-light-active: var(--store-destructive-30);
+  --store-destructive-normal: var(--store-destructive-40);
+  --store-destructive-normal-hover: var(--store-destructive-50);
+  --store-destructive-normal-active: var(--store-destructive-60);
+  --store-destructive-dark: var(--store-destructive-70);
+  --store-destructive-dark-hover: var(--store-destructive-80);
+  --store-destructive-dark-active: var(--store-destructive-90);
+  --store-destructive-darker: var(--store-destructive-100);
+
+  /*
+   * **Typography, from the Design System page** (`SD-200`). Two families and one rule each: the
+   * headline scale is Plus Jakarta Sans, the body scale is Inter, and **every step in both is 120%
+   * line height with zero letter spacing**. That is not a simplification; the file states it for all
+   * sixteen steps, which is why neither is written per step here.
+   *
+   * The names are the designer's. `--store-headline-1` is 96px because the file calls 96px
+   * "Headline 1", and a step renamed on the way in is a step nobody can check against the source.
+   */
+  /*
+   * **The faces are the app's, not this file's.** `apps/web/store/app/layout.tsx` already loads both
+   * through `next/font/google`, which downloads at build and serves from our own origin, and
+   * publishes them as `--font-jakarta` and `--font-inter`. Declaring a second stack here would be a
+   * copy that drifts the first time a weight or subset changes, so these point at those. The
+   * fallbacks are for a consumer that renders this file without that layout.
+   */
+  --store-font-headline:
+    var(--font-jakarta), "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --store-font-body: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  --store-line-height: 1.2;
+  --store-letter-spacing: 0;
+
+  /* Headline scale, Plus Jakarta Sans */
+  --store-headline-1: 96px;
+  --store-headline-2: 64px;
+  --store-headline-3: 56px;
+  --store-headline-4: 52px;
+  --store-headline-5: 48px;
+  --store-headline-6: 44px;
+  --store-headline-7: 40px;
+  --store-headline-8: 36px;
+  --store-headline-9: 32px;
+  --store-headline-10: 28px;
+  --store-headline-11: 24px;
+  --store-headline-12: 20px;
+
+  /* Body scale, Inter */
+  --store-body-1: 16px;
+  --store-body-2: 14px;
+  --store-body-3: 12px;
+  --store-body-4: 10px;
+
+  /*
+   * **Spacing, thirteen steps.** `--store-space-196` is 196 and not 192: it is the only step above
+   * 64 that is not a multiple of 32, and it is taken verbatim because the frame does not say whether
+   * that is deliberate. Rounding it here would be inventing a value (`PD-914`).
+   */
+  --store-space-4: 4px;
+  --store-space-8: 8px;
+  --store-space-12: 12px;
+  --store-space-16: 16px;
+  --store-space-24: 24px;
+  --store-space-32: 32px;
+  --store-space-40: 40px;
+  --store-space-48: 48px;
+  --store-space-64: 64px;
+  --store-space-96: 96px;
+  --store-space-128: 128px;
+  --store-space-160: 160px;
+  --store-space-196: 196px;
+
+  /*
+   * **The grid, three breakpoints.** The column width is **derived rather than declared**: the file
+   * states 74 / 77 / 75, and each is its true width rounded to the nearest pixel, so three stated
+   * columns plus their gutters do not sum to the content width. `calc()` keeps the arithmetic exact.
+   */
+  --store-mobile-width: 375px;
+  --store-mobile-columns: 4;
+  --store-mobile-gutter: 16px;
+  --store-mobile-margin: 16px;
+  --store-mobile-column: calc((100% - 32px - 48px) / 4);
+
+  --store-tablet-width: 834px;
+  --store-tablet-columns: 8;
+  --store-tablet-gutter: 24px;
+  --store-tablet-margin: 24px;
+  --store-tablet-column: calc((100% - 48px - 168px) / 8);
+
+  --store-desktop-width: 1440px;
+  --store-desktop-columns: 12;
+  --store-desktop-gutter: 32px;
+  --store-desktop-margin: 96px;
+  --store-desktop-column: calc((100% - 192px - 352px) / 12);
+
+  /*
+   * **The footer's two breakpoint-varying colours, and its third typeface.**
+   *
+   * The file lightens the column links and darkens the watermark on desktop, with nothing in the
+   * frame explaining either. Both are reproduced as drawn and declared here rather than written into
+   * the component, because a value that changes with the viewport is a media query's job and a
+   * component that carries two of them has to re-implement one.
+   */
+  --store-footer-link: var(--store-neutral-40);
+  --store-watermark: var(--store-neutral-70);
+  --store-font-legal: var(--font-jost), Jost, ui-sans-serif, system-ui, sans-serif;
+
+  /*
+   * The four the Hi-Fi screens add beyond the foundation's two (`SD-202`). `--store-font-system` is
+   * SF Pro, which is Apple's and is not downloaded: it resolves through the stack or it does not.
+   */
+  --store-font-prompt: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --store-font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --store-font-instrument: var(--font-instrument), ui-sans-serif, system-ui, sans-serif;
+  --store-font-accent: var(--font-podkova), ui-serif, Georgia, serif;
+  --store-font-system: -apple-system, BlinkMacSystemFont, ui-sans-serif, system-ui, sans-serif;
+
+  /*
+   * **The card edge, which is a neutral and not the brand** (`SD-210`). The reference's prompt card
+   * carries `1px solid var(--theme-border-strong, #CFD6DD)` inline, and `--t-border-color` is the
+   * same `#cfd6dd`. I had drawn it in `--store-primary-40` because the brief said to use our blue;
+   * the brief was about the brand, and a card's edge is not one. `--store-neutral-50` is `#CECECE`,
+   * a CIE76 distance of 5.07 away and the closest step we have. What it replaces was `--store-primary-40`
+   * at a distance of **95**: a grey hairline drawn in saturated blue, which is the size of the error
+   * that reading a brief instead of the spec produces.
+   */
+  --store-card-border: var(--store-neutral-50);
+
+  /* `--website-bg-color`. Not in our palette: `neutral-20` is `#FDFDFD` and this is cooler. */
+  --store-page-ground: #f9fafe;
+}
+
+/*
+ * The desktop frame, at the Figma grid's own 1440 breakpoint rather than a framework's.
+ */
+@media (width >= 1280px) {
+  :root {
+    --store-footer-link: var(--store-neutral-50);
+    --store-watermark: var(--store-neutral-80);
+  }
+}

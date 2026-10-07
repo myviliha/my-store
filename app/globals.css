@@ -1,0 +1,853 @@
+/* The single stylesheet: the token contract, then the handful of base rules that sit on it.
+ *
+ * Refined from the design project's `src/styles/global.css` (`SD-031`), not copied. What carried
+ * over is its values. What did not is its two naming schemes (it declares `--color-primary` and then
+ * `--primary` as an alias, which is how one colour comes to be written three ways) and its eighteen
+ * ad-hoc `max-width` values, replaced by Tailwind's five breakpoints (`ST-003`).
+ *
+ * Every value below is the design's own or the owner's. Nothing here is taken from TailAdmin: its
+ * page proportions were measured (`SD-034` to `SD-036`), and a measurement is not a stylesheet. */
+@import "tailwindcss";
+
+/**
+ * **The storefront's own palette, type scale, spacing and grid** (`SD-199`, `SD-200`).
+ *
+ * Every value is the Figma file's, read out of page "Design System" (`0:1`), which is the foundation
+ * the Hi-Fi screens (`227:13`) are drawn on. It sits beside `theme.css` in the tokens package rather
+ * than in `src/themes/`, because that directory is globbed by six guards written to police a product
+ * theme a buyer downloads, and the storefront is the customer-facing application rather than
+ * something in the catalogue.
+ *
+ * **Imported before the `@theme` block below**, because that block bridges these names onto
+ * Tailwind's and a bridge cannot resolve a variable that has not been declared yet.
+ */
+@import "./_vendor/store.css";
+
+/* Tailwind scans this app only: the packages the monorepo version pointed at are vendored here. */
+@source "./";
+
+/**
+ * Scan the design-system packages too.
+ *
+ * Tailwind v4 auto-detects sources from this app's own tree, which silently excludes
+ * `@viliha/vui-blocks` and `@viliha/vui-react`. Any class used **only** inside a block is therefore never
+ * generated: the `Marquee`'s `gap-[var(--vui-marquee-gap)]` and its `animate-[vui-marquee...]` were
+ * both missing, so the strip rendered as one run-on line with no animation and nothing failed. The
+ * classes the store happens to use as well kept working, which is what made it look like a spacing
+ * bug rather than a missing stylesheet.
+ */
+/*
+ * **`@repo/web-chrome` is a source too** (`PD-456`).
+ *
+ * Every app here depends on that package and none of them told Tailwind to scan it, so a class used
+ * only inside it was never generated. `CopyButton` stacks its copy and tick glyphs with
+ * `[grid-template-areas:'icon']` and `[grid-area:icon]`; with neither class emitted the two icons
+ * laid out side by side, which is why that button measured 46px wide beside a 31px sibling and read
+ * as misaligned. Nothing errors when this is missing: the markup renders and the styling is simply
+ * absent, which is the same failure the documentation warns buyers about for `src/vui`.
+ */
+
+/* ─── The token contract (`ST-002`) ────────────────────────────────────────────────────────────
+ *
+ * A Tailwind v4 `@theme` block, so every token is simultaneously a CSS variable and a utility:
+ * `--color-primary` gives `bg-primary`, `text-primary` and `border-primary` for free. That is the
+ * whole reason the tokens live here rather than in a `:root`, because a token nobody can reach from
+ * a class gets bypassed with a hex literal, which is the defect `SD-028` exists to prevent. */
+
+@theme {
+  /*
+   * ─── The four design-system colour names the shell writes, bridged ─────────────────────────────
+   *
+   * **`VoiletShell` writes its structure as Tailwind utilities, not as `.vui-*` classes** (`SD-128`).
+   * Its `<aside>` carries `bg-card border-e border-border`, its rows carry `text-foreground` and
+   * `bg-accent`. Those utilities are generated from **this** `@theme` block, because Tailwind
+   * compiles the file it is given, so importing `@viliha/vui-css/vui.css` (`SD-127`) supplied the
+   * `.vui-*` rules and the `:root` variables and **not one of these four classes**: a missing colour
+   * utility emits nothing at all, which is why the sidebar had no fill and the nav no ink.
+   *
+   * They point at the design system's own `:root` values rather than restating them, so there is no
+   * second copy to drift. `border` needed no entry: both systems happened to name it the same, which
+   * is the only reason the sidebar had a right edge while it had no background.
+   *
+   * **In this block rather than a second one, and a second one cost 35 failing tests** (`SD-129`).
+   * Tailwind accepts more than one `@theme`, so a separate block looked like tidier commentary.
+   * `token-contract.test.ts` reads the contract as the slice from the first block opening to its
+   * first closing brace, so four entries placed above the real block became the whole token contract
+   * as far as every assertion in that file was concerned: `expected 4 to be greater than 10`, and 34
+   * more behind it. **One contract, one block.**
+   *
+   * These are **additive**. No existing store class changes meaning, and nothing under `(site)` uses
+   * any of them; on those routes `var(--card)` is simply undefined and the utility paints nothing,
+   * which is the loud failure rather than a wrong colour.
+   */
+  --color-card: var(--card);
+  --color-accent: var(--accent);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+
+  /* ─── The brand ramps (`SD-163`) ─────────────────────────────────────────────────────────────
+   *
+   * The dev's brand guideline, as five ten-step ramps. **The steps are published as tokens rather
+   * than flattened into the semantic names below**, because a ramp is how a designer hands over a
+   * colour and a semantic name is how a page uses one: keeping both means a new surface can reach
+   * for step 30 without inventing a hex, and `SD-028`'s no-literals rule still holds.
+   *
+   * **Step 40 is each ramp's published base, and for three of the five it is a FILL colour, not a
+   * text colour.** Measured on white: success 40 is 1.73:1, warning 40 is 1.67:1, error 40 is
+   * 2.78:1, all far under the 4.5:1 floor for body text. So the semantic `--color-success` and its
+   * siblings take the first step that passes, and the vivid step stays available as `-fill`. This
+   * is the same deviation the store already made once for `#12b76a`, now a rule rather than a
+   * one-off. */
+  --color-primary-10: #e6eefd;
+  --color-primary-20: #d9e6fc;
+  --color-primary-30: #b0cbfa;
+  --color-primary-40: #0058ee;
+  --color-primary-50: #004fd6;
+  --color-primary-60: #0046be;
+  --color-primary-70: #0042b3;
+  --color-primary-80: #00358f;
+  --color-primary-90: #00286b;
+  --color-primary-100: #001f53;
+
+  --color-success-10: #edfcf3;
+  --color-success-30: #c6f5d8;
+  --color-success-40: #48df82;
+  --color-success-80: #2b864e;
+  --color-success-90: #20643a;
+
+  --color-warning-10: #fef9e9;
+  --color-warning-30: #fdecbb;
+  --color-warning-40: #f7c123;
+  --color-warning-90: #6f5710;
+
+  --color-error-10: #fef1f1;
+  --color-error-30: #fdd3d3;
+  --color-error-40: #f77170;
+  --color-error-70: #b95554;
+  --color-error-90: #6f3332;
+
+  /* **#0058EE, the brand guideline's colour 01**, superseding the store's own `#0966ff`
+     (`SD-158`). White on it measures **5.78:1**, better than the 4.82:1 it replaces, so it carries
+     a primary button with more headroom than before. `#003ca2` is the guideline's colour 02, the
+     dark end of the logo's gradient, which is why it is named for the mark rather than numbered:
+     it sits between steps 70 and 80 and belongs to neither. */
+  --color-primary: #0058ee;
+  --color-primary-hover: #004fd6;
+  --color-primary-active: #0046be;
+  --color-brand-deep: #003ca2;
+
+  /* The first step of each ramp that passes AA on white, measured rather than chosen. The vivid
+     published base sits beside it as `-fill`, for badges and chips that carry their own dark ink. */
+  --color-success: #2b864e;
+  --color-success-fill: #48df82;
+  --color-warning: #6f5710;
+  --color-warning-fill: #f7c123;
+  --color-error: #b95554;
+  --color-error-fill: #f77170;
+
+  /* Brand tints. These were literals until review found them: a focus ring and two thirds of the
+     loading bar that stayed blue however `--color-primary` was retuned, which is the exact bypass
+     this block exists to prevent. Both are ramp steps now rather than derived shades. */
+  --color-primary-soft: #b0cbfa;
+  --color-primary-subtle: #d9e6fc;
+
+  /* ─── The neutral ramp (`SD-163`) ────────────────────────────────────────────────────────────
+   *
+   * Ten steps, and the semantic names below are steps of it rather than separate hexes.
+   *
+   * **`--color-muted` is step 80 and not step 70**, which is the one place this departs from the
+   * obvious reading. Step 70 `#858585` measures **3.69:1** on white, under the 4.5:1 floor, and
+   * `--color-muted` labels 12px availability badges. Step 70 stays published for borders, dividers
+   * and disabled ink, where contrast is not the question. */
+  --color-neutral-10: #ffffff;
+  --color-neutral-20: #fdfdfd;
+  --color-neutral-30: #f8f8f8;
+  --color-neutral-40: #f1f1f1;
+  --color-neutral-50: #cecece;
+  --color-neutral-60: #aeaeae;
+  --color-neutral-70: #858585;
+  --color-neutral-80: #5d5d5d;
+  --color-neutral-90: #343434;
+  --color-neutral-100: #0c0c0c;
+
+  /* Ink. Three weights, and no fourth: heading, body, and the quiet one. Steps 100, 90 and 80.
+     **Not 90/80/70**, which is the obvious reading and collapses to two: step 70 `#858585` is
+     3.69:1 on white and cannot carry the 12px badges `--color-muted` labels, so taking it would
+     have forced `--color-text` and `--color-muted` onto the same hex. Measured 19.56, 12.45 and
+     6.58 to one, three distinct weights that all pass. */
+  --color-heading: #0c0c0c;
+  --color-text: #343434;
+  --color-muted: #5d5d5d;
+
+  /* Surfaces and the line between them. */
+  --color-surface: #ffffff;
+  --color-surface-soft: #f8f8f8;
+  --color-surface-muted: #f1f1f1;
+  /* The hero wash's two tints. Tokens rather than literals in the utility, because a buyer who
+     rebrands this product would otherwise be left with our pink in the one place they look first. */
+  --color-wash-warm: #fbd5e8;
+  --color-wash-cool: #d6dbff;
+  --color-border: #f1f1f1;
+  --color-ink: #0c0c0c;
+  /* The Live Preview button, on the dev's instruction of 2026-08-22. A token rather than a literal
+     on the button, so a rebranding buyer changes it in one place like every other surface. */
+  --color-ink-soft: #343434;
+  /* Body text and links on the dark footer. `--color-muted` is tuned for white and goes muddy on
+     `--color-ink`; this is the value the reference's own inspector reports. */
+  --color-on-ink: #aeaeae;
+
+  /* ─── Type (`SD-163`) ────────────────────────────────────────────────────────────────────────
+   *
+   * **Two families, which is what the guideline specifies**: Plus Jakarta Sans for headlines and
+   * Inter for body. Both are loaded by `next/font` in the root layout, which is the only thing that
+   * makes a family name mean anything: naming a face nothing loads falls through the stack in
+   * silence, and this repository has paid for that three times (`PD-1046` most recently).
+   *
+   * Outfit is gone. It was the store's own choice before there was a brand guideline. */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* The headline scale, twelve steps, all at the guideline's 120%. `--text-h*` rather than
+     remapping Tailwind's `text-4xl` family: those keep their own pairing for body copy, and one
+     name meaning two sizes depending on where it is read is the drift `SD-037` already fixed once. */
+  --text-h1: 96px;
+  --text-h2: 64px;
+  --text-h3: 56px;
+  --text-h4: 52px;
+  --text-h5: 48px;
+  --text-h6: 44px;
+  --text-h7: 40px;
+  --text-h8: 36px;
+  --text-h9: 32px;
+  --text-h10: 28px;
+  --text-h11: 24px;
+  --text-h12: 20px;
+
+  /* Body, four steps, also 120%. `--text-body-1` and not `--text-body`: the latter is a token this
+     product's *themes* declare, and two meanings of one name across two layers is exactly what the
+     store's own contract exists to keep apart. */
+  --text-body-1: 16px;
+  --text-body-2: 14px;
+  --text-body-3: 12px;
+  --text-body-4: 10px;
+
+  /* **120%, the one ratio the guideline gives**, superseding `SD-037`'s pair of `1` and `1.5`.
+     That decision predates the guideline and was measured off a different reference. Published as a
+     token so the base rules below read it rather than restating it. */
+  --leading-brand: 1.2;
+
+  /* **Display sizes are pinned to the brand ratio**, because `@layer base` loses to
+     `@layer utilities`. Without these, `text-4xl` emits Tailwind's own `1.111` and quietly beats
+     the `h1, h2` rule below, so the rule would be written down and not true. They were pinned to a
+     flat `1` under `SD-037`; `SD-163`'s guideline says 120% for every headline, and these are the
+     utilities a headline is actually written with. Body sizes keep Tailwind's pairing. */
+  --text-3xl--line-height: 1.2;
+  --text-4xl--line-height: 1.2;
+  --text-5xl--line-height: 1.2;
+  --text-6xl--line-height: 1.2;
+  --text-7xl--line-height: 1.2;
+
+  /* Three radii, named for what they wrap rather than by size, so a card cannot quietly become a
+     control because `lg` sounded right. */
+  --radius-control: 9px;
+  --radius-panel: 12px;
+  --radius-card: 18px;
+
+  /* One shadow. Floating surfaces only: menus, popovers, the mobile drawer. */
+  /* Tinted with the neutral ramp's darkest step rather than the old ink (`SD-163`). */
+  --shadow-float: 0 16px 30px #0c0c0c1f;
+
+  /* Widths. `--container-*` generates `max-w-*`, so these are the measure caps as utilities.
+     `page` is `SD-034`; `heading` and `lead` are `SD-037`, and they are the difference between a
+     readable centred paragraph and one that runs the full 1248px. */
+  /* **1248px, the desktop grid's content column**, superseding `SD-034`'s 1350 (`SD-163`). That
+     number came from TailAdmin's `.container` and predates the brand guideline; this one is the
+     guideline's own 1440 frame less its two 96px margins, and the arithmetic closes: 12 columns of
+     74.67 with 32px gutters is the 75px the guideline states. **This is the most visible change in
+     the brand work**, because it narrows every page, so it is named here rather than left to be
+     discovered. */
+  --container-page: 1248px;
+  /* The frame the grid is specified inside, for anything that needs to reach the full width. */
+  --container-frame: 1440px;
+  --container-heading: 810px;
+  --container-lead: 1090px;
+  /* Prose in a column. Named in `SD-037` and implemented only when review asked where it was. */
+  --container-body: 70ch;
+
+  /*
+   * **The 4px base, declared rather than inherited** (`SD-172`). Tailwind's default is already
+   * `0.25rem` and the guideline's scale is built on 4px, so this changes no value. It is written
+   * because the whole numeric scale hangs off it: `h-12` is `calc(var(--spacing) * 12)`, and when
+   * `SD-171` deleted the thirteen tokens that had been shadowing those steps, the only thing left
+   * standing between a button and a 48px height was a variable this file never mentioned. A base
+   * that important should be stated in the contract that depends on it.
+   */
+  --spacing: 0.25rem;
+
+  /* ─── The spacing scale and the grid (`SD-163`, corrected by `SD-171`) ────────────────────────
+   *
+   * **The guideline's thirteen steps are NOT declared as tokens, and that is the fix rather than the
+   * omission.** They were: `--spacing-4: 4px` through `--spacing-196: 196px`, named by their pixel
+   * value the way the guideline's own table names them. In Tailwind v4 the `--spacing-*` namespace
+   * is the **numeric utility scale**, so `--spacing-12: 12px` redefines `h-12` from 48px to 12px and
+   * `--spacing-4: 4px` redefines `p-4` from 16px to 4px. Thirteen tokens silently rewrote every
+   * numeric spacing utility in the store: a primary button collapsed to a 12px bar with its label
+   * overflowing, and a chat bubble to a vertical pill.
+   *
+   * **The scale is already expressible and needed no tokens at all.** Tailwind's base is `0.25rem`,
+   * so the guideline's steps are its steps: 4px is `1`, 8 is `2`, 12 is `3`, 16 is `4`, 24 is `6`,
+   * 32 is `8`, 40 is `10`, 48 is `12`, 64 is `16`, 96 is `24`, 128 is `32`, 160 is `40` and 196 is
+   * `49`. Declaring them by name bought nothing and cost the whole scale.
+   *
+   * The named ones below are safe for the reason these were not: `grid-margin-mobile` and `gutter`
+   * are words, so they occupy no numeric step.
+   */
+  --spacing-grid-margin-mobile: 16px;
+  --spacing-grid-margin-tablet: 24px;
+  --spacing-grid-margin-desktop: 96px;
+  --spacing-grid-gutter-mobile: 16px;
+  --spacing-grid-gutter-tablet: 24px;
+  --spacing-grid-gutter-desktop: 32px;
+
+  /* The page gutter (`SD-034`) and the header's widest one (`SD-035`). 50px is off the 4px scale
+     on purpose: it is measured, not chosen. */
+  --spacing-gutter: 15px;
+  --spacing-header-x: 50px;
+  /* The reference's `h-13 w-13` preview button. Off the 4px scale, so it needs naming. */
+  --spacing-13: 52px;
+
+  /* The sticky header's height, published because a second element needs it.
+     It stays a *consequence*: these are the nav's own `28px` padding plus its line box plus the
+     border, and `header-height.test.ts` fails if the header's padding stops producing them. A
+     sticky product card hand-offsetting `112px` against a real `81px` is the third time this repo
+     has written a header height down and got it wrong. */
+  --spacing-header: 75px;
+  --spacing-header-xl: 81px;
+}
+
+/* **No `--breakpoint-*` overrides, deliberately.** Tailwind's defaults are already the five
+ * `ST-003` wants: 640, 768, 1024, 1280, 1536. Redeclaring them would create a second source for a
+ * number that already has one. `token-contract.test.ts` fails if one appears. */
+
+/* ─── Base ─────────────────────────────────────────────────────────────────────────────────────
+ *
+ * **One ratio for headings and one for body** (`SD-163`, superseding `SD-037`). The guideline gives
+ * 120% for every headline and every body step, so display type reads `--leading-brand` rather than
+ * the flat `1` that decision pinned. Body copy keeps 1.5, because 1.2 on a 70ch measure is a wall:
+ * the guideline's 120% is a specimen-sheet figure for headlines and short labels, and applying it
+ * to running prose is the one place following it literally would make the product worse. Stated
+ * here rather than silently diverging. */
+@layer base {
+  html {
+    /* The header is sticky, so an anchor target would otherwise land underneath it. `scroll-margin`
+       on each target would be the same number written many times; this is it written once. */
+    scroll-padding-top: calc(var(--spacing-header-xl) + 1rem);
+  }
+
+  body {
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+    /* Outfit ships every weight we use, so a synthesised bold would be a rendering bug. */
+    font-synthesis: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /**
+   * The hand cursor on everything interactive, as one rule.
+   *
+   * Tailwind v4's preflight sets `cursor: default` on buttons, reverting the browser default, so
+   * every button on the site pointed with an arrow. This is the house standard rather than a class
+   * remembered per component: `cursor-pointer` sprinkled by hand is a rule that holds until the
+   * first component that forgets it.
+   *
+   * Disabled controls keep the arrow, because a hand on something that does nothing is a lie.
+   */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  summary,
+  label[for],
+  select:not(:disabled) {
+    cursor: pointer;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--color-heading);
+    /* Balanced wrapping keeps a two-line heading from leaving one orphaned word. */
+    text-wrap: balance;
+  }
+
+  /* Headings read the brand ratio, and the display family (`SD-163`). `h1, h2` was the whole set
+     when there was one family and one flat ratio; every level is a headline in the guideline's
+     scale, so every level takes both. */
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-display);
+    line-height: var(--leading-brand);
+  }
+}
+
+/* The page container, as one utility rather than three classes repeated on 22 routes. */
+@utility page {
+  width: 100%;
+  max-width: var(--container-page);
+  margin-inline: auto;
+  padding-inline: var(--spacing-gutter);
+}
+
+/* ─── The accessible defaults, which are never the lazy thing to skip ───────────────────────────
+ *
+ * Layered, and that is not cosmetic. An unlayered rule beats every layered one whatever the
+ * specificity, so an unlayered `:focus-visible` here would make `focus-visible:ring-primary` on a
+ * button do nothing, with no class able to override it. */
+@layer base {
+  :focus-visible {
+    outline: 3px solid var(--color-primary-soft);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .skip-link {
+    position: fixed;
+    z-index: 1000;
+    left: 1rem;
+    top: -5rem;
+    background: var(--color-ink);
+    color: var(--color-surface);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-control);
+  }
+
+  .skip-link:focus {
+    top: 1rem;
+  }
+
+  /* The navigation progress bar (`SD-039`), driven by `route-progress.tsx` rather than by a root
+   * `loading.tsx`: that file is a Suspense boundary around every page and it emptied the
+   * prerendered `<main>`. These rules came back with the component that replaced it. */
+  .route-progress {
+    position: fixed;
+    inset: 0 auto auto 0;
+    z-index: 9999;
+    width: 100%;
+    height: 3px;
+    pointer-events: none;
+    transform-origin: left;
+    background: linear-gradient(
+      90deg,
+      var(--color-primary),
+      var(--color-primary-soft),
+      var(--color-primary-subtle)
+    );
+    animation: route-progress 8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  /* In the same layer as the bar, so it wins by order rather than by luck. */
+  @media (prefers-reduced-motion: reduce) {
+    .route-progress {
+      animation: none;
+      transform: scaleX(0.85);
+    }
+  }
+}
+
+@keyframes route-progress {
+  0% {
+    transform: scaleX(0);
+  }
+  12% {
+    transform: scaleX(0.32);
+  }
+  55% {
+    transform: scaleX(0.72);
+  }
+  100% {
+    transform: scaleX(0.92);
+  }
+}
+
+/* ─── Animations the design-system blocks reference ────────────────────────────────────────────
+ *
+ * `@viliha/vui-blocks`'s blocks name keyframes that live in `packages/web/ui/react/src/theme.css`, and this file
+ * was written from scratch and imported none of them. The `Marquee` therefore rendered a static row:
+ * the class was generated once `@source` was added, and the animation it named did not exist.
+ *
+ * Copied rather than importing the whole `vui-web/theme.css`, because that file also carries the
+ * admin token layer and this store deliberately has its own (`SD-031`, `SD-034`). A block that uses
+ * a different animation needs its keyframes added here too, which is the cost of not taking the
+ * whole stylesheet and is the cheaper of the two.
+ */
+/**
+ * The hero's backdrop: three radial washes on white, warm at the lower left and cool at the lower
+ * right, the way the reference's does it.
+ *
+ * It is painted on **its own layer covering the whole section**, with the two tints placed around
+ * three-quarters down so they sit behind the screenshot, which is where the reference has them.
+ *
+ * Two earlier attempts got this wrong in opposite directions. Anchored to the section's bottom
+ * corners, the tints landed a thousand pixels below the fold and the hero rendered flat white.
+ * Clamped to one viewport, the layer ended in a hard horizontal line across the page with white
+ * below it. Covering the section and moving the *stops* is what fixes both.
+ *
+ * A utility rather than four arbitrary values on the element, because the same wash has to sit
+ * behind the badge, the heading and the screenshot without any of them declaring it. Every colour
+ * is a token: the first draft wrote them as literals reasoning that decoration at 8% presence is
+ * not a theme surface, and the hex guard rejected it, which was the right call. The hero is the
+ * first thing a rebranding buyer looks at.
+ */
+@utility hero-wash {
+  background:
+    radial-gradient(42% 40% at 1% 74%, var(--color-wash-warm) 0%, transparent 72%),
+    radial-gradient(40% 38% at 100% 70%, var(--color-wash-cool) 0%, transparent 72%),
+    radial-gradient(90% 55% at 50% 0%, var(--color-surface-soft) 0%, var(--color-surface) 58%);
+}
+
+/*
+ * The assistant's trace, one step at a time (`SD-146`).
+ *
+ * `tailwindcss-animate` is not installed here, and the first draft of the trace used its
+ * `animate-in fade-in` utilities: classes that paint nothing, which is the same fault `SD-137` and
+ * `WS-14` are about. So the animation is declared where the store's other two already are.
+ *
+ * **It staggers appearance and never withholds the answer.** Every step is in the DOM from the first
+ * frame and each carries its own `animation-delay`, so this is presentation rather than a simulated
+ * wait. The file's `prefers-reduced-motion` clamp near the end already flattens it to 0.01ms, so
+ * there is no second rule here.
+ */
+@keyframes vui-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.vui-step {
+  animation: vui-step-in 260ms ease-out both;
+}
+
+/* The working dots, paired with `.vui-step` above (`SD-148`). */
+@keyframes vui-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+.vui-dot {
+  animation: vui-dot 1.2s ease-in-out infinite both;
+}
+
+@keyframes vui-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* One global clamp rather than a habit repeated per component, which is how a stray transition
+ * survives an accessibility pass. `!important` wins from any layer, which is the point. */
+@layer base {
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms;
+      transition-duration: 0.01ms;
+    }
+  }
+}
+
+/* ─── `/template`: the reference's token scale and its motion ──────────────────────────────────
+ *
+ * Scoped to `.tn` (the layout's root) so a second scale does not leak into the rest of the store.
+ * Only the values our `--store-*` tokens do not already carry live here: the spacing and radius
+ * ladders, and the two type sizes with no step of ours (`1.625rem` is 26px, `1.125rem` is 18px;
+ * ours run 20, 24, 28 and 14, 16). Every other size is read from `--store-body-*` and
+ * `--store-headline-*` at the call site, because the values match.
+ *
+ * **Both ladders are declared whole, and six steps are currently unreferenced**
+ * (`--tn-radius-xs`, `-sm`, `-md`, `-3xl`, `-4xl` and `--tn-space-2xl`). That is deliberate: a
+ * scale is a scale, and the reference declares all of it, so the next section can reach for a step
+ * without reopening this block and guessing whether 1.5rem was the 3xl. Do not prune them as dead
+ * code; the thing that would be wrong is a seventh value appearing at a call site instead.
+ */
+.tn {
+  --tn-text-lg: 1.125rem;
+  --tn-text-2xl: 1.625rem;
+
+  /* `--spacing` is .25rem; each step is a multiple of it. */
+  --tn-space-3xs: 0.375rem;
+  --tn-space-2xs: 0.5rem;
+  --tn-space-xs: 1rem;
+  --tn-space-sm: 1.5rem;
+  --tn-space-md: 2rem;
+  --tn-space-lg: 2.5rem;
+  --tn-space-xl: 3rem;
+  --tn-space-2xl: 3.5rem;
+  --tn-space-3xl: 4rem;
+
+  --tn-radius-xs: 0.125rem;
+  --tn-radius-sm: 0.25rem;
+  --tn-radius-md: 0.375rem;
+  --tn-radius-lg: 0.5rem;
+  --tn-radius-xl: 0.75rem;
+  --tn-radius-2xl: 1rem;
+  --tn-radius-3xl: 1.5rem;
+  --tn-radius-4xl: 2rem;
+}
+
+/* The slow ambient drift, the reference's `marquee` and its mirror: a vertical sway between -5% and
+ * -35% around a -20% rest. Four stops rather than two, so the column eases back instead of looping
+ * with a snap. */
+@keyframes tn-drift {
+  0%,
+  50%,
+  100% {
+    transform: translateY(-20%);
+  }
+  25% {
+    transform: translateY(-5%);
+  }
+  75% {
+    transform: translateY(-35%);
+  }
+}
+
+@keyframes tn-drift-reverse {
+  0%,
+  50%,
+  100% {
+    transform: translateY(-20%);
+  }
+  25% {
+    transform: translateY(-35%);
+  }
+  75% {
+    transform: translateY(-5%);
+  }
+}
+
+@keyframes tn-slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.tn-drift {
+  animation: tn-drift 24s ease-in-out infinite;
+}
+
+.tn-drift-reverse {
+  animation: tn-drift-reverse 24s ease-in-out infinite;
+}
+
+/* Entrance on load, for the hero. `--i` is the child's index and 150ms is the step, so a row of
+ * five resolves across 600ms instead of appearing at once. */
+.tn-rise {
+  animation: tn-slide-up 300ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 150ms);
+}
+
+/* Entrance on scroll, for everything below the fold. A load-time animation there would finish
+ * before anyone saw it. Where scroll timelines are unsupported this is the load-time one above. */
+.tn-reveal {
+  animation: tn-slide-up 300ms ease-out both;
+  animation-delay: calc(var(--i, 0) * 150ms);
+}
+
+@supports (animation-timeline: view()) {
+  .tn-reveal {
+    animation: tn-slide-up linear both;
+    animation-timeline: view();
+    /* The stagger moves the start of the range instead of a delay, which a scroll timeline ignores. */
+    animation-range: entry calc(var(--i, 0) * 6%) entry calc(40% + var(--i, 0) * 6%);
+  }
+}
+
+/* The global clamp above shortens duration but keeps `both` fill and the delay, so an element
+ * would still sit invisible until its turn. `none` is the only fully inert answer. */
+/**
+ * The suggestions panel, and the rows falling into it one at a time (`SD-211`).
+ *
+ * The panel itself drops; each row follows on a 30ms step, which is short enough to read as one
+ * motion and long enough to read as a cascade rather than a flicker. Eleven rows therefore finish
+ * 330ms after the first, which is why the step is 30 and not the 150 the page uses between sections.
+ */
+@keyframes tn-fall {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.tn-fall {
+  animation: tn-fall 150ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.tn-fall-row {
+  animation: tn-fall 150ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation-delay: calc(60ms + var(--i, 0) * 30ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-drift,
+  .tn-fall,
+  .tn-fall-row,
+  .tn-drift-reverse,
+  .tn-rise,
+  .tn-reveal {
+    animation: none;
+  }
+}
+
+/* The conversation takes the window (`SD-218`).
+ *
+ * **Declared here rather than passed through the layout.** The rail, the bar and the footer are the
+ * root layout's, which is a server component, so a thread cannot hand it a prop; it sets
+ * `data-thread="open"` on the document instead and these two rules do the rest. The same pattern a
+ * modal uses, and it keeps the chrome's markup unaware of a screen it does not own.
+ *
+ * The page does not scroll, because the thread scrolls inside itself, and the footer is not drawn,
+ * because seven columns of site navigation under a conversation is the page the reader just left. */
+html[data-thread="open"],
+html[data-thread="open"] body {
+  overflow: hidden;
+}
+
+html[data-thread="open"] [data-chrome="footer"] {
+  display: none;
+}
+
+:root {
+  /* The bar's own height, which the thread subtracts to fill what is left. */
+  --tn-h-topbar: 56px;
+}
+
+/* Generate, while Voilet is working (`SD-220`).
+ *
+ * The sparkle turns and breathes rather than spinning: a spinner says "waiting for a server", and
+ * nothing here is waiting for one. Clamped by the global reduced-motion rule below it. */
+@keyframes tn-spark {
+  0%,
+  100% {
+    transform: rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: rotate(180deg) scale(1.18);
+    opacity: 0.75;
+  }
+}
+
+.tn-spark {
+  display: inline-flex;
+  animation: tn-spark 1.3s ease-in-out infinite;
+}
+
+/* The hand-off from the prompt card to the conversation.
+ *
+ * One pass of brand light across the card and a small lift, then the thread replaces it. 420ms,
+ * which is long enough to read as something happening and short enough that a reader who knows what
+ * they want is not waiting on choreography. */
+@keyframes tn-cast {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 var(--store-primary-20);
+  }
+  45% {
+    transform: translateY(-6px) scale(1.01);
+    box-shadow: 0 10px 40px -8px var(--store-primary-30);
+  }
+  100% {
+    transform: translateY(-14px) scale(0.985);
+    box-shadow: 0 0 0 0 transparent;
+    opacity: 0.35;
+  }
+}
+
+.tn-cast {
+  animation: tn-cast 420ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-spark,
+  .tn-cast {
+    animation: none;
+  }
+}
+
+/* A menu falling out of the prompt card (`SD-222`).
+ *
+ * It shares the card's border, so the edge they meet on is square at the top and round at the foot:
+ * a rounded top against a straight border reads as a second surface floating in front of the card
+ * rather than as the card continuing. The 180ms is the fall; anything slower is a reader waiting. */
+@keyframes tn-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@keyframes tn-drop-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.tn-drop {
+  animation: tn-drop 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.tn-drop-up {
+  animation: tn-drop-up 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-drop,
+  .tn-drop-up {
+    animation: none;
+  }
+}
