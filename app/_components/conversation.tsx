@@ -2,6 +2,7 @@
 
 import { type ReactNode, useEffect, useState } from "react";
 
+import { Aurora, ChatGlow } from "./aurora";
 import { Hero } from "./hero";
 import { Thread } from "./thread";
 
@@ -16,40 +17,66 @@ import { Thread } from "./thread";
  * The sections arrive as `children` so the page itself stays a server component and only this
  * wrapper and the two screens it switches are sent to the browser.
  *
- * **There is a beat between the two** (`SD-220`). Pressing Generate casts the card upward on one
- * pass of brand light, the control says Voilet is working and takes nothing further, and the thread
- * arrives 420ms later. Switching on the same tick is correct and reads as a page that blinked;
- * `prefers-reduced-motion` gets the blink, because a reader who asked for less motion is asking for
- * exactly that.
+ * **The hand-off** (2026-10-07, replacing `SD-220`'s upward cast):
+ *
+ * 1. Generate: everything but the card fades and lifts out over `LEAVE_MS` (`.tn-leave`), the
+ *    headline in `Hero` and the sections here. The card does not move, and its rectangle is kept.
+ * 2. The thread mounts with its own card **starting at that rectangle** and sliding down to the dock,
+ *    widening to the column as it goes; the reader's message rises into the space it leaves.
+ * 3. **The background never changes.** `Aurora` is drawn here, behind both screens, so it is the
+ *    one thing on the page that does not move while the rest is replaced. The thread adds its own
+ *    colour beneath it (`ChatGlow`), which fades in rather than replacing anything.
+ *
+ * `prefers-reduced-motion` gets the switch on the same tick and no slide, because a reader who asked
+ * for less motion is asking for exactly that.
  */
 
-/** How long the hand-off runs. Matches `.tn-cast` in `globals.css`; both change together. */
-const CAST_MS = 420;
+/** How long the home screen takes to leave. Matches `.tn-leave` in `globals.css`. */
+const LEAVE_MS = 260;
+
+/** Where the home card was, in viewport pixels, at the moment Generate was pressed. */
+export interface CardRect {
+  readonly top: number;
+  readonly left: number;
+  readonly width: number;
+  readonly height: number;
+}
+
 export function Conversation({ children }: { children: ReactNode }) {
-  const [first, setFirst] = useState<string | null>(null);
-  /** The prompt that has been sent and is waiting out the cast. */
-  const [casting, setCasting] = useState<string | null>(null);
+  const [first, setFirst] = useState<{ prompt: string; from: CardRect | null } | null>(null);
+  /** The prompt that has been sent and is waiting out the leave, with where its card was. */
+  const [leaving, setLeaving] = useState<{ prompt: string; from: CardRect | null } | null>(null);
 
   useEffect(() => {
-    if (casting === null) return;
+    if (leaving === null) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const timer = setTimeout(
       () => {
-        setFirst(casting);
-        setCasting(null);
+        setFirst(reduced ? { prompt: leaving.prompt, from: null } : leaving);
+        setLeaving(null);
       },
-      reduced ? 0 : CAST_MS,
+      reduced ? 0 : LEAVE_MS,
     );
     return () => clearTimeout(timer);
-  }, [casting]);
+  }, [leaving]);
 
-  if (first !== null) {
-    return <Thread first={first} onBack={() => setFirst(null)} />;
-  }
   return (
-    <>
-      <Hero onStart={setCasting} casting={casting !== null} />
-      {children}
-    </>
+    /* `isolate` so `Aurora`'s `-z-10` sits behind this wrapper's content rather than behind the
+       page ground, where it would not be seen at all. */
+    <div className="relative isolate">
+      <Aurora />
+      {first !== null ? <ChatGlow /> : null}
+      {first !== null ? (
+        <Thread first={first.prompt} from={first.from} onBack={() => setFirst(null)} />
+      ) : (
+        <>
+          <Hero
+            onStart={(prompt, from) => setLeaving({ prompt, from })}
+            casting={leaving !== null}
+          />
+          <div className={leaving !== null ? "tn-leave" : undefined}>{children}</div>
+        </>
+      )}
+    </div>
   );
 }

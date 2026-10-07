@@ -56,8 +56,8 @@ import { accentAt, FONT } from "./type";
  * **The look** (2026-10-07): a soft blue-to-violet ground with a hairline edge; the current page is
  * a white pill with an accent bar and its label in brand blue, found from the URL rather than
  * guessed; each row's icon takes its own accent on hover and when active, the same five accents
- * the home page rotates; the two lists are headed rather than ruled apart; and the foot carries an
- * upgrade card whose count is read from `ASSETS`, so it cannot promise screens that do not exist.
+ * the home page rotates; the two lists are parted by a 1px rule in a fixed 24px slot; and the foot
+ * carries an upgrade card whose count is read from `ASSETS`, so it cannot promise screens that do not exist.
  * None of it moves an icon: paddings and the glyph size are untouched, so the collapse arithmetic
  * below still holds.
  */
@@ -75,8 +75,7 @@ const RAIL_EXPANDED = "w-[192px]";
  * in the collapsed rail, reached from the paddings rather than copied. **It was 9px of item padding
  * until 2026-10-07**, which put every icon's centre at 26, 4px left of the collapsed rail's middle,
  * while this comment still claimed 30. Everything else in the collapsed rail is held to the same
- * 30: the expand button is `mx-auto` in the 44px between the paddings, a heading's rule is 18px wide
- * from the same 13px inset, and the Upgrade button drops its gap when the label is gone, because a
+ * 30: the expand button is `mx-auto` in the 44px between the paddings, and the Upgrade button drops its gap when the label is gone, because a
  * gap beside a zero-width label still pushes the icon 3px left. The rail's edge is an inset shadow,
  * not `border-r`: a border takes a pixel from the content box, which puts everything centred in it
  * half a pixel left of the rail's middle.
@@ -87,10 +86,18 @@ const RAIL_EXPANDED = "w-[192px]";
  * `globals.css`, not anything here: `sticky` was never the problem, the whole page bouncing was.
  */
 const RAIL_COLLAPSED = "w-[60px]";
+/*
+ * **One box for the wordmark in both states, so the V cannot move vertically.** The full wordmark's
+ * box is as tall as its letters (19px text at `leading-none`, so 19px); the mark alone is 17.922px.
+ * Each is centred in the 40px brand row, so the mark sat 0.54px lower when the rail was open and
+ * hopped on every toggle. Pinning both boxes at 19px puts the mark's top at one y open or shut.
+ */
+const WORDMARK_BOX = "h-[19px]";
 const RAIL_MOTION =
   "transition-[width] duration-[260ms] ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none";
-const LABEL_MOTION =
-  "transition-[opacity,transform] duration-[160ms] ease-out motion-reduce:transition-none";
+/* The labels' horizontal fade is `.tn-label-x` in `globals.css`: a soft-edged mask that sweeps
+   in from the left on open and back out on close. Open, the mask moves over 240ms on the rail's own
+   curve; closing, it is 160ms and ease-in, so the text is gone before the rail can clip it. */
 
 /* `className` is here because `SD-208` passes `shrink-0`: a prop a caller sets and the type does
    not declare is a type error, not a convention. */
@@ -148,15 +155,20 @@ const activeOf = (items: readonly Item[], path: string): string | undefined =>
     item.href === "/" ? path === "/" : path === item.href || path.startsWith(`${item.href}/`),
   )?.label;
 
+/**
+ * An item's text. **Every label sweeps at the same moment**, left to right, rather than rippling
+ * down the rail: the timing lives in `.tn-label-x` and is the same for all of them, so there is no
+ * per-row index to pass.
+ */
 function Label({
   collapsed,
-  index,
   children,
   grow = true,
+  className = "",
 }: {
   collapsed: boolean;
-  index: number;
   children: string;
+  className?: string;
   /**
    * **A growing label eats the free space, so `justify-center` has nothing left to centre.** Every
    * navigation row wants it, because the label should fill the row and truncate; the call to action
@@ -168,8 +180,8 @@ function Label({
   return (
     <span
       aria-hidden={collapsed}
-      className={`${LABEL_MOTION} ${grow ? "grow text-start" : ""} truncate ${collapsed ? "pointer-events-none w-0 -translate-x-1 opacity-0" : "translate-x-0 opacity-100"}`}
-      style={{ transitionDelay: collapsed ? "0ms" : `${60 + index * 20}ms` }}
+      data-hidden={collapsed}
+      className={`tn-label-x ${grow ? "grow text-start" : ""} truncate ${collapsed ? "pointer-events-none w-0" : ""} ${className}`}
     >
       {children}
     </span>
@@ -217,7 +229,7 @@ function RailItem({
         className={`shrink-0 transition-colors duration-150 ${active ? "text-[var(--row-accent)]" : "text-[var(--store-neutral-80)] group-hover:text-[var(--row-accent)]"}`}
         aria-hidden
       />
-      <Label collapsed={collapsed} index={index}>
+      <Label collapsed={collapsed}>
         {item.label}
       </Label>
     </>
@@ -245,21 +257,19 @@ function RailItem({
 }
 
 /**
- * A list's heading. Collapsed, the words would not fit, so it becomes a short rule in the same 24px,
- * which keeps every icon below it exactly where it was.
+ * The break between the two groups: **a 1px rule in a fixed 24px slot, in both states**.
+ *
+ * The groups were headed "Browse" and "Account" until 2026-10-07; the names went by request and the
+ * rule stayed, so the two lists still read as two. It is one element for both states: the slot
+ * carries the rows' own 13px inset and the rule is `w-full` inside it, so it is 150px open and
+ * exactly 18px (the icons' width, centred on the rail's 30) collapsed, and it follows the rail's
+ * width transition with no swap and no state. The slot's height never changes, so nothing below it
+ * moves on a toggle. `aria-hidden` because each `<nav>` already carries its own label.
  */
-function Heading({ collapsed, children }: { collapsed: boolean; children: string }) {
+function Divider() {
   return (
-    <div aria-hidden="true" className="flex h-[24px] items-end px-[13px] pb-[4px]">
-      {collapsed ? (
-        <span className="h-px w-[18px] bg-[var(--store-primary-30)]" />
-      ) : (
-        <span
-          className={`${FONT} text-[10px] font-semibold uppercase leading-none tracking-[0.08em] text-[var(--store-neutral-80)]`}
-        >
-          {children}
-        </span>
-      )}
+    <div aria-hidden="true" className="flex h-[24px] shrink-0 items-center px-[13px]">
+      <span className="h-px w-full bg-[var(--store-primary-30)]" />
     </div>
   );
 }
@@ -284,19 +294,29 @@ export function Rail() {
        * Expanded there are two controls, because there is room and because the wordmark should go
        * home rather than fold the rail.
        */}
-      <div className="flex items-center justify-between">
+      {/* **40px in both states** (2026-10-07). Collapsed, the row holds a 40px button; expanded, its
+          tallest child is the 30px fold button, so the row was 30 and every item below it dropped
+          10px on each collapse. Fixing the row at the larger of the two keeps the list still.
+
+          **The mark sits at the same x in both states**: 12.767px in from the rail's padding in the
+          wordmark link and in the collapsed button alike, which is 30 - 8 - 18.467 / 2, so the
+          mark's centre is the rail's 30 open or shut. The collapsed button used to be `mx-auto`,
+          and at the moment of the swap the rail is still 192px wide, so it appeared in the middle
+          of the row and then slid left as the rail narrowed. Left-anchored, nothing moves; the
+          hover glyph is `left-[13px]`, the same centre for an 18px box. */}
+      <div className="flex h-[40px] shrink-0 items-center justify-between">
         {collapsed ? (
           <button
             type="button"
             onClick={() => setCollapsed(false)}
             aria-expanded={false}
             aria-label="Expand the menu"
-            className="group relative mx-auto flex size-[40px] shrink-0 cursor-pointer items-center justify-center rounded-[8px] transition-colors duration-150 hover:bg-[var(--store-primary-20)]"
+            className="group relative flex h-[40px] w-full shrink-0 cursor-pointer items-center justify-start rounded-[8px] pl-[12.767px] transition-colors duration-150 hover:bg-[var(--store-primary-20)]"
           >
             {/* Both states occupy the same cell, so nothing reflows on hover and the swap is a
                 cross-fade rather than a jump. */}
             <span className="transition-opacity duration-150 group-hover:opacity-0 motion-reduce:transition-none">
-              <VoiletWordmark size="rail" markOnly />
+              <VoiletWordmark size="rail" markOnly className={WORDMARK_BOX} />
             </span>
             <svg
               width="18"
@@ -304,7 +324,7 @@ export function Rail() {
               viewBox="0 0 14 14"
               fill="none"
               aria-hidden="true"
-              className="absolute text-[var(--store-neutral-100)] opacity-0 transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none"
+              className="absolute left-[13px] text-[var(--store-neutral-100)] opacity-0 transition-opacity duration-150 group-hover:opacity-100 motion-reduce:transition-none"
             >
               {/* The reference's own glyph: three rules and a chevron, pointing the way the rail
                   will move. */}
@@ -328,9 +348,9 @@ export function Rail() {
             <Link
               href="/"
               aria-label="Voilet home"
-              className="flex shrink-0 items-center pl-[13px]"
+              className="flex shrink-0 items-center pl-[12.767px]"
             >
-              <VoiletWordmark size="rail" />
+              <VoiletWordmark size="rail" className={WORDMARK_BOX} />
             </Link>
             <button
               type="button"
@@ -359,34 +379,36 @@ export function Rail() {
         )}
       </div>
 
-      <Heading collapsed={collapsed}>Browse</Heading>
-      <nav aria-label="Store" className="flex flex-col gap-[2px]">
-        {MAIN.map((item, i) => (
-          <RailItem
-            key={item.label}
-            item={item}
-            collapsed={collapsed}
-            index={i}
-            active={item.label === activeMain}
-          />
-        ))}
-      </nav>
-      <div className="mt-[8px]">
-        <Heading collapsed={collapsed}>Account</Heading>
+      {/* **One column, one 2px rhythm** (2026-10-07): the rows and the divider between the two
+          lists are all children of this column, so every step down the rail is 2px plus whatever
+          sits in it, and the one break is the divider's fixed 24px slot. */}
+      <div className="mt-[8px] flex flex-col gap-[2px]">
+        <nav aria-label="Store" className="flex flex-col gap-[2px]">
+          {MAIN.map((item, i) => (
+            <RailItem
+              key={item.label}
+              item={item}
+              collapsed={collapsed}
+              index={i}
+              active={item.label === activeMain}
+            />
+          ))}
+        </nav>
+        <Divider />
+        <nav aria-label="Account and pricing" className="flex flex-col gap-[2px]">
+          {MORE.map((item, i) => (
+            <RailItem
+              key={item.label}
+              item={item}
+              collapsed={collapsed}
+              index={i}
+              /* Offset so these three do not repeat the first three colours of the list above. */
+              accent={i + 3}
+              active={item.label === activeMore}
+            />
+          ))}
+        </nav>
       </div>
-      <nav aria-label="Account and pricing" className="flex flex-col gap-[2px]">
-        {MORE.map((item, i) => (
-          <RailItem
-            key={item.label}
-            item={item}
-            collapsed={collapsed}
-            index={i}
-            /* Offset so these three do not repeat the first three colours of the list above. */
-            accent={i + 3}
-            active={item.label === activeMore}
-          />
-        ))}
-      </nav>
 
       <div className="mt-auto flex flex-col gap-[8px] pt-[12px]">
         {/* **The upgrade card**, expanded only: a 60px rail has no room for a sentence, and the
@@ -427,7 +449,9 @@ export function Rail() {
           className={`${FONT} inline-flex w-full shrink-0 cursor-pointer items-center justify-center ${collapsed ? "gap-0" : "gap-[6px]"} rounded-[8px] bg-gradient-to-r from-[var(--tn-accent-blue-solid)] to-[var(--tn-accent-violet-solid)] px-[12px] py-[8px] text-[length:var(--store-body-2)] font-semibold leading-none text-white shadow-[0_6px_16px_-6px_var(--tn-accent-violet-solid)] transition-[filter,transform] duration-150 hover:-translate-y-px hover:brightness-110 active:brightness-95`}
         >
           <Bolt width={18} height={18} aria-hidden className="shrink-0" />
-          <Label collapsed={collapsed} index={1} grow={false}>
+          {/* `leading-[1.5]` on the word, not the button's `leading-none`: `truncate` clips to the line
+              box, and at 14px tall the descenders of "p" and "g" lost 2px. A 21px box holds them. */}
+          <Label collapsed={collapsed} grow={false} className="leading-[1.5]">
             Upgrade
           </Label>
         </Link>

@@ -38,13 +38,23 @@ export interface Asset extends Marked {
   readonly tier: Tier;
 }
 
-/** Title-case a route: `/support-ticket-reply` becomes `Support Ticket Reply`. */
+/**
+ * Words a route spells in lower case that a reader expects in their own casing. Title-casing turned
+ * `/crm` into "Crm" and `/api-keys` into "Api Keys", on gallery cards and in the recipe's page list.
+ */
+const CASED: Record<string, string> = { crm: "CRM", api: "API", faq: "FAQ", saas: "SaaS", kpi: "KPI" };
+
+/** Title-case a route: `/support-ticket-reply` becomes `Support Ticket Reply`, `/crm` becomes `CRM`. */
 const titleOf = (route: string): string => {
   const last = route.split("/").filter(Boolean).at(-1);
   if (!last) return "Dashboard";
   return last
     .split("-")
-    .map((word) => (word.length <= 2 ? word.toUpperCase() : word[0]?.toUpperCase() + word.slice(1)))
+    .map(
+      (word) =>
+        CASED[word] ??
+        (word.length <= 2 ? word.toUpperCase() : word[0]?.toUpperCase() + word.slice(1)),
+    )
     .join(" ");
 };
 

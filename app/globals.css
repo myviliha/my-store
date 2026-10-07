@@ -841,6 +841,46 @@ html[data-thread="open"] [data-chrome="footer"] {
   }
 }
 
+/* The rail's labels: **a horizontal fade, not a whole-word one** (2026-10-07).
+ *
+ * A mask with a soft edge sweeps across the text. The mask is 2.5x the label's width: opaque for
+ * its first 40%, a soft edge to 60%, clear after. At `mask-position: 0%` the opaque part covers the
+ * whole label (shown); at `100%` the mask has slid 1.5 label-widths left and only clear mask is over
+ * it (hidden). Between the two the soft edge is somewhere across the word, so opening the rail wipes
+ * each label in from the left and closing it wipes it out towards the left, in the direction the
+ * rail itself is moving. **Every label sweeps at once**, no stagger down the rail: opening waits
+ * 60ms so the rail has started to widen before any text arrives, closing starts at once.
+ *
+ * `-webkit-` alongside the standard properties for Safari. Under reduced motion there is no sweep:
+ * the label is simply there or not. */
+.tn-label-x {
+  -webkit-mask-image: linear-gradient(to right, #000 0 40%, transparent 60% 100%);
+  mask-image: linear-gradient(to right, #000 0 40%, transparent 60% 100%);
+  -webkit-mask-size: 250% 100%;
+  mask-size: 250% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: 0% 0;
+  mask-position: 0% 0;
+  transition:
+    -webkit-mask-position 240ms cubic-bezier(0.32, 0.72, 0, 1) 60ms,
+    mask-position 240ms cubic-bezier(0.32, 0.72, 0, 1) 60ms;
+}
+
+.tn-label-x[data-hidden="true"] {
+  -webkit-mask-position: 100% 0;
+  mask-position: 100% 0;
+  transition-duration: 160ms;
+  transition-timing-function: ease-in;
+  transition-delay: 0ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-label-x {
+    transition: none;
+  }
+}
+
 /* The typing caret on the prompt card's animated placeholder. `steps(1)` so it blinks rather than
  * fades, which is what a text caret does. Clamped by the global reduced-motion rule, and the
  * typewriter itself stops there too, so the caret is never left blinking after a still example. */
@@ -858,34 +898,64 @@ html[data-thread="open"] [data-chrome="footer"] {
   animation: tn-caret 1s steps(1) infinite;
 }
 
-/* The hand-off from the prompt card to the conversation.
+/* The hand-off from the home page to the conversation (2026-10-07).
  *
- * One pass of brand light across the card and a small lift, then the thread replaces it. 420ms,
- * which is long enough to read as something happening and short enough that a reader who knows what
- * they want is not waiting on choreography. */
-@keyframes tn-cast {
-  0% {
-    transform: translateY(0) scale(1);
-    box-shadow: 0 0 0 0 var(--store-primary-20);
-  }
-  45% {
-    transform: translateY(-6px) scale(1.01);
-    box-shadow: 0 10px 40px -8px var(--store-primary-30);
-  }
-  100% {
-    transform: translateY(-14px) scale(0.985);
-    box-shadow: 0 0 0 0 transparent;
-    opacity: 0.35;
+ * **The prompt card is not animated here; everything around it is.** On Generate the headline, the
+ * search, the gallery and the sections below fade and lift 8px out over 260ms (`.tn-leave`), while
+ * the card stays exactly where it is. The thread then mounts with its own card starting at the home
+ * card's rectangle and sliding down to its dock, which is a FLIP in `thread.tsx` rather than a
+ * keyframe here, because the distance is wherever the reader happened to be scrolled. Their message
+ * rises into the space the card leaves (`.tn-message-in`). The background glow belongs to neither
+ * screen, so it never moves at all.
+ *
+ * `.tn-leave` is declared after `.tn-rise` and `.tn-reveal` so it wins on the elements that carry
+ * both: the headline enters with one and leaves with the other. */
+@keyframes tn-leave {
+  to {
+    transform: translateY(-8px);
+    opacity: 0;
   }
 }
 
-.tn-cast {
-  animation: tn-cast 420ms cubic-bezier(0.4, 0, 0.2, 1) both;
+.tn-leave {
+  animation: tn-leave 260ms cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+/* The conversation's background glow arriving: a slow fade, so the ground gains colour rather than
+ * changing. Longer than the card's slide, so it is still settling as the first answer starts. */
+@keyframes tn-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.tn-fade-in {
+  animation: tn-fade-in 900ms ease-out both;
+}
+
+/* A reader's message arriving: up from 32px below, so it reads as coming out of the card under it. */
+@keyframes tn-message-in {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.tn-message-in {
+  animation: tn-message-in 460ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  animation-delay: var(--delay, 0ms);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .tn-spark,
-  .tn-cast {
+  .tn-leave,
+  .tn-message-in,
+  .tn-fade-in {
     animation: none;
   }
 }

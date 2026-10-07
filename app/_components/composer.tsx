@@ -15,7 +15,7 @@ import {
   Table,
   Upload,
 } from "@/app/_vendor/icons";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, type Ref, useEffect, useState } from "react";
 
 import { Choice, Divider, Panel, useAnchor, useFilePicker } from "./menu";
 import { ModelPicker } from "./model-picker";
@@ -187,6 +187,9 @@ export interface ComposerProps {
   busy?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  /** The card itself, for a caller that measures or animates it: the hand-off reads the home card's
+      rectangle through this, and the thread slides its own card from there. */
+  formRef?: Ref<HTMLFormElement>;
 }
 
 export function Composer({
@@ -199,6 +202,7 @@ export function Composer({
   busy = false,
   className,
   style,
+  formRef,
 }: ComposerProps) {
   const empty = value.trim() === "";
   /* Only while the box is truly empty: a space typed is the reader starting, so the example gets
@@ -245,6 +249,7 @@ export function Composer({
 
   return (
     <form
+      ref={formRef}
       onSubmit={(e) => {
         e.preventDefault();
         if (!empty && !busy) onSubmit();
