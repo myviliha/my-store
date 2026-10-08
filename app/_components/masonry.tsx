@@ -19,6 +19,8 @@ export interface MasonryCard {
   readonly title: string;
   /** Shown as a tag in the card's top-right corner. */
   readonly tier: Tier;
+  /** Frameworks the screen ships in, most recommended first. The card shows the first two. */
+  readonly frameworks: readonly string[];
   /** Width over height, as CSS `aspect-ratio` takes it: `[16, 9]` is a landscape card. */
   readonly ratio: readonly [number, number];
 }
@@ -69,6 +71,37 @@ const TAG: Record<Tier, { label: string; className: string }> = {
       "bg-[var(--store-neutral-100)] text-white border-[var(--tn-accent-violet-solid)]",
   },
 };
+
+/**
+ * **The framework tags, drawn to the Figma card's** (850:7561): `--store-primary-20` ground, 3.42px
+ * corners, Inter 10.25 at 1.2 in `--store-neutral-100`, 6.84px apart; the fractions are the design's.
+ *
+ * Every screen ships in all six frameworks (`AVAILABLE`), so six tags would be the same six on every
+ * card and would not fit beside a name. The first two, the recommended ones, are shown, then a "+N"
+ * tag whose title names the rest; the group's label reads all of them to a screen reader.
+ */
+const SHOWN_FRAMEWORKS = 2;
+const FRAMEWORK_TAG =
+  "inline-flex items-center justify-center rounded-[3.417px] bg-[var(--store-primary-20)] px-[13.67px] py-[5.126px] font-[family-name:var(--font-inter)] text-[10.252px] font-normal leading-[1.2] whitespace-nowrap text-[var(--store-neutral-100)]";
+
+function FrameworkTags({ frameworks }: { frameworks: readonly string[] }) {
+  const shown = frameworks.slice(0, SHOWN_FRAMEWORKS);
+  const rest = frameworks.slice(SHOWN_FRAMEWORKS);
+  return (
+    <ul aria-label={`Frameworks: ${frameworks.join(", ")}`} className="flex shrink-0 items-start gap-[6.835px]">
+      {shown.map((f) => (
+        <li key={f} aria-hidden="true" className={FRAMEWORK_TAG}>
+          {f}
+        </li>
+      ))}
+      {rest.length > 0 ? (
+        <li aria-hidden="true" title={`Also ${rest.join(", ")}`} className={FRAMEWORK_TAG}>
+          +{rest.length}
+        </li>
+      ) : null}
+    </ul>
+  );
+}
 
 const deal = (cards: readonly MasonryCard[], count: number): MasonryCard[][] => {
   const columns: MasonryCard[][] = Array.from({ length: count }, () => []);
@@ -152,13 +185,19 @@ export function Masonry({ cards }: { cards: readonly MasonryCard[] }) {
                   </Link>
                 </div>
               </div>
-              <Link
-                href={card.href}
-                tabIndex={-1}
-                className={`${BODY_3} mt-[var(--tn-space-2xs)] block truncate text-left font-semibold text-[var(--store-neutral-100)]`}
-              >
-                {card.title}
-              </Link>
+              {/* The name and its framework tags, as the Figma theme card lays them out (850:7559):
+                  name left, tags right; where both do not fit, the tags wrap under the name rather
+                  than cutting it off. */}
+              <div className="mt-[var(--tn-space-2xs)] flex flex-wrap items-start justify-between gap-x-[8px] gap-y-[6px]">
+                <Link
+                  href={card.href}
+                  tabIndex={-1}
+                  className={`${BODY_3} block min-w-0 max-w-full truncate text-left font-semibold text-[var(--store-neutral-100)]`}
+                >
+                  {card.title}
+                </Link>
+                <FrameworkTags frameworks={card.frameworks} />
+              </div>
             </li>
           ))}
         </ul>

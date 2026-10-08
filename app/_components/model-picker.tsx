@@ -94,13 +94,11 @@ export function ModelPicker({
   onClose,
   selected,
   onSelect,
-  left = 0,
 }: {
   open: boolean;
   onClose: () => void;
   selected: string;
   onSelect: (row: ModelRow) => void;
-  left?: number;
 }) {
   const [query, setQuery] = useState("");
   const [unfolded, setUnfolded] = useState<readonly string[]>([]);
@@ -114,7 +112,7 @@ export function ModelPicker({
   const hits = q === "" ? [] : ALL_ROWS.filter((r) => `${r.name} ${r.note ?? ""}`.toLowerCase().includes(q));
 
   return (
-    <Panel open={open} onClose={onClose} label="Select AI model" width={400} left={left}>
+    <Panel open={open} onClose={onClose} label="Select AI model" width={400}>
       <Search value={query} onChange={setQuery} placeholder="Search AI model" />
 
       {q !== "" ? (

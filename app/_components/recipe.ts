@@ -12,8 +12,8 @@ import type { Tier } from "@/src/entitlement-core";
  * here is authored, every option is read from the catalogue the rest of the store uses, and a
  * message the keywords do not cover gets one focused question rather than a pretend understanding.
  *
- * **Only what is missing is asked** (§ 5's six steps, in order): use case, setup, plan, stack,
- * design, then the page list with preview and download. A message that already names some of them
+ * **Only what is missing is asked** (§ 5's six steps, in order): use case, setup, stack, style,
+ * plan, design, then the page list with preview and download. A message that already names some of them
  * ("CRM admin, React, Tailwind") skips straight past those, and the summary lets any one be changed
  * without starting over.
  *
@@ -108,6 +108,54 @@ export const isAvailable = (framework: FrameworkId, css: CssId): boolean =>
 /** The setup recommended to anyone who has not chosen one (§ 5: "a verified Next.js + Tailwind"). */
 export const RECOMMENDED = { framework: "nextjs", css: "tailwind" } as const;
 
+export type VibeId = "minimal" | "dense" | "soft";
+
+/**
+ * **The style step** (2026-10-08, from the Figma "AI Builder - Guest" frame, node 840:6788): after the
+ * stack is confirmed the reader picks a look, Minimal Design, Dense Data or Soft Card, or explores
+ * every theme. The design step then offers only that style's designs.
+ *
+ * **The grouping is authored, not catalogue data.** `THEMES` records no style, so each design is
+ * placed by its own hint in `vui-core.ts` (quoted in the notes below), once, in exactly one group.
+ * Change a design's group here and nothing else needs to move. Keywords are deliberately narrow:
+ * "card" is left out because "candidate cards" is a request for a recruitment screen, not a style.
+ */
+export const VIBES: readonly {
+  readonly id: VibeId;
+  readonly label: string;
+  readonly note: string;
+  readonly designs: readonly string[];
+  readonly keywords: readonly string[];
+}[] = [
+  {
+    id: "minimal",
+    label: "Minimal Design",
+    note: "Quiet chrome and plenty of space",
+    /* Voilet "the standard"; Console's near-black, scoped bar; Reach's single edge-to-edge rail. */
+    designs: ["voilet", "neon", "tendora"],
+    keywords: ["minimal", "minimalist", "clean", "simple"],
+  },
+  {
+    id: "dense",
+    label: "Dense Data",
+    note: "More rows, tabs and panels on screen",
+    /* Desk "several records open at once"; Board's project nav; Suite's grouped panel; Rack "dense
+       warehouse operations"; Cloud "an enterprise cloud console". */
+    designs: ["workspace", "jira", "zoho", "rackwise", "sales-force"],
+    keywords: ["dense", "compact", "data-heavy", "enterprise"],
+  },
+  {
+    id: "soft",
+    label: "Soft Card",
+    note: "Rounded, floating cards and gentle colour",
+    /* Flow "floating cards… rounded"; Panel "a friendly SaaS console"; Counter's wide tinted rail. */
+    designs: ["flow", "swift", "durara"],
+    keywords: ["soft", "rounded", "friendly", "playful"],
+  },
+];
+
+export const vibeOf = (id: Recipe["vibe"]) => VIBES.find((v) => v.id === id);
+
 /** The design's own primary, for its swatch. Two designs inherit the store's blue. */
 export const swatchOf = (theme: Theme): string => {
   const tokens = (DESIGN_TOKENS[theme.id] ?? {}) as Record<string, string>;
@@ -126,12 +174,29 @@ export const designsFor = (recipe: Recipe): readonly Theme[] =>
       (!recipe.css || t.css.includes(recipe.css)),
   );
 
+/**
+ * The designs the design step offers: `designsFor`, narrowed to the chosen style. **When the plan
+ * leaves none in that style** (Free is Voilet alone, which is Minimal), it falls back to what the plan
+ * does allow and says so, rather than showing an empty step or quietly switching the plan.
+ */
+export const designsForVibe = (
+  recipe: Recipe,
+): { readonly designs: readonly Theme[]; readonly outsideVibe: boolean } => {
+  const allowed = designsFor(recipe);
+  const vibe = vibeOf(recipe.vibe);
+  if (!vibe) return { designs: allowed, outsideVibe: false };
+  const inVibe = allowed.filter((t) => vibe.designs.includes(t.id));
+  return inVibe.length > 0 ? { designs: inVibe, outsideVibe: false } : { designs: allowed, outsideVibe: true };
+};
+
 export interface Recipe {
   readonly useCase?: string;
   /** How the stack was decided, so the summary can say "recommended" rather than "chosen". */
   readonly setup?: "recommended" | "own";
   readonly framework?: FrameworkId;
   readonly css?: CssId;
+  /** The look, or `"any"` when the reader chose to explore every theme. */
+  readonly vibe?: VibeId | "any";
   readonly tier?: Tier;
   readonly design?: string;
   /** Slugs the reader has ticked. `undefined` means "all this plan includes", until they edit it. */
@@ -216,6 +281,12 @@ export function parse(message: string): Parsed {
     understood.push(labelOf(css));
   }
 
+  const vibe = VIBES.find((v) => v.keywords.some((k) => has(text, k)));
+  if (vibe) {
+    patch.vibe = vibe.id;
+    understood.push(vibe.label);
+  }
+
   if (has(text, "free")) {
     patch.tier = "free";
     understood.push("Free");
@@ -240,6 +311,7 @@ export type Step =
   | { readonly kind: "setup" }
   | { readonly kind: "recommend" }
   | { readonly kind: "stack" }
+  | { readonly kind: "vibe" }
   | { readonly kind: "tier" }
   | { readonly kind: "tierConflict" }
   | { readonly kind: "design" }
@@ -258,6 +330,7 @@ export function nextStep(recipe: Recipe): Step {
   if (!recipe.framework || !recipe.css) {
     return recipe.setup === "recommended" ? { kind: "recommend" } : { kind: "stack" };
   }
+  if (!recipe.vibe) return { kind: "vibe" };
   if (!recipe.tier) return { kind: "tier" };
   if (recipe.tier === "free" && recipe.css !== "tailwind") return { kind: "tierConflict" };
   if (!recipe.design || !designsFor(recipe).some((t) => t.id === recipe.design)) {
@@ -280,8 +353,10 @@ export function promptFor(step: Step, recipe: Recipe): string {
       return recipe.css
         ? `Choose a framework. These work with ${labelOf(recipe.css)}:`
         : "Choose a framework and a CSS framework:";
+    case "vibe":
+      return `I've set up ${labelOf(recipe.framework ?? "")} and ${labelOf(recipe.css ?? "")}. What style should your themes have?`;
     case "tier":
-      return `I've set up ${labelOf(recipe.framework ?? "")} and ${labelOf(recipe.css ?? "")}. Would you like a Free starter or the Pro ${useCase?.label ?? ""} pages?`;
+      return `Would you like a Free starter or the Pro ${useCase?.label ?? ""} pages?`;
     case "tierConflict":
       return `Free themes use Tailwind CSS only, and you chose ${labelOf(recipe.css ?? "")}. Which should change?`;
     case "design":
@@ -292,9 +367,13 @@ export function promptFor(step: Step, recipe: Recipe): string {
 }
 
 /** The steps a summary row reopens: clearing exactly the field it edits, nothing after it. */
-export const REOPEN: Record<"useCase" | "stack" | "tier" | "design", (r: Recipe) => Recipe> = {
+export const REOPEN: Record<
+  "useCase" | "stack" | "vibe" | "tier" | "design",
+  (r: Recipe) => Recipe
+> = {
   useCase: (r) => ({ ...r, useCase: undefined, pages: undefined }),
   stack: (r) => ({ ...r, framework: undefined, css: undefined, setup: "own" }),
+  vibe: (r) => ({ ...r, vibe: undefined, design: undefined }),
   tier: (r) => ({ ...r, tier: undefined, pages: undefined }),
   design: (r) => ({ ...r, design: undefined }),
 };

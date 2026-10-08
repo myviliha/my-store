@@ -17,7 +17,7 @@ import {
 } from "@/app/_vendor/icons";
 import { type ReactNode, type Ref, useEffect, useState } from "react";
 
-import { Choice, Divider, Panel, useAnchor, useFilePicker } from "./menu";
+import { Choice, Divider, Panel, useFilePicker } from "./menu";
 import { ModelPicker } from "./model-picker";
 import type { ModelRow } from "./models";
 
@@ -233,14 +233,9 @@ export function Composer({
       if (gone?.url) URL.revokeObjectURL(gone.url);
       return f.filter((_, k) => k !== at);
     });
-  const addA = useAnchor();
-  const toolsA = useAnchor();
-  const brandA = useAnchor();
-  const modelA = useAnchor();
-  /** Opens a menu and records where its trigger sits inside the card, so the panel hangs from the
-      card's bottom border rather than from the button (`SD-222`). */
-  const toggle = (which: "add" | "tools" | "brand" | "model", a: ReturnType<typeof useAnchor>) => {
-    a.measure();
+  /** Opens a menu, or closes it when it is the one open. Each panel places itself against its own
+      trigger's wrapper (`Panel` in `menu.tsx`). */
+  const toggle = (which: "add" | "tools" | "brand" | "model") => {
     setMenu((m) => (m === which ? null : which));
   };
   const pickAny = useFilePicker(take);
@@ -343,20 +338,27 @@ export function Composer({
           card's foot by `margin-top: auto`; here the textarea's `flex-1` does the pushing. */}
       <div className="mt-auto flex shrink-0 items-center justify-between gap-[10px] border-t border-[var(--store-neutral-40)] px-[var(--tn-space-sm)] md:h-[60px]">
         <div className="flex flex-wrap items-center gap-x-[var(--tn-space-2xs)] gap-y-[var(--tn-space-2xs)] md:gap-x-[20px]">
-          <div>
+          <div className="relative">
             <button
-              ref={addA.trigger}
               type="button"
               aria-label={menu === "add" ? "Close" : "Add"}
               aria-expanded={menu === "add"}
-              onClick={() => toggle("add", addA)}
+              onClick={() => toggle("add")}
               className={`${ROW_BUTTON} ${menu === "add" ? "text-[var(--store-primary-40)]" : ""}`}
             >
               {/* The plus turns into a close mark while its menu is open, which is the reference's
-                  own behaviour and the reason that menu needs no heading row to close from. */}
-              <Glyph size={24}>
-                {menu === "add" ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M12 5v14M5 12h14" />}
-              </Glyph>
+                  own behaviour and the reason that menu needs no heading row to close from.
+                  **It turns, it is not swapped** (2026-10-08): a plus rotated 45° is the close mark,
+                  so one glyph rotates on the composer's own easing instead of two drawings
+                  replacing each other, which jumped. Reduced motion gets the turn without the
+                  motion. */}
+              <span
+                className={`flex transition-transform duration-200 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none ${menu === "add" ? "rotate-45" : "rotate-0"}`}
+              >
+                <Glyph size={24}>
+                  <path d="M12 5v14M5 12h14" />
+                </Glyph>
+              </span>
             </button>
             <Panel
               open={menu === "add"}
@@ -364,7 +366,7 @@ export function Composer({
               label="Add to this prompt"
               heading={false}
               width={360}
-              left={addA.left}
+             
             >
               {/* The reference's three bands: what is on this machine, what is on the web, and the
                   services an account can be connected to. The last two are mock, like the model
@@ -414,12 +416,11 @@ export function Composer({
               />
             </Panel>
           </div>
-          <div>
+          <div className="relative">
             <button
-              ref={toolsA.trigger}
               type="button"
               aria-expanded={menu === "tools"}
-              onClick={() => toggle("tools", toolsA)}
+              onClick={() => toggle("tools")}
               className={`${ROW_BUTTON} ${tool ? "text-[var(--store-primary-40)]" : ""}`}
             >
               {/* Two rails; the top knob sits right of centre, the bottom knob left of it. */}
@@ -430,7 +431,7 @@ export function Composer({
               </Glyph>
               {tool ? TOOLS.find((t) => t.id === tool)?.title : "Tools"}
             </button>
-            <Panel open={menu === "tools"} onClose={close} label="What should Voilet generate?" width={392} left={toolsA.left}>
+            <Panel open={menu === "tools"} onClose={close} label="What should Voilet generate?" width={392}>
               {TOOLS.map((t) => (
                 <Choice
                   key={t.id}
@@ -450,12 +451,11 @@ export function Composer({
               ))}
             </Panel>
           </div>
-          <div>
+          <div className="relative">
             <button
-              ref={brandA.trigger}
               type="button"
               aria-expanded={menu === "brand"}
-              onClick={() => toggle("brand", brandA)}
+              onClick={() => toggle("brand")}
               className={`${ROW_BUTTON} ${brand ? "text-[var(--store-primary-40)]" : ""}`}
             >
               <Glyph size={20}>
@@ -464,7 +464,7 @@ export function Composer({
               </Glyph>
               {brand || "Brand"}
             </button>
-            <Panel open={menu === "brand"} onClose={close} label="Apply your brand" width={336} left={brandA.left}>
+            <Panel open={menu === "brand"} onClose={close} label="Apply your brand" width={336}>
               <div className="border-t border-[var(--store-neutral-40)] px-[8px] py-[10px]">
                 <label htmlFor="brand-name" className="sr-only">
                   Your brand name
@@ -488,12 +488,11 @@ export function Composer({
               />
             </Panel>
           </div>
-          <div>
+          <div className="relative">
             <button
-              ref={modelA.trigger}
               type="button"
               aria-expanded={menu === "model"}
-              onClick={() => toggle("model", modelA)}
+              onClick={() => toggle("model")}
               className={ROW_BUTTON}
             >
               <span className="max-w-[140px] truncate">{model?.name ?? "Voilet"}</span>
@@ -504,7 +503,7 @@ export function Composer({
               onClose={close}
               selected={model?.id ?? "voilet"}
               onSelect={setModel}
-              left={modelA.left}
+             
             />
           </div>
         </div>

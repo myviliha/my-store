@@ -105,7 +105,7 @@ export function Search() {
               ))}
             </div>
 
-            <div className="max-h-[320px] overflow-y-auto pb-[8px]">
+            <div className="max-h-[320px] overflow-y-auto overscroll-contain pb-[8px]">
               <p className={PANEL_HEADING}>Trending themes</p>
               {THEMES.slice(0, 6).map((theme, i) => (
                 <Link

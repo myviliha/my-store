@@ -10,7 +10,7 @@ import { THEMES } from "@/src/data/themes";
 
 import {
   CSS_SYSTEMS,
-  designsFor,
+  designsForVibe,
   FRAMEWORKS,
   includedPages,
   isAvailable,
@@ -22,6 +22,8 @@ import {
   swatchOf,
   USE_CASES,
   useCaseOf,
+  VIBES,
+  vibeOf,
 } from "./recipe";
 import { BODY_2, BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
 
@@ -84,6 +86,7 @@ export function StepCard({
   onEdit,
   onPreview,
   onDownload,
+  onExplore,
 }: {
   step: Step;
   /** The recipe when this question was asked. */
@@ -97,6 +100,8 @@ export function StepCard({
   onEdit: (next: Recipe, echo?: string) => void;
   onPreview: () => void;
   onDownload: () => void;
+  /** Opens the Explore Themes panel beside the conversation. */
+  onExplore: () => void;
 }) {
   const shown = answered ?? asked;
   switch (step.kind) {
@@ -192,6 +197,9 @@ export function StepCard({
 
     case "stack":
       return <StackPicker recipe={shown} live={live} onAnswer={onAnswer} />;
+
+    case "vibe":
+      return <VibePicker recipe={shown} live={live} onAnswer={onAnswer} onExplore={onExplore} />;
 
     case "tier":
       return <TierPicker recipe={shown} live={live} onAnswer={onAnswer} />;
@@ -387,6 +395,80 @@ function TierPicker({
 }
 
 /** Only designs this recipe may use (Free is Voilet; every one must build the chosen stack). */
+/**
+ * The style step, **drawn to the Figma exactly** ("AI Builder - Guest", message 849:6803): a row of
+ * pill buttons 5px apart, each 39px tall with a 1px #D3D7DD border, a 17px icon tile (#C9CED6
+ * border, 5px corners, the brand bar at its foot) and the label in Inter 14 at 1.2; then **Explore
+ * themes**, filled brand blue with a dashed edge, a 12px grid icon and its label in Instrument Sans
+ * Bold. Both icons are the design's own SVGs (`public/recipe/`), not redrawn. The greys and #111418
+ * are the design's values, which no token of ours carries.
+ *
+ * A chosen style keeps the brand tint the other choice cards use, since the design shows no
+ * selected state; hover is a brand border, as on every other chip in the conversation.
+ */
+const STYLE_BUTTON =
+  "inline-flex h-[39px] shrink-0 items-start gap-[9px] rounded-[50px] border border-[#d3d7dd] px-[15px] py-[11px] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] disabled:cursor-default";
+const STYLE_LABEL =
+  "font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap text-[#111418]";
+
+function VibePicker({
+  recipe,
+  live,
+  onAnswer,
+  onExplore,
+}: {
+  recipe: Recipe;
+  live: boolean;
+  onAnswer: (a: Answer) => void;
+  onExplore: () => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-[5px]">
+      {VIBES.map((v) => (
+        <button
+          key={v.id}
+          type="button"
+          disabled={!live}
+          title={v.note}
+          onClick={() => onAnswer({ patch: { vibe: v.id }, echo: v.label })}
+          className={`${STYLE_BUTTON} ${recipe.vibe === v.id ? "border-[var(--store-primary-40)] bg-[var(--store-primary-10)]" : "bg-white"}`}
+        >
+          <span
+            aria-hidden="true"
+            className="relative size-[17px] shrink-0 rounded-[5px] border border-[#c9ced6]"
+          >
+            {/* biome-ignore lint/performance/noImgElement: a 10x4 static SVG from the design */}
+            <img src="/recipe/style-chip-bar.svg" alt="" width={10} height={4} className="absolute left-[3px] top-[9px] block" />
+          </span>
+          <span className={STYLE_LABEL}>{v.label}</span>
+        </button>
+      ))}
+      <button
+        type="button"
+        disabled={!live}
+        /* Answers the question (no style filter) and opens the Explore Themes panel beside the
+           conversation, as the design's button does. */
+        onClick={() => {
+          onAnswer({ patch: { vibe: "any" }, echo: "Explore themes" });
+          onExplore();
+        }}
+        className={`inline-flex h-[39px] shrink-0 items-center gap-[8px] rounded-[50px] border border-dashed border-[var(--store-primary-40)] bg-[var(--store-primary-40)] px-[15px] py-[12px] transition-colors duration-150 enabled:cursor-pointer enabled:hover:bg-[var(--store-primary-50)] disabled:cursor-default ${recipe.vibe === "any" ? "ring-2 ring-[var(--store-primary-20)]" : ""}`}
+      >
+        <span aria-hidden="true" className="relative size-[12px] shrink-0">
+          {/* The design draws the grid 4.86% past its 12px box on every side (13.17px). */}
+          {/* biome-ignore lint/performance/noImgElement: a 13px static SVG from the design */}
+          <span className="absolute inset-[-4.86%]">
+            <img src="/recipe/explore-grid.svg" alt="" width={13.1667} height={13.1667} className="block size-full max-w-none" />
+          </span>
+        </span>
+        <span className="whitespace-nowrap font-[family-name:var(--store-font-instrument)] text-[14px] font-bold leading-normal text-white">
+          Explore themes
+        </span>
+      </button>
+    </div>
+  );
+}
+
 function DesignPicker({
   recipe,
   live,
@@ -396,7 +478,8 @@ function DesignPicker({
   live: boolean;
   onAnswer: (a: Answer) => void;
 }) {
-  const designs = designsFor(recipe);
+  const { designs, outsideVibe } = designsForVibe(recipe);
+  const vibe = vibeOf(recipe.vibe);
   const hidden = THEMES.length - designs.length;
   return (
     <div className="flex flex-col gap-[8px]">
@@ -423,7 +506,12 @@ function DesignPicker({
           </button>
         ))}
       </div>
-      {recipe.tier === "free" && hidden > 0 ? (
+      {outsideVibe && vibe ? (
+        <p className={`${BODY_3} text-[var(--store-neutral-80)]`}>
+          {vibe.label} designs come with Pro. On Free, Voilet is the design included; you can change
+          the plan in the summary.
+        </p>
+      ) : recipe.tier === "free" && hidden > 0 ? (
         <p className={`${BODY_3} text-[var(--store-neutral-80)]`}>
           {hidden} more designs come with Pro.
         </p>
@@ -452,6 +540,11 @@ function Summary({
   const chosen = new Set(includedPages(recipe).map((p) => p.slug));
   const rows: { label: string; value: string; reopen: keyof typeof REOPEN }[] = [
     { label: "Admin", value: `${useCase?.label ?? ""} admin`, reopen: "useCase" },
+    {
+      label: "Style",
+      value: recipe.vibe === "any" ? "All themes" : (vibeOf(recipe.vibe)?.label ?? ""),
+      reopen: "vibe",
+    },
     { label: "Design", value: design?.label ?? "", reopen: "design" },
     {
       label: "Stack",

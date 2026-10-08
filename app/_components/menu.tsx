@@ -12,9 +12,20 @@ import { FONT } from "./type";
  * that closes on Escape, on a click outside and on a selection is forty lines; a second stylesheet
  * in the storefront is a decision nobody took.
  *
- * **It opens upward.** Every one of these buttons sits in the composer's foot row, and the composer
- * is at the foot of the window, so a panel that opens downward opens off-screen.
+ * **It opens at its own button** (2026-10-08, by request), as a rounded popover 8px off the
+ * trigger, not as a drawer from the prompt card's bottom edge (`SD-222`'s first design). The panel is
+ * rendered beside its trigger inside a `relative` wrapper (the four in `composer.tsx`), and that
+ * wrapper is what it measures and positions against. It drops below the button when there is room
+ * and opens above it when there is not, which is the docked composer at the foot of the thread, and
+ * it slides left rather than run off the right edge of the screen.
+ *
+ * **Scrolling stays inside it** (`overscroll-contain`, 2026-10-08): a long list such as the model
+ * picker, scrolled to its end, used to hand the rest of the wheel to the page behind it, so the whole
+ * home page moved under an open menu. The search panel's list does the same.
  */
+
+/** The space between a trigger and its panel. */
+const GAP = 8;
 
 export function Panel({
   open,
@@ -23,8 +34,6 @@ export function Panel({
   heading = true,
   children,
   width = 320,
-  /** Where the panel's left edge sits, in pixels from the card's left edge. */
-  left = 0,
 }: {
   open: boolean;
   onClose: () => void;
@@ -35,35 +44,45 @@ export function Panel({
   heading?: boolean;
   children: ReactNode;
   width?: number;
-  left?: number;
 }) {
   const panel = useRef<HTMLDivElement>(null);
   /**
-   * Where the panel goes and how tall it may be.
+   * Where the panel goes, how tall it may be, and how far it slides left.
    *
-   * **It shrinks before it flips.** The first rule was "flip up if the panel overflows", and a tall
-   * list overflows almost anywhere, so the model menu kept jumping above the card and reading as a
-   * sheet floating over the page. The panel is a drawer in the card's bottom edge: it keeps that
-   * edge and takes the room that is there, down to a floor of 240px, and only goes above the card
-   * when there is less than that below it.
+   * **It shrinks before it flips.** A tall list overflows almost anywhere, so "flip if it overflows"
+   * kept throwing the model menu above its button. It drops below and takes the room that is there,
+   * down to a floor of 240px, and only opens above when there is less than that below and more
+   * above. Horizontally it starts at its button's left edge and slides left just enough to keep a
+   * 16px margin to the window's right edge.
    */
-  const [place, setPlace] = useState<{ up: boolean; max: number }>({ up: false, max: 560 });
+  const [place, setPlace] = useState<{ up: boolean; max: number; shift: number }>({
+    up: false,
+    max: 560,
+    shift: 0,
+  });
 
   useEffect(() => {
     if (!open) return;
-    const card = panel.current?.closest("form")?.getBoundingClientRect();
-    if (card) {
-      const below = window.innerHeight - card.bottom - 12;
-      const above = card.top - 12;
-      setPlace(below >= 240 || below >= above ? { up: false, max: below } : { up: true, max: above });
+    const anchor = panel.current?.parentElement?.getBoundingClientRect();
+    if (anchor) {
+      const gap = GAP + 12;
+      const below = window.innerHeight - anchor.bottom - gap;
+      const above = anchor.top - gap;
+      const up = below < 240 && above > below;
+      const w = Math.min(width, window.innerWidth - 32);
+      const overflow = anchor.left + w - (window.innerWidth - 16);
+      const shift = overflow > 0 ? -Math.min(overflow, anchor.left - 16) : 0;
+      setPlace({ up, max: up ? above : below, shift });
     }
     const key = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
     };
     /* `mousedown` rather than `click`: a click that starts inside the panel and ends outside it,
        which is what a drag on a scrollbar looks like, should not close it. */
+    /* The trigger counts as inside: it sits in the same wrapper, and a mousedown on it closing the
+       panel would let the click that follows open it again. */
     const away = (e: MouseEvent) => {
-      if (!panel.current?.contains(e.target as Node)) onClose();
+      if (!panel.current?.parentElement?.contains(e.target as Node)) onClose();
     };
     document.addEventListener("keydown", key);
     document.addEventListener("mousedown", away);
@@ -71,7 +90,7 @@ export function Panel({
       document.removeEventListener("keydown", key);
       document.removeEventListener("mousedown", away);
     };
-  }, [open, onClose]);
+  }, [open, onClose, width]);
 
   if (!open) return null;
 
@@ -80,11 +99,9 @@ export function Panel({
       ref={panel}
       role="dialog"
       aria-label={label}
-      style={{ width, left, maxWidth: "calc(100vw - 32px)", maxHeight: place.max }}
-      className={`absolute z-50 overflow-y-auto border border-[var(--store-card-border)] bg-white p-[8px] shadow-[var(--shadow-float)] ${
-        place.up
-          ? "tn-drop-up bottom-full rounded-t-[16px] rounded-b-none"
-          : "tn-drop top-full rounded-t-none rounded-b-[16px]"
+      style={{ width, left: place.shift, maxWidth: "calc(100vw - 32px)", maxHeight: place.max }}
+      className={`absolute z-50 overflow-y-auto overscroll-contain rounded-[16px] border border-[var(--store-card-border)] bg-white p-[8px] shadow-[var(--shadow-float)] ${
+        place.up ? "tn-drop-up bottom-full mb-[8px]" : "tn-drop top-full mt-[8px]"
       }`}
     >
       {/* The reference's heading is **12px at 600**, not 14: it is a label for the list, not a title
@@ -109,26 +126,6 @@ export function Panel({
   );
 }
 
-/**
- * Where a trigger sits inside the card, so a panel can hang from the card's own bottom edge rather
- * than from the button (`SD-222`).
- *
- * **The card is the anchor, not the control.** Four buttons of different widths each opened their
- * panel from their own left edge and their own top, so four panels arrived at four heights; the
- * reference hangs every one of them off the bottom border of the prompt card. This returns the
- * trigger's offset within that card, which is the only part that still differs.
- */
-export function useAnchor() {
-  const trigger = useRef<HTMLButtonElement>(null);
-  const [left, setLeft] = useState(0);
-  const measure = () => {
-    const el = trigger.current;
-    const card = el?.closest("form");
-    if (!el || !card) return;
-    setLeft(el.getBoundingClientRect().left - card.getBoundingClientRect().left);
-  };
-  return { trigger, left, measure };
-}
 
 /**
  * A row in one of those panels: tile, title, one line of what it does.

@@ -9,6 +9,21 @@
  * page proportions were measured (`SD-034` to `SD-036`), and a measurement is not a stylesheet. */
 @import "tailwindcss";
 
+/* **Hover waits for the pointer to move** (2026-10-08). Typing hides the system pointer but leaves it
+ * where it was, and a reply that appears under it lit its first option as hovered although nobody
+ * had pointed at anything. This redefines Tailwind's `hover:` (and `group-hover:`, built on it) to
+ * skip anything inside `[data-pointer="idle"]`, which the conversation sets whenever new content
+ * arrives and clears on a real pointer move or press (`thread.tsx`). Nothing else sets the attribute,
+ * so hover everywhere else is exactly Tailwind's own. `:where()` keeps specificity at zero, and the
+ * `(hover: hover)` media query is Tailwind's default, kept so touch screens get no sticky hover. */
+@custom-variant hover {
+  @media (hover: hover) {
+    &:hover:not(:where([data-pointer="idle"] *)) {
+      @slot;
+    }
+  }
+}
+
 /**
  * **The storefront's own palette, type scale, spacing and grid** (`SD-199`, `SD-200`).
  *
@@ -934,6 +949,26 @@ html[data-thread="open"] [data-chrome="footer"] {
   animation: tn-fade-in 900ms ease-out both;
 }
 
+/* The chat's loading state (`Replying` in `thread.tsx`): three dots that rise and dim in turn, each
+ * offset by `--d`. A pulse, not a progress bar: it says a reply is coming and nothing more. */
+@keyframes tn-typing {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-3px);
+    opacity: 1;
+  }
+}
+
+.tn-typing {
+  animation: tn-typing 1s ease-in-out infinite;
+  animation-delay: var(--d, 0ms);
+}
+
 /* A reader's message arriving: up from 32px below, so it reads as coming out of the card under it. */
 @keyframes tn-message-in {
   from {
@@ -955,7 +990,8 @@ html[data-thread="open"] [data-chrome="footer"] {
   .tn-spark,
   .tn-leave,
   .tn-message-in,
-  .tn-fade-in {
+  .tn-fade-in,
+  .tn-typing {
     animation: none;
   }
 }

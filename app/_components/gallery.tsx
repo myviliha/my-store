@@ -1,8 +1,7 @@
 import Link from "next/link";
 
-import { ASSETS, type AssetKind, KIND_COLLECTION } from "@/src/data/assets";
-
-import { Masonry, type MasonryCard } from "./masonry";
+import { Masonry } from "./masonry";
+import { GALLERY_CARDS } from "./screen-cards";
 
 /**
  * The gallery under the hero: a loose wall of screenshot cards, then a "browse all" button.
@@ -16,53 +15,14 @@ import { Masonry, type MasonryCard } from "./masonry";
  * of the 24px padding), no `max-w`; `Masonry` decides how many columns that is. The margin is
  * matched on `Search` so the two edges line up.
  *
- * **Each card's shape comes from its slug**, so it is the same on every render and every deploy,
- * and the six shapes are the spread the reference's wall shows: a 16:9 deck, a 4:3 page, a square
- * logo, and three portraits down to a 2:3 poster. Cycling them in order would line the same shape
- * up across a row, which reads as a pattern rather than a wall. The captures are all 1440px wide
- * and taller than they are wide, so each is cropped from the top to its card.
+ * **The cards are `GALLERY_CARDS` from `screen-cards.ts`**, the same ones the conversation's
+ * Explore Themes panel shows, so a screen looks and links the same in both places; each card's shape
+ * comes from its slug, and the reasoning for that lives with the builder.
  */
-const COUNT = 36;
-const KIND_ORDER: readonly AssetKind[] = ["dashboard", "application", "page"];
-const SHAPES: readonly (readonly [number, number])[] = [
-  [16, 9],
-  [4, 3],
-  [1, 1],
-  [4, 5],
-  [3, 4],
-  [2, 3],
-];
-
-/** A small, stable string hash (FNV-1a), so a slug always picks the same shape. */
-const hash = (text: string): number => {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return h >>> 0;
-};
-
-const CARDS: readonly MasonryCard[] = KIND_ORDER.flatMap((kind) =>
-  ASSETS.filter((asset) => asset.kind === kind && asset.pattern !== "UI element"),
-)
-  .slice(0, COUNT)
-  .map((screen) => ({
-    key: screen.slug,
-    href: `${KIND_COLLECTION[screen.kind]}/${screen.slug}`,
-    /* There is no per-screen download: a screen ships inside a theme. `/download` is the page
-       that explains what a download contains and starts one. */
-    download: "/download",
-    src: screen.src,
-    title: screen.title,
-    tier: screen.tier,
-    ratio: SHAPES[hash(screen.slug) % SHAPES.length] ?? [1, 1],
-  }));
-
 export function Gallery() {
   return (
     <section className="mt-[var(--tn-space-lg)] px-[var(--tn-space-sm)] md:mx-[var(--tn-space-xs)] lg:mx-[var(--tn-space-md)]">
-      <Masonry cards={CARDS} />
+      <Masonry cards={GALLERY_CARDS} />
       <div className="mt-[var(--tn-space-sm)] flex justify-center">
         <Link
           href="/themes"
