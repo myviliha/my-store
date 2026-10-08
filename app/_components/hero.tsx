@@ -3,11 +3,12 @@
 import { useRef, useState } from "react";
 
 import { Composer } from "./composer";
+import { HelloBot } from "./hello-bot";
 import type { CardRect } from "./conversation";
 import { BODY_2, FONT } from "./type";
 
 /**
- * The opening screen: H1, one line of subtitle and the prompt card.
+ * The opening screen: a waving robot, H1, one line of subtitle and the prompt card.
  *
  * **Sending does not navigate** (`SD-216`). The card hands its text up to `Conversation`, which
  * swaps this screen for the thread; the form used to GET `/voilet`, a route `SD-215` deleted, so
@@ -56,11 +57,14 @@ export function Hero({
      `z-index` cannot lift it above a later sibling of its parent (`SD-212`, twice now). */
   return (
     <section className="relative z-30 mx-auto flex w-full flex-col items-center px-[var(--tn-space-sm)] pt-[var(--tn-space-md)] pb-[var(--tn-space-lg)] text-center">
-      {/* **24px at every width, `--store-headline-11`** (2026-10-07, by request). It was the
-          reference's 23px stepping up to 32px at `lg`; one size now, from our own scale, so the
-          headline is the same weight beside the 720px card on a phone and on a desktop. */}
+      {/* The waving robot above the headline (`hello-bot.tsx`). It enters with the headline and
+          leaves with it on Generate, so it is never left behind on its own. */}
+      <HelloBot className={`${leave} mb-[var(--tn-space-2xs)]`} />
+      {/* **18px at 500, at every width** (`--tn-text-lg`, 2026-10-08, by request). It was 24px at
+          800; before that the reference's 23px stepping up to 32px at `lg`. One size, so the
+          headline is the same beside the 720px card on a phone and on a desktop. */}
       <h1
-        className={`${FONT} ${leave} text-[length:var(--store-headline-11)] font-extrabold leading-[1.5] text-[var(--store-neutral-100)]`}
+        className={`${FONT} ${leave} text-[length:var(--tn-text-lg)] font-medium leading-[1.5] text-[var(--store-neutral-100)]`}
         style={{ ["--i" as string]: 0 }}
       >
         {/* The gradient sits on a span, not the h1, so it spans the words rather than the full row,
