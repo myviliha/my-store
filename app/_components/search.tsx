@@ -6,6 +6,8 @@ import { useRef, useState } from "react";
 import { AVAILABLE, labelOf } from "@/src/configurator-core";
 import { THEMES } from "@/src/data/themes";
 
+import { setDomain, useDomain } from "./domain-store";
+import { USE_CASES } from "./recipe";
 import { accentAt, BODY_2, BODY_3, FONT } from "./type";
 
 /**
@@ -37,7 +39,19 @@ const FIELD =
 const PANEL_HEADING = `${BODY_3} px-[12px] pt-[12px] pb-[4px] text-start font-medium text-[var(--store-neutral-70)]`;
 const PANEL_ROW = `${BODY_2} flex items-center gap-[10px] rounded-[8px] px-[12px] py-[8px] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-10)]`;
 
+/**
+ * **The chip row is website domains** (2026-10-08): All, then the kinds of admin the guided chat
+ * understands (`USE_CASES`), each filtering the gallery below to that domain's own screens
+ * (`GalleryWall`). Choosing the chosen one again shows all. They used to be the theme names, which
+ * linked to `/themes/[id]`, a route this app does not have.
+ *
+ * **The row wraps**, as `CLAUDE.md` asks of chip rows: it was a sideways-scrolling strip with its
+ * scrollbar hidden, the set-up that made the cursor flicker over the Explore panel's tabs.
+ */
+const DOMAIN_CHIP = `${BODY_2} inline-flex cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-[8px] border bg-white px-[12px] py-[8px] font-medium text-[var(--store-neutral-100)] transition-colors duration-150`;
+
 export function Search() {
+  const domain = useDomain();
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
@@ -53,7 +67,7 @@ export function Search() {
          gallery beneath it takes `lg`, 40px, so the search read as attached to the prompt card and
          detached from the results it filters. It belongs to neither more than the other, so the two
          gaps are the same. */
-      className="tn-rise relative z-20 mt-[var(--tn-space-lg)] grid grid-cols-1 md:mx-[var(--tn-space-xs)] lg:mx-[var(--tn-space-md)] items-start gap-[8px] px-[var(--tn-space-sm)] md:grid-cols-[minmax(0,390px)_minmax(0,1fr)] md:gap-x-[16px]"
+      className="tn-rise relative z-20 mt-[var(--tn-space-lg)] grid grid-cols-1 md:mx-[var(--tn-space-xs)] lg:mx-[var(--tn-space-md)] items-start gap-[8px] px-[var(--tn-space-sm)] xl:grid-cols-[minmax(0,390px)_minmax(0,1fr)] xl:gap-x-[16px]"
       style={{ ["--i" as string]: 3 }}
       /* Closes when focus leaves the whole box rather than the input, so a click on a row inside
          the panel is not cancelled by the blur that precedes it. */
@@ -67,9 +81,10 @@ export function Search() {
           thing that changes is the panel beneath it. Two searches, two behaviours, and conflating
           them made the chips beside this one dodge out of the way for no reason. */}
       {/* **Near full width, laid out by grid** rather than a 1180px flex row, with the same small
-          side margin as the gallery so their edges line up. Below `md` the field takes
-          the whole row and the chips scroll on the line under it; from `md` the field is a column
-          of up to 390px, the reference's width, and the chips take the rest. */}
+          side margin as the gallery so their edges line up. Below `xl` the field takes the whole
+          row and the domain chips wrap on the lines under it; from `xl` (2026-10-08, was `md`) the
+          field is a column of up to 390px, the reference's width, and the chips take the rest. At
+          `md` the chips' column was so narrow they wrapped into six rows. */}
       <div className="relative min-w-0">
         <form action="/themes" method="get" role="search" className="relative">
           <label htmlFor="search" className="sr-only">
@@ -145,19 +160,30 @@ export function Search() {
         )}
       </div>
 
-      <div className="min-w-0 flex-1 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <ul className="flex flex-nowrap items-center gap-[8px]">
-          {THEMES.map((theme, i) => (
-            <li key={theme.id} className="shrink-0">
-              {/* Each chip carries a dot in the next accent, so the strip reads as a palette of
-                  themes; the hover tints the chip in that same accent. */}
-              <Link
-                href={`/themes/${theme.id}`}
-                className={`${BODY_2} inline-flex items-center gap-[6px] whitespace-nowrap rounded-[8px] border border-[var(--store-card-border)] bg-white px-[12px] py-[8px] font-medium text-[var(--store-neutral-100)] transition-colors duration-150 ${accentAt(i).border} ${accentAt(i).hoverSoft}`}
+      <div role="group" aria-label="Filter themes by domain" className="min-w-0 flex-1">
+        <ul className="flex flex-wrap items-center gap-[8px]">
+          <li>
+            <button
+              type="button"
+              aria-pressed={domain === null}
+              onClick={() => setDomain(null)}
+              className={`${DOMAIN_CHIP} ${domain === null ? "border-[var(--store-primary-40)] bg-[var(--store-primary-10)] text-[var(--store-primary-40)]" : "border-[var(--store-card-border)] hover:border-[var(--store-primary-40)]"}`}
+            >
+              All
+            </button>
+          </li>
+          {USE_CASES.map((u, i) => (
+            <li key={u.id}>
+              {/* Each chip keeps a dot in the next accent, and the hover tints it in that accent. */}
+              <button
+                type="button"
+                aria-pressed={domain === u.id}
+                onClick={() => setDomain(domain === u.id ? null : u.id)}
+                className={`${DOMAIN_CHIP} ${domain === u.id ? "border-[var(--store-primary-40)] bg-[var(--store-primary-10)] text-[var(--store-primary-40)]" : `border-[var(--store-card-border)] ${accentAt(i).border} ${accentAt(i).hoverSoft}`}`}
               >
                 <span aria-hidden="true" className={`${accentAt(i).solid} size-[8px] shrink-0 rounded-full`} />
-                {theme.label}
-              </Link>
+                {u.label}
+              </button>
             </li>
           ))}
         </ul>

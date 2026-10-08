@@ -1,7 +1,6 @@
 import Link from "next/link";
 
-import { Masonry } from "./masonry";
-import { GALLERY_CARDS } from "./screen-cards";
+import { GalleryWall } from "./gallery-wall";
 
 /**
  * The gallery under the hero: a loose wall of screenshot cards, then a "browse all" button.
@@ -22,7 +21,7 @@ import { GALLERY_CARDS } from "./screen-cards";
 export function Gallery() {
   return (
     <section className="mt-[var(--tn-space-lg)] px-[var(--tn-space-sm)] md:mx-[var(--tn-space-xs)] lg:mx-[var(--tn-space-md)]">
-      <Masonry cards={GALLERY_CARDS} />
+      <GalleryWall />
       <div className="mt-[var(--tn-space-sm)] flex justify-center">
         <Link
           href="/themes"

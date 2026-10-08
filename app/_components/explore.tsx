@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { Glyph } from "./composer";
 import { Masonry, type MasonryCard } from "./masonry";
-import { GALLERY_CARDS, LANDING_CARDS } from "./screen-cards";
+import { EXPLORE_CARDS, LANDING_CARDS } from "./screen-cards";
 import { FONT } from "./type";
 
 /**
@@ -12,8 +12,9 @@ import { FONT } from "./type";
  *
  * Opened by the style step's Explore themes button. The layout is the design's: the title, a row of
  * category tabs, then the themes. **The themes are the home page's masonry**, not the design's
- * two-column card grid (by request): the same `Masonry`, the same cards from `screen-cards.ts`, Free
+ * two-column card grid (by request): the same `Masonry` and card builder from `screen-cards.ts`, Free
  * and Pro tags, and Preview and Download on hover, so a screen looks the same here as on the home page.
+ * **Each tab shows at most ten**, the chat brief's curated ten (`EXPLORE_CARDS`, § 4 and § 11).
  *
  * **The tabs are the brief's categories** (§ 3): Dashboard UI first and selected, Landing Page, and
  * the two that are not built yet, Email Templates and Docker, shown at the design's 40% and
@@ -33,7 +34,7 @@ const CATEGORIES: readonly {
   readonly label: string;
   readonly cards?: readonly MasonryCard[];
 }[] = [
-  { id: "dashboard", label: "Dashboard UI", cards: GALLERY_CARDS },
+  { id: "dashboard", label: "Dashboard UI", cards: EXPLORE_CARDS },
   { id: "landing", label: "Landing Page", cards: LANDING_CARDS },
   { id: "email", label: "Email Templates . soon" },
   { id: "docker", label: "Docker . soon" },
