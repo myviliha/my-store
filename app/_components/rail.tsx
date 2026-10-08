@@ -20,10 +20,11 @@ import {
 } from "@/app/_vendor/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { type ComponentType, useState } from "react";
+import { type ComponentType, useEffect, useRef, useState } from "react";
 
 import { ASSETS } from "@/src/data/assets";
 
+import { setDrawer, useDrawer } from "./drawer-store";
 import { accentAt, FONT } from "./type";
 
 /**
@@ -274,15 +275,82 @@ function Divider() {
   );
 }
 
+/** The phone breakpoint, below Tailwind's `md`: the rail is a drawer there, not a column. */
+const PHONE = "(max-width: 767px)";
+/** The tablet band, `md` to below `lg`: the rail starts folded to its icons there. */
+const TABLET = "(min-width: 768px) and (max-width: 1023px)";
+
+/**
+ * **Responsive** (2026-10-08, after the Figma tablet and mobile frames):
+ *
+ * - **Desktop** (`lg` and up): as before, open, foldable to its 60px icons.
+ * - **Tablet** (`md` to `lg`): it **starts folded**, so the content keeps its width; the reader can
+ *   still unfold it. Decided once on load, so a reader's own choice is never overridden afterwards.
+ * - **Phone** (below `md`): it is a **drawer**, off-screen until the top bar's menu button opens it
+ *   (`drawer-store.ts`). Always unfolded there, 264px, over a dimmed backdrop. It closes on its
+ *   close button, the backdrop, Escape or any link, the page behind cannot scroll while it is open,
+ *   and while closed it is `inert`, so no hidden link takes keyboard focus. Focus moves to its close
+ *   button on open and back to the menu button on close.
+ */
 export function Rail() {
-  const [collapsed, setCollapsed] = useState(false);
+  /** The reader's fold choice; on a phone the drawer ignores it and is always unfolded. */
+  const [folded, setCollapsed] = useState(false);
+  const [phone, setPhone] = useState(false);
+  const drawer = useDrawer();
+  const closeButton = useRef<HTMLButtonElement>(null);
+  const collapsed = !phone && folded;
   const path = usePathname() ?? "/";
+
+  useEffect(() => {
+    const q = window.matchMedia(PHONE);
+    const sync = () => {
+      setPhone(q.matches);
+      if (!q.matches) setDrawer(false);
+    };
+    sync();
+    if (window.matchMedia(TABLET).matches) setCollapsed(true);
+    q.addEventListener("change", sync);
+    return () => q.removeEventListener("change", sync);
+  }, []);
+
+  /* A link followed closes the drawer, even one to the page already open. */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: closes on every navigation
+  useEffect(() => {
+    setDrawer(false);
+  }, [path]);
+
+  useEffect(() => {
+    if (!drawer) return;
+    const root = document.documentElement;
+    const before = root.style.overflow;
+    root.style.overflow = "hidden";
+    closeButton.current?.focus();
+    const key = (e: KeyboardEvent) => e.key === "Escape" && setDrawer(false);
+    window.addEventListener("keydown", key);
+    return () => {
+      root.style.overflow = before;
+      window.removeEventListener("keydown", key);
+      document.getElementById("rail-menu-button")?.focus();
+    };
+  }, [drawer]);
   const activeMain = activeOf(MAIN, path);
   const activeMore = activeOf(MORE, path);
 
   return (
+    <>
+    {/* The phone drawer's backdrop: tapping it closes the drawer. */}
+    <div
+      aria-hidden="true"
+      onClick={() => setDrawer(false)}
+      className={`fixed inset-0 z-40 bg-[#0c0c0c66] transition-opacity duration-300 motion-reduce:transition-none md:hidden ${drawer ? "opacity-100" : "pointer-events-none opacity-0"}`}
+    />
     <aside
-      className={`sticky top-0 flex h-dvh shrink-0 flex-col overflow-clip bg-gradient-to-b from-[var(--store-primary-10)] via-[var(--store-primary-10)] to-[var(--tn-accent-violet-soft)] px-[8px] py-[16px] shadow-[inset_-1px_0_0_var(--store-primary-20)] ${RAIL_MOTION} ${collapsed ? RAIL_COLLAPSED : RAIL_EXPANDED}`}
+      id="rail"
+      inert={phone && !drawer}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest("a")) setDrawer(false);
+      }}
+      className={`sticky top-0 flex h-dvh shrink-0 flex-col overflow-clip bg-gradient-to-b from-[var(--store-primary-10)] via-[var(--store-primary-10)] to-[var(--tn-accent-violet-soft)] px-[8px] py-[16px] shadow-[inset_-1px_0_0_var(--store-primary-20)] ${RAIL_MOTION} ${collapsed ? RAIL_COLLAPSED : RAIL_EXPANDED} max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:w-[264px] max-md:shadow-[0_0_40px_-8px_#0c0c0c40] max-md:transition-transform max-md:duration-300 ${drawer ? "max-md:translate-x-0" : "max-md:-translate-x-full"}`}
     >
       {/*
        * **Collapsed, the brand slot is the toggle** (`SD-212`). The reference shows its square
@@ -357,7 +425,7 @@ export function Rail() {
               onClick={() => setCollapsed(true)}
               aria-expanded
               aria-label="Collapse the menu"
-              className="flex shrink-0 cursor-pointer items-center rounded-[8px] px-[10px] py-[8px] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-20)]"
+              className="flex shrink-0 cursor-pointer items-center rounded-[8px] px-[10px] py-[8px] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-20)] max-md:hidden"
             >
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
                 <path
@@ -373,6 +441,18 @@ export function Rail() {
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
+              </svg>
+            </button>
+            {/* On a phone the rail is a drawer, and the control here closes it. */}
+            <button
+              ref={closeButton}
+              type="button"
+              onClick={() => setDrawer(false)}
+              aria-label="Close the menu"
+              className="flex size-[36px] shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-20)] md:hidden"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
               </svg>
             </button>
           </>
@@ -457,5 +537,6 @@ export function Rail() {
         </Link>
       </div>
     </aside>
+    </>
   );
 }

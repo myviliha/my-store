@@ -1,8 +1,10 @@
 "use client";
 
+import { VoiletWordmark } from "@/app/_vendor/voilet-wordmark";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { setDrawer, useDrawer } from "./drawer-store";
 import { BUTTON_PRIMARY, FONT } from "./type";
 
 /**
@@ -30,8 +32,15 @@ import { BUTTON_PRIMARY, FONT } from "./type";
  * The same `.15s` on `cubic-bezier(.4,0,.2,1)` as everything else here, and `overflow-hidden` on the
  * box so the field is clipped rather than spilling while the width is still animating.
  */
+/**
+ * **On a phone the bar carries the brand and the menu** (2026-10-08, after the Figma mobile frames):
+ * the rail is a drawer there, so the wordmark moves into the bar on the left and a menu button on
+ * the right opens the drawer. Search, Pricing and Sign up are hidden below `md`: Pricing and Sign in
+ * are in the drawer, and the home page has its own theme search. Tablet and desktop are unchanged.
+ */
 export function TopBar() {
   const [open, setOpen] = useState(false);
+  const drawer = useDrawer();
   const field = useRef<HTMLInputElement>(null);
 
   /* Focus follows the expansion rather than racing it: a field focused while its box is still zero
@@ -47,11 +56,14 @@ export function TopBar() {
      * the content by space rather than a line, which is why a line reads as an extra band: with the
      * rail beside it there is already an edge doing that work.
      */
-    <div className="flex h-[56px] w-full items-center justify-end gap-[16px] px-[24px]">
+    <div className="flex h-[56px] w-full items-center justify-between gap-[16px] px-[16px] md:justify-end md:px-[24px]">
+      <Link href="/" aria-label="Voilet home" className="flex items-center md:hidden">
+        <VoiletWordmark size="rail" />
+      </Link>
       {/* `justify-end` inside, so the field's right edge stays under the icon and the box grows to
           the left rather than pushing the controls beside it. */}
       <div
-        className={`flex justify-end overflow-hidden transition-[width] duration-150 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none ${open ? "w-[320px] max-w-[50vw]" : "w-0"}`}
+        className={`flex justify-end overflow-hidden max-md:hidden transition-[width] duration-150 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none ${open ? "w-[320px] max-w-[50vw]" : "w-0"}`}
       >
         <input
           ref={field}
@@ -72,7 +84,7 @@ export function TopBar() {
         aria-label={open ? "Close search" : "Search themes"}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="flex size-[32px] shrink-0 cursor-pointer items-center justify-center rounded-full text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-10)]"
+        className="flex size-[32px] shrink-0 max-md:hidden cursor-pointer items-center justify-center rounded-full text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-10)]"
       >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <circle cx="9" cy="9" r="6" stroke="currentColor" strokeWidth="1.6" />
@@ -89,7 +101,7 @@ export function TopBar() {
           than anybody's brand, so it stays. */}
       <Link
         href="/pricing"
-        className={BUTTON_PRIMARY}
+        className={`${BUTTON_PRIMARY} max-md:hidden`}
       >
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path
@@ -104,10 +116,26 @@ export function TopBar() {
 
       <Link
         href="/login"
-        className={`${FONT} shrink-0 text-[length:var(--store-body-2)] font-medium leading-[1.5] text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)]`}
+        className={`${FONT} shrink-0 text-[length:var(--store-body-2)] font-medium leading-[1.5] text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)] max-md:hidden`}
       >
         Sign up
       </Link>
+
+      <button
+        id="rail-menu-button"
+        type="button"
+        aria-label="Open the menu"
+        aria-controls="rail"
+        aria-expanded={drawer}
+        onClick={() => setDrawer(true)}
+        className="flex size-[40px] shrink-0 cursor-pointer items-center justify-center rounded-[8px] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-primary-10)] md:hidden"
+      >
+        {/* The rail's own glyph, pointing the way the drawer comes in from. */}
+        <svg width="22" height="22" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+          <path d="M1.47 11.15h7.6M1.47 7.69H7M1.47 4.23h7.6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M13 4.6 10.6 7 13 9.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
     </div>
   );
 }

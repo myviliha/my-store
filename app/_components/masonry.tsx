@@ -35,7 +35,7 @@ export interface MasonryCard {
  * hole under every short card. Dealing by hand is the only way to have both.
  *
  * **The column count is measured, not a breakpoint**: as many 220px columns as the width fits,
- * never fewer than two, so a full-width gallery on a wide screen gains columns instead of stretching
+ * down to one on a phone, so a full-width gallery on a wide screen gains columns instead of stretching
  * its cards into banners. Each card goes to the **shortest column so far**, and the heights are
  * known before any image loads because the ratio is on the card, so nothing reflows as they arrive.
  *
@@ -123,7 +123,9 @@ export function Masonry({ cards }: { cards: readonly MasonryCard[] }) {
     if (!el) return;
     const observer = new ResizeObserver(([entry]) => {
       const width = entry?.contentRect.width ?? 0;
-      setCount(Math.max(2, Math.floor((width + GAP) / (MIN_COLUMN + GAP))));
+      /* One column is allowed (2026-10-08): on a phone two 160px columns made every screenshot a
+         thumbnail, and the Figma mobile frame shows one card across. */
+      setCount(Math.max(1, Math.floor((width + GAP) / (MIN_COLUMN + GAP))));
     });
     observer.observe(el);
     return () => observer.disconnect();

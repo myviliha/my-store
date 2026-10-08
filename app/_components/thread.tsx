@@ -965,8 +965,11 @@ export function Thread({
       <div ref={body} className="flex min-h-0 flex-1 gap-0">
         {split2 ? (
           <>
+            {/* Below `lg` the chat and the side panel are tabs: the whole column goes when the side
+                panel's tab is chosen, not just the chat inside it, or its 46% split width stayed
+                behind empty and squeezed the panel into half a phone (2026-10-08). */}
             <div
-              className="flex min-h-0 min-w-0 max-lg:flex-1"
+              className={`flex min-h-0 min-w-0 max-lg:flex-1 ${tab === "side" ? "max-lg:hidden" : ""}`}
               style={{ flexBasis: `${split}%` }}
             >
               {chat}

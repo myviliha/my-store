@@ -335,8 +335,11 @@ export function Composer({
         ) : null}
       </div>
       {/* `prompt-actions`: the reference's row is space-between with a 10px gap, pushed to the
-          card's foot by `margin-top: auto`; here the textarea's `flex-1` does the pushing. */}
-      <div className="mt-auto flex shrink-0 items-center justify-between gap-[10px] border-t border-[var(--store-neutral-40)] px-[var(--tn-space-sm)] md:h-[60px]">
+          card's foot by `margin-top: auto`; here the textarea's `flex-1` does the pushing.
+          **Below `md` it has 8px above and below** (2026-10-08): with no height there, the row
+          shrank to its tallest button and the buttons pressed against the rule and the card's foot.
+          From `md` it is the fixed 60px it always was. */}
+      <div className="mt-auto flex shrink-0 items-center justify-between gap-[10px] border-t border-[var(--store-neutral-40)] px-[var(--tn-space-sm)] py-[var(--tn-space-2xs)] md:h-[60px] md:py-0">
         <div className="flex flex-wrap items-center gap-x-[var(--tn-space-2xs)] gap-y-[var(--tn-space-2xs)] md:gap-x-[20px]">
           <div className="relative">
             <button
@@ -429,7 +432,10 @@ export function Composer({
                 <circle cx="15" cy="8" r="2.5" fill="white" />
                 <circle cx="9" cy="16" r="2.5" fill="white" />
               </Glyph>
-              {tool ? TOOLS.find((t) => t.id === tool)?.title : "Tools"}
+              {/* Below `sm` the label is read, not shown, so the row fits a phone (2026-10-08). */}
+              <span className="max-sm:sr-only">
+                {tool ? TOOLS.find((t) => t.id === tool)?.title : "Tools"}
+              </span>
             </button>
             <Panel open={menu === "tools"} onClose={close} label="What should Voilet generate?" width={392}>
               {TOOLS.map((t) => (
@@ -462,7 +468,7 @@ export function Composer({
                 <circle cx="12" cy="12" r="9.25" />
                 <path d="M9.5 7.5h3.2a2.2 2.2 0 0 1 0 4.4H9.5zM9.5 11.9h3.6a2.3 2.3 0 0 1 0 4.6H9.5z" />
               </Glyph>
-              {brand || "Brand"}
+              <span className="max-sm:sr-only">{brand || "Brand"}</span>
             </button>
             <Panel open={menu === "brand"} onClose={close} label="Apply your brand" width={336}>
               <div className="border-t border-[var(--store-neutral-40)] px-[8px] py-[10px]">
@@ -495,7 +501,7 @@ export function Composer({
               onClick={() => toggle("model")}
               className={ROW_BUTTON}
             >
-              <span className="max-w-[140px] truncate">{model?.name ?? "Voilet"}</span>
+              <span className="max-w-[140px] truncate max-sm:sr-only">{model?.name ?? "Voilet"}</span>
               <ChevronDown width={16} height={16} aria-hidden="true" />
             </button>
             <ModelPicker
@@ -542,7 +548,7 @@ export function Composer({
                 <path d="M12 3l1.9 5.6L19.5 10.5l-5.6 1.9L12 18l-1.9-5.6L4.5 10.5l5.6-1.9zM19 16l.7 2.1L21.8 19l-2.1.7L19 22l-.7-2.3L16.2 19l2.1-.9z" />
               </Glyph>
             </span>
-            <span className="leading-none">{busy ? "Voilet is working" : "Generate"}</span>
+            <span className="leading-none max-sm:sr-only">{busy ? "Voilet is working" : "Generate"}</span>
           </button>
         </div>
       </div>
