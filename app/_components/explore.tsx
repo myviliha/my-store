@@ -43,7 +43,14 @@ const CATEGORIES: readonly {
 const TAB =
   "inline-flex h-[39px] shrink-0 items-center justify-center rounded-[50px] border bg-white px-[17px] py-[12px] font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap text-[#111418] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] disabled:cursor-not-allowed disabled:opacity-40";
 
-export function Explore({ onClose }: { onClose: () => void }) {
+export function Explore({
+  onClose,
+  onPreview,
+}: {
+  onClose: () => void;
+  /** A card's Preview opens that theme's preview in this same panel (`ThemePreview`). */
+  onPreview: (card: MasonryCard) => void;
+}) {
   const [category, setCategory] = useState<Category>("dashboard");
   const cards = CATEGORIES.find((c) => c.id === category)?.cards ?? [];
 
@@ -102,7 +109,7 @@ export function Explore({ onClose }: { onClose: () => void }) {
         role="tabpanel"
         className="-mt-[4px] min-h-0 flex-1 overflow-y-auto overscroll-contain pt-[4px] pr-[2px]"
       >
-        <Masonry key={category} cards={cards} />
+        <Masonry key={category} cards={cards} onPreview={onPreview} />
       </div>
     </aside>
   );

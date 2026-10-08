@@ -5,7 +5,7 @@ import { ASSETS, type Asset, type AssetKind, assetBySlug, KIND_COLLECTION } from
 import type { MasonryCard } from "./masonry";
 import { tierOf } from "@/src/entitlement-core";
 
-import { FRAMEWORKS, pagesOf, useCaseOf } from "./recipe";
+import { FRAMEWORKS, pagesOf, USE_CASES, useCaseOf } from "./recipe";
 
 /**
  * The frameworks a screen ships in, **read from `AVAILABLE`, not typed**: every screen is built in
@@ -81,6 +81,8 @@ export const toCards = (screens: readonly Asset[]): readonly MasonryCard[] =>
     const theme = DEMO_THEMES[i % DEMO_THEMES.length] ?? { id: "voilet", label: "Voilet" };
     return {
       key: screen.slug,
+      slug: screen.slug,
+      theme,
       href: `${KIND_COLLECTION[screen.kind]}/${screen.slug}`,
       /* There is no per-screen download: a screen ships inside a theme. `/download` is the page
          that explains what a download contains and starts one. */
@@ -148,3 +150,29 @@ export const LANDING_CARDS: readonly MasonryCard[] = toCards(
  */
 export const domainCards = (domain: string): readonly MasonryCard[] =>
   toCards(pagesOf(useCaseOf(domain)));
+
+/**
+ * The pages a theme preview shows as thumbnails (2026-10-08): the screen the card showed first, then
+ * the other screens of the first domain that includes it (`USE_CASES`), so a "CRM" card's preview
+ * walks through CRM's own pages. A screen in no domain falls back to the Explore set. Four at most,
+ * the number the Figma preview strip shows.
+ */
+export const PREVIEW_PAGES = 4;
+
+/**
+ * The pages a theme preview is about: the screen the card showed first, then the rest of the first
+ * domain that includes it (`USE_CASES`), so a CRM card's preview is about CRM's pages. A screen in no
+ * domain falls back to the Explore set. All of them, for "What's in this preview"; the thumbnails
+ * take the first `PREVIEW_PAGES`.
+ */
+export const themePages = (slug: string): readonly Asset[] => {
+  const own = assetBySlug(slug);
+  const domain = USE_CASES.find((u) => u.slugs.includes(slug));
+  const pool = domain
+    ? pagesOf(domain)
+    : EXPLORE_SLUGS.map((s) => assetBySlug(s)).filter((a): a is Asset => Boolean(a));
+  return [...(own ? [own] : []), ...pool.filter((a) => a.slug !== slug)];
+};
+
+export const relatedScreens = (slug: string): readonly Asset[] =>
+  themePages(slug).slice(0, PREVIEW_PAGES);

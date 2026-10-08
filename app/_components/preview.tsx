@@ -225,7 +225,7 @@ export function Preview({
  * another page starts a fresh state rather than resetting one in an effect that can lose the race
  * with a cached image's `load`.
  */
-function Shot({ src, title, width, height }: { src: string; title: string; width: number; height: number }) {
+export function Shot({ src, title, width, height }: { src: string; title: string; width: number; height: number }) {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   return (
     <div className="relative min-h-[200px]">

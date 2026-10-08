@@ -312,8 +312,12 @@ export function Composer({
           onChange={(e) => onChange(e.target.value)}
           /* Enter sends and Shift+Enter breaks the line, which is what a composer that looks like a
              chat box is expected to do. Without it the only way to send is the button, and a reader
-             who presses Enter gets a newline and no answer. */
+             who presses Enter gets a newline and no answer.
+             **Not while an input method is composing** (2026-10-08): with Vietnamese Telex, Japanese
+             and the like, the first Enter only commits the composed word, and sending on it sent
+             the message twice. `isComposing` is the standard flag; keyCode 229 is Safari's. */
           onKeyDown={(e) => {
+            if (e.nativeEvent.isComposing || e.keyCode === 229) return;
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
               if (!empty && !busy) onSubmit();

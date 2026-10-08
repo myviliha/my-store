@@ -11,6 +11,10 @@ import { BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY } from "./type";
 
 export interface MasonryCard {
   readonly key: string;
+  /** The screen the card shows, by slug. */
+  readonly slug: string;
+  /** The theme the card is titled with (see `screen-cards.ts`). */
+  readonly theme: { readonly id: string; readonly label: string };
   /** The screen's own page, which is what Preview opens. */
   readonly href: string;
   /** Where Download goes. */
@@ -114,7 +118,18 @@ const deal = (cards: readonly MasonryCard[], count: number): MasonryCard[][] => 
   return columns;
 };
 
-export function Masonry({ cards }: { cards: readonly MasonryCard[] }) {
+export function Masonry({
+  cards,
+  onPreview,
+}: {
+  cards: readonly MasonryCard[];
+  /**
+   * Opens a card's preview in place (2026-10-08). Given, Preview, the image and the name call it
+   * (the Explore panel opens the theme preview beside the chat); not given, they link to the
+   * screen's page as before (the home page).
+   */
+  onPreview?: (card: MasonryCard) => void;
+}) {
   const grid = useRef<HTMLDivElement>(null);
   const [count, setCount] = useState(4);
 
@@ -149,16 +164,33 @@ export function Masonry({ cards }: { cards: readonly MasonryCard[] }) {
                 className="relative overflow-hidden rounded-[var(--tn-radius-xl)] border border-[var(--store-neutral-50)] bg-[var(--store-neutral-40)] transition-transform duration-300 group-hover:-translate-y-1"
                 style={{ aspectRatio: `${card.ratio[0]} / ${card.ratio[1]}` }}
               >
-                <Link href={card.href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
-                  <Image
-                    src={card.src}
-                    alt=""
-                    fill
-                    sizes={`(min-width: 640px) ${Math.round(100 / count)}vw, 50vw`}
-                    className="object-cover object-top"
-                    priority={row === 0}
-                  />
-                </Link>
+                {(() => {
+                  const image = (
+                    <Image
+                      src={card.src}
+                      alt=""
+                      fill
+                      sizes={`(min-width: 640px) ${Math.round(100 / count)}vw, 50vw`}
+                      className="object-cover object-top"
+                      priority={row === 0}
+                    />
+                  );
+                  return onPreview ? (
+                    <button
+                      type="button"
+                      tabIndex={-1}
+                      aria-hidden="true"
+                      onClick={() => onPreview(card)}
+                      className="absolute inset-0 cursor-pointer"
+                    >
+                      {image}
+                    </button>
+                  ) : (
+                    <Link href={card.href} tabIndex={-1} aria-hidden="true" className="absolute inset-0">
+                      {image}
+                    </Link>
+                  );
+                })()}
                 <span
                   className={`${BODY_3} ${TAG[card.tier].className} pointer-events-none absolute right-[8px] top-[8px] z-[1] rounded-full border px-[8px] py-[1px] font-semibold shadow-[0_2px_6px_#0c0c0c1f]`}
                 >
@@ -169,14 +201,26 @@ export function Masonry({ cards }: { cards: readonly MasonryCard[] }) {
                   className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 transition-opacity duration-300 group-has-[:focus-visible]:opacity-100 group-hover:opacity-100"
                 />
                 <div className="pointer-events-none absolute inset-x-[8px] bottom-[8px] flex gap-[6px] opacity-0 transition-opacity duration-300 group-has-[:focus-visible]:pointer-events-auto group-has-[:focus-visible]:opacity-100 group-hover:pointer-events-auto group-hover:opacity-100">
-                  <Link
-                    href={card.href}
-                    aria-label={`Preview ${card.title}`}
-                    className={`${BUTTON_SECONDARY} min-w-0 flex-1 border-transparent`}
-                  >
-                    <Eye aria-hidden="true" className="size-[14px] shrink-0" />
-                    Preview
-                  </Link>
+                  {onPreview ? (
+                    <button
+                      type="button"
+                      onClick={() => onPreview(card)}
+                      aria-label={`Preview ${card.title}`}
+                      className={`${BUTTON_SECONDARY} min-w-0 flex-1 border-transparent`}
+                    >
+                      <Eye aria-hidden="true" className="size-[14px] shrink-0" />
+                      Preview
+                    </button>
+                  ) : (
+                    <Link
+                      href={card.href}
+                      aria-label={`Preview ${card.title}`}
+                      className={`${BUTTON_SECONDARY} min-w-0 flex-1 border-transparent`}
+                    >
+                      <Eye aria-hidden="true" className="size-[14px] shrink-0" />
+                      Preview
+                    </Link>
+                  )}
                   <Link
                     href={card.download}
                     aria-label={`Download ${card.title}`}
@@ -191,13 +235,24 @@ export function Masonry({ cards }: { cards: readonly MasonryCard[] }) {
                   name left, tags right; where both do not fit, the tags wrap under the name rather
                   than cutting it off. */}
               <div className="mt-[var(--tn-space-2xs)] flex flex-wrap items-start justify-between gap-x-[8px] gap-y-[6px]">
-                <Link
-                  href={card.href}
-                  tabIndex={-1}
-                  className={`${BODY_3} block min-w-0 max-w-full truncate text-left font-semibold text-[var(--store-neutral-100)]`}
-                >
-                  {card.title}
-                </Link>
+                {onPreview ? (
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => onPreview(card)}
+                    className={`${BODY_3} block min-w-0 max-w-full cursor-pointer truncate text-left font-semibold text-[var(--store-neutral-100)]`}
+                  >
+                    {card.title}
+                  </button>
+                ) : (
+                  <Link
+                    href={card.href}
+                    tabIndex={-1}
+                    className={`${BODY_3} block min-w-0 max-w-full truncate text-left font-semibold text-[var(--store-neutral-100)]`}
+                  >
+                    {card.title}
+                  </Link>
+                )}
                 <FrameworkTags frameworks={card.frameworks} />
               </div>
             </li>

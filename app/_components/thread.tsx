@@ -15,7 +15,9 @@ import {
 import { Composer, Glyph } from "./composer";
 import type { CardRect } from "./conversation";
 import { Explore } from "./explore";
+import type { MasonryCard } from "./masonry";
 import { Preview } from "./preview";
+import { ThemePreview } from "./theme-preview";
 import { nextStep, parse, promptFor, type Recipe, type Step } from "./recipe";
 import { type Answer, DownloadCard, StepCard } from "./recipe-ui";
 import { BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
@@ -292,6 +294,8 @@ function ReaderBubble({
             value={value}
             onChange={(e) => setValue(e.target.value)}
             onKeyDown={(e) => {
+              /* An input method's Enter commits its word; it does not send (see `Composer`). */
+              if (e.nativeEvent.isComposing || e.keyCode === 229) return;
               if (e.key === "Escape") {
                 e.preventDefault();
                 close();
@@ -530,11 +534,24 @@ export function Thread({
    * What the space beside the conversation shows: the recipe's preview, the Explore Themes panel
    * (opened from the style step), or nothing. One at a time, in the same resizable split.
    */
-  const [side, setSide] = useState<"preview" | "explore" | null>(null);
+  const [side, setSide] = useState<"preview" | "explore" | "theme" | null>(null);
+  /** The card whose theme the "theme" panel previews, opened from Explore. */
+  const [themeCard, setThemeCard] = useState<MasonryCard | null>(null);
   /** Below `lg` the chat and the side panel share the screen as tabs. */
   const [tab, setTab] = useState<"chat" | "side">("chat");
   const [split, setSplit] = useState(SPLIT_DEFAULT);
-  const [draft, setDraft] = useState("");
+  const [draft, setDraftState] = useState("");
+  /**
+   * The draft, readable and clearable the instant it is sent (2026-10-08). `send` read `draft` from
+   * state, and two submits in one moment (an input method's double Enter) both saw the old text
+   * before React re-rendered, so the message and its reply went out twice. Reading and clearing this
+   * ref first makes the second submit find nothing to send.
+   */
+  const draftRef = useRef("");
+  const setDraft = (next: string) => {
+    draftRef.current = next;
+    setDraftState(next);
+  };
   const foot = useRef<HTMLDivElement>(null);
   const dock = useRef<HTMLFormElement>(null);
   /** The scrolling list of messages, which is what `data-pointer` is set on. */
@@ -638,7 +655,7 @@ export function Thread({
     turn(echo, { ...recipe, ...patch });
 
   const send = () => {
-    const text = draft.trim();
+    const text = draftRef.current.trim();
     if (text === "" || busy.current) return;
     setDraft("");
     const { next, lead } = read(text, recipe);
@@ -787,6 +804,29 @@ export function Thread({
     };
   }, [turns.length, pending, streaming === null]);
 
+  /**
+   * **Opening or closing a side panel keeps the latest message in view** (2026-10-08). The chat's
+   * column changes width (and on a phone, visibility), its text reflows, and a reader who was at
+   * the latest message would otherwise find themselves somewhere above it. Pinned before paint, so
+   * the jump is never seen. Someone reading further up is left where they were.
+   */
+  const atBottom = useRef(true);
+  useEffect(() => {
+    const el = list.current;
+    if (!el) return;
+    const track = () => {
+      atBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+    };
+    track();
+    el.addEventListener("scroll", track, { passive: true });
+    return () => el.removeEventListener("scroll", track);
+  }, []);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-pinned when the layout changes
+  useLayoutEffect(() => {
+    const el = list.current;
+    if (el && atBottom.current) el.scrollTop = el.scrollHeight;
+  }, [side, tab]);
+
   /* While a reply streams, the view follows its last line down; `auto`, because a smooth scroll
      restarted on every word never arrives. When it completes, `pending` drops and the effect above
      brings its cards into view. */
@@ -830,6 +870,20 @@ export function Thread({
   const closeSide = () => {
     setSide(null);
     setTab("chat");
+  };
+  const previewTheme = (card: MasonryCard) => {
+    setThemeCard(card);
+    setSide("theme");
+    setTab("side");
+  };
+  /**
+   * "Use this theme": the theme becomes the recipe's design, as the reader's answer (brief § 4:
+   * applied "only after the user chooses Use this theme"). The panel closes so the reply is seen;
+   * a theme the plan does not allow is asked about by the design step, never switched silently.
+   */
+  const applyTheme = (theme: MasonryCard["theme"]) => {
+    closeSide();
+    turn(`Use the ${theme.label} theme`, { ...recipe, design: theme.id });
   };
 
   const chat = (
@@ -950,7 +1004,7 @@ export function Thread({
                 onClick={() => setTab(v)}
                 className={`${FONT} cursor-pointer rounded-full px-[14px] py-[5px] text-[length:var(--store-body-3)] font-semibold ${tab === v ? "bg-white text-[var(--store-primary-40)] shadow-[0_1px_3px_#0c0c0c1a]" : "text-[var(--store-neutral-80)]"}`}
               >
-                {v === "chat" ? "Chat" : side === "explore" ? "Themes" : "Preview"}
+                {v === "chat" ? "Chat" : side === "preview" ? "Preview" : "Themes"}
               </button>
             ))}
           </div>
@@ -963,17 +1017,21 @@ export function Thread({
       </p>
 
       <div ref={body} className="flex min-h-0 flex-1 gap-0">
+        {/* **The chat's column is always this same element**, side panel or not (2026-10-08). It
+            used to be the bare chat with no panel and this wrapper with one, two different places in
+            the tree, so opening Explore or Preview threw the chat away and mounted a new one whose
+            scroll started at the top. Only its classes change now.
+            Below `lg` the chat and the side panel are tabs: the whole column goes when the side
+            panel's tab is chosen, or its 46% split width stayed behind empty and squeezed the panel
+            into half a phone. */}
+        <div
+          className={`flex min-h-0 min-w-0 ${split2 ? `max-lg:flex-1 ${tab === "side" ? "max-lg:hidden" : ""}` : "flex-1"}`}
+          style={split2 ? { flexBasis: `${split}%` } : undefined}
+        >
+          {chat}
+        </div>
         {split2 ? (
           <>
-            {/* Below `lg` the chat and the side panel are tabs: the whole column goes when the side
-                panel's tab is chosen, not just the chat inside it, or its 46% split width stayed
-                behind empty and squeezed the panel into half a phone (2026-10-08). */}
-            <div
-              className={`flex min-h-0 min-w-0 max-lg:flex-1 ${tab === "side" ? "max-lg:hidden" : ""}`}
-              style={{ flexBasis: `${split}%` }}
-            >
-              {chat}
-            </div>
             <div
               role="separator"
               aria-orientation="vertical"
@@ -988,11 +1046,20 @@ export function Thread({
             >
               <span className="h-[48px] w-[4px] rounded-full bg-[var(--store-neutral-50)] transition-colors group-hover:bg-[var(--store-primary-40)]" />
             </div>
+            {/* Slides in when it opens (`.tn-panel-in`); `key` replays it when the panel changes. */}
             <div
-              className={`min-h-0 min-w-0 flex-1 ${tab === "chat" ? "max-lg:hidden" : ""}`}
+              key={side}
+              className={`tn-panel-in min-h-0 min-w-0 flex-1 ${tab === "chat" ? "max-lg:hidden" : ""}`}
             >
               {side === "explore" ? (
-                <Explore onClose={closeSide} />
+                <Explore onClose={closeSide} onPreview={previewTheme} />
+              ) : side === "theme" && themeCard ? (
+                <ThemePreview
+                  card={themeCard}
+                  onBack={() => setSide("explore")}
+                  onClose={closeSide}
+                  onApply={applyTheme}
+                />
               ) : preview ? (
                 <Preview
                   recipe={preview.recipe}
@@ -1005,9 +1072,7 @@ export function Thread({
               ) : null}
             </div>
           </>
-        ) : (
-          chat
-        )}
+        ) : null}
       </div>
     </section>
   );

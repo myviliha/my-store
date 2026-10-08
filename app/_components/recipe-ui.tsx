@@ -443,16 +443,14 @@ function VibePicker({
           <span className={STYLE_LABEL}>{v.label}</span>
         </button>
       ))}
+      {/* **A function button, not an answer** (2026-10-08): it only opens the Explore Themes
+          drawer. It sends no message and does not move the conversation on; the style is still
+          chosen with the three buttons beside it. So it stays usable on an answered question too,
+          since opening the drawer changes nothing in the recipe. */}
       <button
         type="button"
-        disabled={!live}
-        /* Answers the question (no style filter) and opens the Explore Themes panel beside the
-           conversation, as the design's button does. */
-        onClick={() => {
-          onAnswer({ patch: { vibe: "any" }, echo: "Explore themes" });
-          onExplore();
-        }}
-        className={`inline-flex h-[39px] shrink-0 items-center gap-[8px] rounded-[50px] border border-dashed border-[var(--store-primary-40)] bg-[var(--store-primary-40)] px-[15px] py-[12px] transition-colors duration-150 enabled:cursor-pointer enabled:hover:bg-[var(--store-primary-50)] disabled:cursor-default ${recipe.vibe === "any" ? "ring-2 ring-[var(--store-primary-20)]" : ""}`}
+        onClick={onExplore}
+        className="inline-flex h-[39px] shrink-0 cursor-pointer items-center gap-[8px] rounded-[50px] border border-dashed border-[var(--store-primary-40)] bg-[var(--store-primary-40)] px-[15px] py-[12px] transition-colors duration-150 hover:bg-[var(--store-primary-50)]"
       >
         <span aria-hidden="true" className="relative size-[12px] shrink-0">
           {/* The design draws the grid 4.86% past its 12px box on every side (13.17px). */}
