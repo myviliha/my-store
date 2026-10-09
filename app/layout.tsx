@@ -17,6 +17,7 @@ import { Aurora } from "./_components/aurora";
 import { Footer } from "./_components/footer";
 import { Rail } from "./_components/rail";
 import { ScatterGlow } from "./_components/scatter-glow";
+import { AuthModal } from "./_components/auth-modal";
 import { TopBar } from "./_components/topbar";
 
 /**
@@ -176,6 +177,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main className="flex-1">{children}</main>
           <Footer />
         </div>
+        {/* Sign in from the rail, Sign up from the top bar (`auth-store.ts`). */}
+        <AuthModal />
         <script
           type="application/ld+json"
           // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD has no other injection point, and this is `JSON.stringify` of objects we built, never user input.

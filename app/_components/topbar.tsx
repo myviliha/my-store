@@ -4,7 +4,9 @@ import { VoiletWordmark } from "@/app/_vendor/voilet-wordmark";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { initialsOf, setAuth, signOut, useUser } from "./auth-store";
 import { setDrawer, useDrawer } from "./drawer-store";
+import { Panel } from "./menu";
 import { BUTTON_PRIMARY, FONT } from "./type";
 
 /**
@@ -41,6 +43,7 @@ import { BUTTON_PRIMARY, FONT } from "./type";
 export function TopBar() {
   const [open, setOpen] = useState(false);
   const drawer = useDrawer();
+  const user = useUser();
   const field = useRef<HTMLInputElement>(null);
 
   /* Focus follows the expansion rather than racing it: a field focused while its box is still zero
@@ -60,8 +63,15 @@ export function TopBar() {
       <Link href="/" aria-label="Voilet home" className="flex items-center md:hidden">
         <VoiletWordmark size="rail" />
       </Link>
-      {/* `justify-end` inside, so the field's right edge stays under the icon and the box grows to
-          the left rather than pushing the controls beside it. */}
+      {/*
+       * HIDDEN FOR NOW (2026-10-09, by request), kept to bring back later: the search, a field that
+       * unrolls to the left of its icon. To restore, delete this note (from its opening brace to the
+       * blank line under it) and the closing brace line after the button. `open`, `field` and the
+       * effect that focuses the field stay in place for it.
+       *
+       * The field's box is `justify-end` inside, so its right edge stays under the icon and it grows
+       * to the left rather than pushing the controls beside it.
+
       <div
         className={`flex justify-end overflow-hidden max-md:hidden transition-[width] duration-150 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none ${open ? "w-[320px] max-w-[50vw]" : "w-0"}`}
       >
@@ -96,9 +106,19 @@ export function TopBar() {
           />
         </svg>
       </button>
+      */}
 
-      {/* The crown is the reference's own mark for the paid tier, and it is a generic glyph rather
-          than anybody's brand, so it stays. */}
+      {/*
+       * HIDDEN FOR NOW (2026-10-09, by request), kept to bring back later: the Pricing button and the
+       * account control (Sign up when signed out, the avatar menu when signed in). To restore, delete
+       * this note (from its opening brace to the blank line under it) and the closing brace line after
+       * the account block. Everything they use stays in place: `AccountMenu`
+       * below, `useUser`, `setAuth`, `Panel` and `BUTTON_PRIMARY`. Sign in is still in the rail.
+       *
+       * Pricing: the crown is the reference's own mark for the paid tier, and it is a generic glyph
+       * rather than anybody's brand, so it stays. Account: signed out it opens the auth modal on
+       * sign-up (`AuthModal`), which links back to sign-in; signed in it is the avatar and its menu.
+
       <Link
         href="/pricing"
         className={`${BUTTON_PRIMARY} max-md:hidden`}
@@ -114,12 +134,18 @@ export function TopBar() {
         Pricing
       </Link>
 
-      <Link
-        href="/login"
-        className={`${FONT} shrink-0 text-[length:var(--store-body-2)] font-medium leading-[1.5] text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)] max-md:hidden`}
-      >
-        Sign up
-      </Link>
+      {user ? (
+        <AccountMenu name={user.name} email={user.email} />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAuth("signup")}
+          className={`${FONT} shrink-0 cursor-pointer text-[length:var(--store-body-2)] font-medium leading-[1.5] text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)] max-md:hidden`}
+        >
+          Sign up
+        </button>
+      )}
+      */}
 
       <button
         id="rail-menu-button"
@@ -136,6 +162,52 @@ export function TopBar() {
           <path d="M13 4.6 10.6 7 13 9.4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
+    </div>
+  );
+}
+
+/**
+ * **The signed-in account, in the bar** (2026-10-09, the full-flow demo): the initials in a gradient
+ * circle, the size of the bar's other round buttons, opening the shared `Panel` with the name, the
+ * email and Sign out. Hidden below `md` with the rest of the bar's right side; on a phone the drawer
+ * shows the account instead (`Rail`).
+ */
+function AccountMenu({ name, email }: { name: string; email: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative shrink-0 max-md:hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-label={`Account: ${name}`}
+        title={name}
+        className={`${FONT} flex size-[32px] cursor-pointer items-center justify-center rounded-full bg-gradient-to-br from-[var(--tn-accent-blue-solid)] to-[var(--tn-accent-violet-solid)] text-[length:var(--store-body-3)] font-semibold text-white transition-[filter] duration-150 hover:brightness-110`}
+      >
+        {initialsOf(name)}
+      </button>
+      <Panel open={open} onClose={() => setOpen(false)} label="Account" heading={false} width={240}>
+        <div className="flex flex-col gap-[2px] px-[8px] pt-[6px] pb-[10px]">
+          <p className={`${FONT} truncate text-[length:var(--store-body-2)] font-semibold text-[var(--store-neutral-100)]`}>
+            {name}
+          </p>
+          <p className={`${FONT} truncate text-[length:var(--store-body-3)] text-[var(--store-neutral-80)]`}>{email}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            setOpen(false);
+            signOut();
+          }}
+          className={`${FONT} flex w-full cursor-pointer items-center gap-[8px] rounded-[8px] px-[8px] py-[8px] text-left text-[length:var(--store-body-2)] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-neutral-30)]`}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H4" />
+          </svg>
+          Sign out
+        </button>
+      </Panel>
     </div>
   );
 }

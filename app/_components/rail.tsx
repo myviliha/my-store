@@ -12,6 +12,7 @@ import {
   FileText,
   Home,
   Layout,
+  Logout,
   Palette,
   Person,
   Reader,
@@ -24,6 +25,7 @@ import { type ComponentType, useEffect, useRef, useState } from "react";
 
 import { ASSETS } from "@/src/data/assets";
 
+import { initialsOf, setAuth, signOut, useUser } from "./auth-store";
 import { setDrawer, useDrawer } from "./drawer-store";
 import { accentAt, FONT } from "./type";
 
@@ -195,6 +197,7 @@ function RailItem({
   index,
   active = false,
   accent = index,
+  onClick,
 }: {
   item: Item;
   collapsed: boolean;
@@ -202,6 +205,8 @@ function RailItem({
   active?: boolean;
   /** Which of the five accents the icon takes. Defaults to the row's position. */
   accent?: number;
+  /** An action rather than a page: the row is a button and `href` is not followed. */
+  onClick?: () => void;
 }) {
   const Glyph = item.icon;
   const body = (
@@ -240,6 +245,13 @@ function RailItem({
   const style = {
     ["--row-accent" as string]: `var(--tn-accent-${accentAt(accent).name}-ink)`,
   };
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={`${className} cursor-pointer`} title={title} style={style}>
+        {body}
+      </button>
+    );
+  }
   return item.external ? (
     <a href={item.href} className={className} title={title} style={style}>
       {body}
@@ -297,6 +309,7 @@ export function Rail() {
   const [folded, setCollapsed] = useState(false);
   const [phone, setPhone] = useState(false);
   const drawer = useDrawer();
+  const user = useUser();
   const closeButton = useRef<HTMLButtonElement>(null);
   const collapsed = !phone && folded;
   const path = usePathname() ?? "/";
@@ -492,31 +505,71 @@ export function Rail() {
 
       <div className="mt-auto flex flex-col gap-[8px] pt-[12px]">
         {/* **The upgrade card**, expanded only: a 60px rail has no room for a sentence, and the
-            button below it still says Upgrade there. The number is `PRO_SCREENS`, counted. */}
+            button below it still says Upgrade there. The number is `PRO_SCREENS`, counted.
+            **Its text is set at its final width and clipped, not re-wrapped** (2026-10-09, by
+            request): the card appears as the rail starts to open, and while the rail widens its two
+            lines used to re-wrap at every frame. `min-w-[150px]` is the text's width in the open
+            192px rail (192 − 16 rail padding − 2 border − 24 card padding), so they are laid out
+            once, at that width, and the card's `overflow-hidden` reveals them as it grows. In the
+            264px phone drawer the text is wider than that and lays out at its own width. */}
         {collapsed ? null : (
           <div className="relative overflow-hidden rounded-[12px] border border-white/60 bg-white/70 p-[12px] shadow-[0_4px_16px_-8px_#7c3aed40]">
             <span
               aria-hidden="true"
               className="pointer-events-none absolute -right-[24px] -top-[24px] size-[80px] rounded-full bg-[var(--tn-accent-violet-solid)] opacity-20 blur-[24px]"
             />
-            <p
-              className={`${FONT} relative text-[length:var(--store-body-3)] font-semibold leading-[1.4] text-[var(--store-neutral-100)]`}
-            >
-              Unlock every screen
-            </p>
-            <p
-              className={`${FONT} relative mt-[2px] text-[11px] leading-[1.45] text-[var(--store-neutral-80)]`}
-            >
-              {PRO_SCREENS} application screens come with Pro.
-            </p>
+            <div className="relative min-w-[150px]">
+              <p
+                className={`${FONT} text-[length:var(--store-body-3)] font-semibold leading-[1.4] text-[var(--store-neutral-100)]`}
+              >
+                Unlock every screen
+              </p>
+              <p className={`${FONT} mt-[2px] text-[11px] leading-[1.45] text-[var(--store-neutral-80)]`}>
+                {PRO_SCREENS} application screens come with Pro.
+              </p>
+            </div>
           </div>
         )}
-        <RailItem
-          item={{ label: "Sign in", href: "/login", icon: Person }}
-          collapsed={collapsed}
-          index={0}
-          accent={1}
-        />
+        {/* Signed out: opens the auth modal on sign-in (`AuthModal`); on a phone the drawer closes
+            under it. Signed in (the full-flow demo): the account, and Sign out. */}
+        {user ? (
+          <>
+            <div
+              title={collapsed ? `${user.name} · ${user.email}` : user.email}
+              className={`${ROW} cursor-default font-semibold text-[var(--store-neutral-100)]`}
+            >
+              <span
+                aria-hidden="true"
+                className="flex size-[18px] shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--tn-accent-blue-solid)] to-[var(--tn-accent-violet-solid)] text-[8px] font-bold leading-none text-white"
+              >
+                {initialsOf(user.name)}
+              </span>
+              <span className="sr-only">Signed in as </span>
+              <Label collapsed={collapsed}>{user.name}</Label>
+            </div>
+            <RailItem
+              item={{ label: "Sign out", href: "/", icon: Logout }}
+              collapsed={collapsed}
+              index={0}
+              accent={1}
+              onClick={() => {
+                setDrawer(false);
+                signOut();
+              }}
+            />
+          </>
+        ) : (
+          <RailItem
+            item={{ label: "Sign in", href: "/login", icon: Person }}
+            collapsed={collapsed}
+            index={0}
+            accent={1}
+            onClick={() => {
+              setDrawer(false);
+              setAuth("signin");
+            }}
+          />
+        )}
         {/* **`justify-center`, and this is the button the dev kept pointing at.** Every row above it
             is left-aligned because a rail is a list and a list aligns on one edge; this is not a
             row, it is the one call to action in the rail, and its mark and word belong in the
