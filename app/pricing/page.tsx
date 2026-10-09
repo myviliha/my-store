@@ -146,19 +146,27 @@ const NOT_CLAIMED = [
 
 /*
  * **Presentation only below this line** (2026-10-09). The page now lives at `/pricing` and wears the
- * home page's look: the `Aurora` glow and the moving gradient headline, accent cards like
- * `Capabilities`, tables in white rounded cards, and the `tn-rise` / `tn-reveal` entrances. Every
- * sentence, number and row above is unchanged and still the source of the text.
+ * home page's look: the site's glow and the moving gradient headline, every card and table in the
+ * same frosted glass (`GLASS_SURFACE`), and the `tn-rise` / `tn-reveal` entrances. Every sentence,
+ * number and row above is unchanged and still the source of the text.
  *
  * **Responsive** (`CLAUDE.md`): from `md` the two tables are tables; below `md` each row becomes a
  * stacked card, so the measured ratio, the evidence, is never scrolled off a phone's screen.
  */
-const CARD = "rounded-[var(--tn-radius-2xl)] border border-[var(--store-card-border)] bg-white";
 const TH = `${BODY_2} px-[16px] py-[12px] text-left font-semibold text-[var(--store-neutral-100)]`;
 const TD = `${BODY_2} px-[16px] py-[14px] align-top`;
-/** Frosted glass over the site's glow, for the question and "do not claim" cards. */
-const GLASS =
-  "tn-reveal relative flex flex-col gap-[8px] overflow-hidden rounded-[12px] border border-white/70 bg-gradient-to-br from-white/60 to-white/25 p-[12px] shadow-[inset_0_1px_0_#ffffffcc,0_8px_24px_-12px_#7c3aed59] backdrop-blur-xl backdrop-saturate-150";
+/** Frosted glass over the site's glow: every card and table on the page is one of these. */
+const GLASS_SURFACE =
+  "relative overflow-hidden rounded-[12px] border border-white/70 bg-gradient-to-br from-white/60 to-white/25 shadow-[inset_0_1px_0_#ffffffcc,0_8px_24px_-12px_#7c3aed59] backdrop-blur-xl backdrop-saturate-150";
+/** The question and "do not claim" cards: the surface, laid out as a column. */
+const GLASS = `tn-reveal ${GLASS_SURFACE} flex flex-col gap-[8px] p-[12px]`;
+/**
+ * A table's header: the accent tints left to right, at 80% so the glass still shows through. Row
+ * lines stay in the glass's own white rather than grey.
+ */
+const GLASS_HEAD =
+  "bg-gradient-to-r from-[var(--tn-accent-violet-soft)]/80 via-[var(--tn-accent-blue-soft)]/80 to-[var(--tn-accent-pink-soft)]/80";
+const GLASS_ROW = "border-t border-white/70 transition-colors duration-150 hover:bg-white/40";
 const SHEEN =
   "pointer-events-none absolute inset-x-0 top-0 -z-10 h-1/2 bg-gradient-to-b from-white/50 to-transparent";
 
@@ -220,9 +228,10 @@ export default function StandardsPage() {
         </p>
         <div className="mt-[var(--tn-space-sm)] w-full max-w-[1000px]">
           {/* From `md`: a table in a card. */}
-          <div className={`${CARD} tn-reveal hidden overflow-hidden md:block`}>
+          <div className={`${GLASS_SURFACE} tn-reveal hidden md:block`}>
+            <span aria-hidden="true" className={SHEEN} />
             <table className={`${FONT} w-full border-collapse`}>
-              <thead className="bg-[var(--store-primary-10)]">
+              <thead className={GLASS_HEAD}>
                 <tr>
                   <th className={TH}>Standard</th>
                   <th className={TH}>Scope</th>
@@ -231,7 +240,7 @@ export default function StandardsPage() {
               </thead>
               <tbody>
                 {STANDARDS.map((row, i) => (
-                  <tr key={row.name} className="border-t border-[var(--store-neutral-40)] transition-colors duration-150 hover:bg-[var(--store-neutral-30)]">
+                  <tr key={row.name} className={GLASS_ROW}>
                     <td className={`${TD} font-semibold text-[var(--store-neutral-100)]`}>
                       <span className="flex items-start gap-[8px] text-left">
                         <span aria-hidden="true" className={`${accentAt(i).solid} mt-[7px] size-[8px] shrink-0 rounded-full`} />
@@ -248,7 +257,8 @@ export default function StandardsPage() {
           {/* Below `md`: one card per standard. */}
           <ul className="flex flex-col gap-[var(--tn-space-xs)] text-left md:hidden">
             {STANDARDS.map((row, i) => (
-              <li key={row.name} className={`${CARD} tn-reveal flex flex-col gap-[6px] p-[var(--tn-space-xs)]`}>
+              <li key={row.name} className={`${GLASS_SURFACE} tn-reveal flex flex-col gap-[6px] p-[var(--tn-space-xs)]`}>
+                <span aria-hidden="true" className={SHEEN} />
                 <span className={`${FONT} flex items-center gap-[8px] text-[length:var(--store-body-1)] font-semibold text-[var(--store-neutral-100)]`}>
                   <span aria-hidden="true" className={`${accentAt(i).solid} size-[8px] shrink-0 rounded-full`} />
                   {row.name}
@@ -272,9 +282,10 @@ export default function StandardsPage() {
           formula. Not sampled from a screenshot, and not rounded in our favour.
         </p>
         <div className="mt-[var(--tn-space-sm)] w-full max-w-[1000px]">
-          <div className={`${CARD} tn-reveal hidden overflow-hidden md:block`}>
+          <div className={`${GLASS_SURFACE} tn-reveal hidden md:block`}>
+            <span aria-hidden="true" className={SHEEN} />
             <table className={`${FONT} w-full border-collapse`}>
-              <thead className="bg-[var(--store-primary-10)]">
+              <thead className={GLASS_HEAD}>
                 <tr>
                   <th className={TH}>Pair</th>
                   <th className={TH}>Tokens</th>
@@ -284,7 +295,7 @@ export default function StandardsPage() {
               </thead>
               <tbody>
                 {CONTRAST.map((row) => (
-                  <tr key={row.pair} className="border-t border-[var(--store-neutral-40)] transition-colors duration-150 hover:bg-[var(--store-neutral-30)]">
+                  <tr key={row.pair} className={GLASS_ROW}>
                     <td className={`${TD} text-left text-[var(--store-neutral-100)]`}>{row.pair}</td>
                     <td className={`${TD} text-left font-[family-name:var(--store-font-mono)] text-[length:var(--store-body-3)] text-[var(--store-neutral-80)]`}>
                       {row.tokens}
@@ -302,7 +313,8 @@ export default function StandardsPage() {
           </div>
           <ul className="flex flex-col gap-[var(--tn-space-xs)] text-left md:hidden">
             {CONTRAST.map((row) => (
-              <li key={row.pair} className={`${CARD} tn-reveal flex items-start justify-between gap-[12px] p-[var(--tn-space-xs)]`}>
+              <li key={row.pair} className={`${GLASS_SURFACE} tn-reveal flex items-start justify-between gap-[12px] p-[var(--tn-space-xs)]`}>
+                <span aria-hidden="true" className={SHEEN} />
                 <span className="flex min-w-0 flex-col gap-[4px]">
                   <span className={`${BODY_2} font-semibold text-[var(--store-neutral-100)]`}>{row.pair}</span>
                   <span className={`${BODY_3} font-[family-name:var(--store-font-mono)] text-[var(--store-neutral-80)]`}>
