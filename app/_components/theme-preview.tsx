@@ -12,17 +12,21 @@ import { FONT } from "./type";
  * **A theme's preview**, opened from a card's Preview in the Explore Themes panel (Figma "AI Builder -
  * Guest - template preview", node 850:7592, as revised; 2026-10-08).
  *
- * The design, top to bottom: the title "Preview · <theme>" (Plus Jakarta Sans SemiBold 28); the
- * device pills with the light/dark + full-screen pill beside them (`850:7921`); the **preview box**
- * (`1062:3936`, 13.96px corners) with the **"What's in this preview" card** (`1069:2324`) under the
- * frame; then the page thumbnails (`850:7884`). Every size, colour and font below is the
- * design's, from its tokens where one exists (`--store-success-50`, `--store-neutral-60/70/90`,
- * `--store-primary-50`, Geist for Apply).
+ * **Top to bottom, by request (2026-10-09): details, then pages, then the big picture.**
+ * 1. The title "Preview · <theme>" (Plus Jakarta Sans SemiBold 28) and the **"What's in this
+ *    preview" card** (`1069:2324`) with Apply, so what the theme includes is read first.
+ * 2. The page thumbnails (`850:7884`).
+ * 3. The device pills with the light/dark + full-screen pill (`850:7921`), then the **preview box**
+ *    (`1062:3936`, 13.96px corners) showing the chosen page **whole, at its real shape, never
+ *    cropped**: the image's own pixels set its height.
  *
- * **Each device shows its own shape** (by request): the frame inside the box is 1440:900 on Desktop,
- * 768:1024 on Tablet and 390:844 on Mobile, and the capture fills it from the top. The captures are
- * desktop screenshots of the Voilet build, so Tablet and Mobile show the top of that capture in the
- * device's shape, and the note under the preview says so.
+ * Every size, colour and font below is the design's, from its tokens where one exists
+ * (`--store-success-50`, `--store-neutral-60/70/90`, `--store-primary-50`, Geist for Apply).
+ *
+ * **A device sets the frame's width only.** It used to force the device's shape (1440:900, 768:1024,
+ * 390:844) and crop the capture to fit; the captures are desktop screenshots of the Voilet build, so
+ * that cut off most of every page. Now Tablet and Mobile show the whole capture at a narrower width,
+ * and the note under the preview says so.
  *
  * **Where it departs from the design:** the moon is disabled (no dark captures; the brief asks for
  * light/dark "when the output supports it", § 6); the thumbnails are a grid, not a strip running off
@@ -32,14 +36,14 @@ import { FONT } from "./type";
  */
 
 /**
- * Each device's shape, and how much of the box's width its frame takes. **Wider on a phone**: at 38%
- * of a phone-sized box the Mobile frame was 99px across, too small to read, so below `sm` the narrow
- * devices take more of it. The shape (`ratio`) is the same at every width.
+ * How much of the box's width each device's frame takes; the height is the capture's own. **Wider on
+ * a phone**: at 38% of a phone-sized box the Mobile frame was 99px across, too small to read, so
+ * below `sm` the narrow devices take more of it.
  */
 const DEVICES = [
-  { id: "desktop", label: "Desktop", ratio: "1440 / 900", width: "w-full" },
-  { id: "tablet", label: "Tablet", ratio: "768 / 1024", width: "w-[85%] sm:w-[62%]" },
-  { id: "mobile", label: "Mobile", ratio: "390 / 844", width: "w-[62%] sm:w-[38%]" },
+  { id: "desktop", label: "Desktop", width: "w-full" },
+  { id: "tablet", label: "Tablet", width: "w-[85%] sm:w-[62%]" },
+  { id: "mobile", label: "Mobile", width: "w-[62%] sm:w-[38%]" },
 ] as const;
 type Device = (typeof DEVICES)[number]["id"];
 
@@ -138,96 +142,16 @@ export function ThemePreview({
         </button>
       </div>
 
-      {/* Title, then devices and the light/dark + full-screen pill (Figma 850:7923). */}
-      <div className="flex flex-col gap-[24px]">
+      {/* 1. The theme's details: the title, then "What's in this preview" with Apply. */}
+      <div className="flex shrink-0 flex-col gap-[24px]">
         <h2
           className={`${FONT} font-[family-name:var(--store-font-headline)] text-[length:var(--store-headline-10)] font-semibold leading-[1.2] text-[var(--store-neutral-100)]`}
         >
           Preview · {card.theme.label}
         </h2>
-        <div className="flex flex-wrap items-center justify-between gap-[12px]">
-          <div role="group" aria-label="Device" className="flex flex-wrap items-center gap-[10px]">
-            {DEVICES.map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                aria-pressed={device === d.id}
-                onClick={() => setDevice(d.id)}
-                className={`${PILL} ${device === d.id ? PILL_ON : PILL_OFF}`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-          <div className="flex items-center gap-[29.274px] rounded-[100px] border border-black px-[12px] py-[8px]">
-            <div className="flex items-center overflow-clip rounded-[121.974px] bg-white">
-              <span
-                role="img"
-                aria-label="Light"
-                className="flex items-center justify-center bg-[var(--store-primary-40)] px-[9.758px] py-[7.318px]"
-              >
-                {/* biome-ignore lint/performance/noImgElement: the design's 19.5px SVG */}
-                <img src="/recipe/sun.svg" alt="" width={19.5158} height={19.5158} className="block" />
-              </span>
-              <button
-                type="button"
-                disabled
-                title="Dark previews aren't available yet"
-                aria-label="Dark (not available yet)"
-                className="flex cursor-not-allowed items-center justify-center px-[9.758px] py-[7.318px] opacity-50"
-              >
-                {/* biome-ignore lint/performance/noImgElement: the design's 19.5px SVG */}
-                <img src="/recipe/moon.svg" alt="" width={19.5158} height={19.5158} className="block" />
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setFull((f) => !f)}
-              aria-label={full ? "Exit full screen" : "Full screen"}
-              className="flex cursor-pointer items-center justify-center rounded-[6px]"
-            >
-              {/* biome-ignore lint/performance/noImgElement: the design's 24px SVG */}
-              <img src="/recipe/arrows-out.svg" alt="" width={24.3947} height={24.3947} className="block" />
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* The preview box (Figma 1062:3936), with the summary card under the frame. */}
-      <div className="relative shrink-0 rounded-[13.96px] bg-[var(--store-neutral-30)] p-[24px]">
-        {current ? (
-          <div
-            className={`relative mx-auto overflow-hidden rounded-[10px] border border-[var(--store-card-border)] bg-white shadow-[0_8px_24px_-12px_#0c0c0c33] transition-[width] duration-300 motion-reduce:transition-none ${frame.width}`}
-            style={{ aspectRatio: frame.ratio }}
-          >
-            <Image
-              key={current.src}
-              src={current.src}
-              alt={`${current.title} page, ${frame.label.toLowerCase()} view`}
-              fill
-              sizes="(min-width: 1024px) 50vw, 100vw"
-              priority
-              onLoad={() => setLoaded(current.src)}
-              onError={() => setFailed(current.src)}
-              className="object-cover object-top"
-            />
-            {loaded !== current.src && failed !== current.src ? (
-              <div aria-hidden="true" className="absolute inset-0 animate-pulse bg-[var(--store-neutral-40)] motion-reduce:animate-none" />
-            ) : null}
-            {failed === current.src ? (
-              <div className={`${FONT} absolute inset-0 flex items-center justify-center bg-white p-[16px] text-center text-[length:var(--store-body-2)] text-[var(--store-neutral-80)]`}>
-                This page's preview couldn't load.
-              </div>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* "What's in this preview" (Figma 1069:2324), **under the frame, never over it**
-            (2026-10-08, by request): the design floats it across the image's foot, which hid the
-            bottom of every page. Its own styling is the design's. */}
         <section
           aria-label="What's in this preview"
-          className="mt-[20.92px] flex flex-col gap-[24px] rounded-[24px] bg-white px-[24px] py-[18px] drop-shadow-[0_0_5px_rgba(0,0,0,0.12)]"
+          className="flex flex-col gap-[24px] rounded-[24px] bg-white px-[24px] py-[18px] drop-shadow-[0_0_5px_rgba(0,0,0,0.12)]"
         >
           <h3 className="font-[family-name:var(--font-inter)] text-[16px] font-medium leading-[1.2] text-[var(--store-neutral-90)]">
             What's in this preview
@@ -286,7 +210,7 @@ export function ThemePreview({
         </section>
       </div>
 
-      {/* The theme's pages (Figma 850:7884), at the design's 260:172 tile and 10.2px corners. */}
+      {/* 2. The theme's pages (Figma 850:7884), at the design's 260:172 tile and 10.2px corners. */}
       <div role="tablist" aria-label="Pages" className="grid shrink-0 grid-cols-2 gap-[14.45px] sm:grid-cols-4">
         {thumbs.map((p) => (
           <button
@@ -304,11 +228,91 @@ export function ThemePreview({
         ))}
       </div>
 
-      <p className={`${FONT} text-[length:var(--store-body-3)] text-[var(--store-neutral-80)]`}>
-        Demo preview: screens are desktop captures of the Voilet build with demo data, shown under the{" "}
-        {card.theme.label} name.
-        {device !== "desktop" ? ` The ${frame.label.toLowerCase()} frame shows the top of that capture in the device's shape.` : ""}
-      </p>
+      {/* 3. The chosen page, whole: devices and the light/dark + full-screen pill (Figma 850:7923),
+          then the capture at its own shape, never cropped. */}
+      <div className="flex shrink-0 flex-col gap-[16px]">
+        <div className="flex flex-wrap items-center justify-between gap-[12px]">
+          <div role="group" aria-label="Device" className="flex flex-wrap items-center gap-[10px]">
+            {DEVICES.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                aria-pressed={device === d.id}
+                onClick={() => setDevice(d.id)}
+                className={`${PILL} ${device === d.id ? PILL_ON : PILL_OFF}`}
+              >
+                {d.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-[29.274px] rounded-[100px] border border-black px-[12px] py-[8px]">
+            <div className="flex items-center overflow-clip rounded-[121.974px] bg-white">
+              <span
+                role="img"
+                aria-label="Light"
+                className="flex items-center justify-center bg-[var(--store-primary-40)] px-[9.758px] py-[7.318px]"
+              >
+                {/* biome-ignore lint/performance/noImgElement: the design's 19.5px SVG */}
+                <img src="/recipe/sun.svg" alt="" width={19.5158} height={19.5158} className="block" />
+              </span>
+              <button
+                type="button"
+                disabled
+                title="Dark previews aren't available yet"
+                aria-label="Dark (not available yet)"
+                className="flex cursor-not-allowed items-center justify-center px-[9.758px] py-[7.318px] opacity-50"
+              >
+                {/* biome-ignore lint/performance/noImgElement: the design's 19.5px SVG */}
+                <img src="/recipe/moon.svg" alt="" width={19.5158} height={19.5158} className="block" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFull((f) => !f)}
+              aria-label={full ? "Exit full screen" : "Full screen"}
+              className="flex cursor-pointer items-center justify-center rounded-[6px]"
+            >
+              {/* biome-ignore lint/performance/noImgElement: the design's 24px SVG */}
+              <img src="/recipe/arrows-out.svg" alt="" width={24.3947} height={24.3947} className="block" />
+            </button>
+          </div>
+        </div>
+        <div className="rounded-[13.96px] bg-[var(--store-neutral-30)] p-[16px] sm:p-[24px]">
+          {current ? (
+            <div
+              className={`relative mx-auto overflow-hidden rounded-[10px] border border-[var(--store-card-border)] bg-white shadow-[0_8px_24px_-12px_#0c0c0c33] transition-[width] duration-300 motion-reduce:transition-none ${frame.width}`}
+            >
+              {/* `h-auto` with the capture's own pixels sets the height, so the page is shown in full
+                  at its real shape; 1440x900 is only the placeholder's shape while it loads. */}
+              <Image
+                key={current.src}
+                src={current.src}
+                alt={`${current.title} page, ${frame.label.toLowerCase()} view`}
+                width={1440}
+                height={900}
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                priority
+                onLoad={() => setLoaded(current.src)}
+                onError={() => setFailed(current.src)}
+                className="block h-auto w-full"
+              />
+              {loaded !== current.src && failed !== current.src ? (
+                <div aria-hidden="true" className="absolute inset-0 animate-pulse bg-[var(--store-neutral-40)] motion-reduce:animate-none" />
+              ) : null}
+              {failed === current.src ? (
+                <div className={`${FONT} absolute inset-0 flex items-center justify-center bg-white p-[16px] text-center text-[length:var(--store-body-2)] text-[var(--store-neutral-80)]`}>
+                  This page's preview couldn't load.
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        <p className={`${FONT} text-[length:var(--store-body-3)] text-[var(--store-neutral-80)]`}>
+          Demo preview: screens are desktop captures of the Voilet build with demo data, shown under the{" "}
+          {card.theme.label} name.
+          {device !== "desktop" ? ` The ${frame.label.toLowerCase()} frame shows the whole capture at that width.` : ""}
+        </p>
+      </div>
     </aside>
   );
 }
