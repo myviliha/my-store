@@ -327,7 +327,9 @@ function ReaderBubble({
           {text}
         </div>
       )}
-      {editing ? null : (
+      {/* Hidden rather than removed while editing, so the gap down to the reply stays the height of
+          this row instead of closing up under the edit box. `inert` keeps it out of reach. */}
+      <div className={editing ? "invisible" : undefined} inert={editing}>
         <Actions
           align="end"
           items={[
@@ -340,7 +342,7 @@ function ReaderBubble({
             },
           ]}
         />
-      )}
+      </div>
     </div>
   );
 }
