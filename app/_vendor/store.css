@@ -266,6 +266,15 @@
    */
   --store-card-border: var(--store-neutral-50);
 
+  /*
+   * **The edge of a control** (a field, a select, a toggle), as against the edge of a card (`SD-226`).
+   * WCAG 2.2 1.4.11 asks 3:1 for the boundary a control is found by, and the card edge measures
+   * **1.44:1** on white, so it cannot be a control's only boundary. `--store-neutral-70` measures
+   * **3.69:1** on white and 3.54:1 on `--store-page-ground`, both clear of 3:1, and 3.69:1 is the
+   * figure `/standards` publishes for this token. Added to this repo 2026-10-09; the monorepo had it.
+   */
+  --store-control-border: var(--store-neutral-70);
+
   /* `--website-bg-color`. Not in our palette: `neutral-20` is `#FDFDFD` and this is cooler. */
   --store-page-ground: #f9fafe;
 }

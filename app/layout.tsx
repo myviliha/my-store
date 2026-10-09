@@ -13,8 +13,10 @@ import "./globals.css";
 
 import { SITE } from "@/lib/site";
 import { organizationSchema, webSiteSchema } from "@/src/data/seo";
+import { Aurora } from "./_components/aurora";
 import { Footer } from "./_components/footer";
 import { Rail } from "./_components/rail";
+import { ScatterGlow } from "./_components/scatter-glow";
 import { TopBar } from "./_components/topbar";
 
 /**
@@ -161,8 +163,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="tn flex min-h-screen bg-[var(--store-page-ground)]">
         <Rail />
         {/* `min-w-0` so a wide child, the footer's seven columns, scrolls inside the column rather
-            than pushing the rail's neighbour past the viewport. */}
-        <div className="flex min-w-0 flex-1 flex-col">
+            than pushing the rail's neighbour past the viewport.
+
+            **The site's background lives here** (2026-10-09): `Aurora`'s three glows at the top and
+            `ScatterGlow`'s evenly spaced ones down to the footer, on every page. `relative isolate`
+            so their `-z-10` sits behind the bar, the page and the footer, none of which has a ground
+            of its own, so the colour shows through all three. */}
+        <div className="relative isolate flex min-w-0 flex-1 flex-col">
+          <Aurora />
+          <ScatterGlow />
           <TopBar />
           <main className="flex-1">{children}</main>
           <Footer />
