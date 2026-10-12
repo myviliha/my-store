@@ -535,7 +535,7 @@ export function Composer({
             type="submit"
             disabled={empty || busy}
             aria-busy={busy}
-            className={`${BUTTON_PRIMARY} disabled:cursor-not-allowed disabled:bg-[var(--store-primary-30)]`}
+            className={BUTTON_PRIMARY}
           >
             {/* **The reference's own markup, not a measurement off a screenshot.** Its generate
                 button is `btn btn-primary` at `border-radius: 8px` with a `width="16"` glyph, which

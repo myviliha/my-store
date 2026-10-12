@@ -5,6 +5,8 @@ import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "re
 import { ChatGlow } from "./aurora";
 import { Hero } from "./hero";
 import { onPanelRequest, type Panel, takePendingPanel } from "./panel-store";
+import type { Recipe } from "./recipe";
+import { clearShared, readShared } from "./share-link";
 import { Thread } from "./thread";
 
 /**
@@ -65,6 +67,8 @@ export function Conversation({ children }: { children: ReactNode }) {
   } | null>(null);
   /** The side panel the conversation opens with, when a button opened it. */
   const [side, setSide] = useState<Panel | null>(null);
+  /** A design opened from a shared link: the conversation starts with it, its preview beside. */
+  const [shared, setShared] = useState<Recipe | null>(null);
   /** A panel asked for from the hero: the sections below are sliding down first (`.tn-drop-out`). */
   const [dropping, setDropping] = useState<Panel | null>(null);
   const open = useRef(false);
@@ -86,6 +90,13 @@ export function Conversation({ children }: { children: ReactNode }) {
     };
     const waiting = takePendingPanel();
     if (waiting) show(waiting);
+    /* A shared design's link (`?design=`): its Preview drawer opens the way Pricing does. */
+    const sharedDesign = readShared();
+    if (sharedDesign) {
+      clearShared();
+      setShared(sharedDesign);
+      show("preview");
+    }
     return onPanelRequest(show);
   }, []);
 
@@ -166,6 +177,7 @@ export function Conversation({ children }: { children: ReactNode }) {
           first={first.prompt}
           from={first.from}
           initialSide={side}
+          initialRecipe={side === "preview" ? (shared ?? undefined) : undefined}
           welcomeFrom={first.welcome ?? null}
           onBack={(from) => {
             setFirst(null);

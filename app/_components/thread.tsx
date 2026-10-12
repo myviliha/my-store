@@ -9,19 +9,26 @@ import {
   useState,
 } from "react";
 
+import { labelOf } from "@/src/configurator-core";
+import { THEMES } from "@/src/data/themes";
+
 import { Composer, Glyph } from "./composer";
 import type { CardRect } from "./conversation";
 import { Explore } from "./explore";
 import { Welcome } from "./hero";
+import { setAuth, unlocksPro, useAuth, useUser } from "./auth-store";
 import { onPanelRequest } from "./panel-store";
+import { type CheckoutItem, CheckoutPanel } from "./checkout-panel";
 import { PricingPanel } from "./pricing-panel";
 import { ReaderBubble } from "./reader-bubble";
 import { ReplyActions } from "./message-actions";
+import { Generating, STEP_MS } from "./generating";
+import { LivePreview } from "./live-preview";
 import { Replying } from "./replying";
 import type { MasonryCard } from "./masonry";
 import { Preview } from "./preview";
 import { ThemePreview } from "./theme-preview";
-import { nextStep, parse, promptFor, type Recipe, type Step } from "./recipe";
+import { includedPages, nextStep, parse, promptFor, type Recipe, type Step, useCaseOf } from "./recipe";
 import { type Answer, DownloadCard, StepCard } from "./recipe-ui";
 import { FONT } from "./type";
 
@@ -172,6 +179,7 @@ export function Thread({
   from = null,
   onBack,
   initialSide = null,
+  initialRecipe,
   welcomeFrom = null,
 }: {
   /** The reader's opening message, or `null` for a conversation opened by a button (`/pricing`):
@@ -184,7 +192,9 @@ export function Thread({
       box stand, so the home screen can slide them back into place (`Conversation`). */
   onBack: (from?: { welcome: CardRect | null; box: CardRect | null }) => void;
   /** A panel to open with the conversation (a Pricing button). */
-  initialSide?: "pricing" | null;
+  initialSide?: "pricing" | "preview" | null;
+  /** A design to start from: a shared link's, opened with its Preview drawer (`share-link.ts`). */
+  initialRecipe?: Recipe;
   /** Where the home screen's welcome was: the empty conversation's slides from there. */
   welcomeFrom?: CardRect | null;
 }) {
@@ -244,7 +254,7 @@ export function Thread({
   /** The one-sentence answer to a pricing message: no question, no recipe change. */
   const pricingReply = (): Turn => ({ id: nextId(), from: "voilet", text: PRICING_LEAD });
   const [recipe, setRecipe] = useState<Recipe>(() =>
-    first && !firstIsPricing ? read(first, {}).next : {},
+    initialRecipe ?? (first && !firstIsPricing ? read(first, {}).next : {}),
   );
   const [turns, setTurns] = useState<Turn[]>(() => {
     if (first === null) return [];
@@ -276,14 +286,16 @@ export function Thread({
   const [preview, setPreview] = useState<{
     recipe: Recipe;
     revision: number;
-  } | null>(null);
+  } | null>(() => (initialRecipe ? { recipe: initialRecipe, revision: 1 } : null));
   /**
    * What the space beside the conversation shows: the recipe's preview, the Explore Themes panel
    * (opened from the style step), or nothing. One at a time, in the same resizable split.
    */
   /* A panel asked for from the hero opens once the welcome and box have reached the centre (the
      effect below); otherwise it is open from the start. */
-  const [side, setSide] = useState<"preview" | "explore" | "theme" | "pricing" | null>(() =>
+  /** What the demo checkout is selling, when the side panel shows it (`CheckoutPanel`). */
+  const [checkout, setCheckout] = useState<CheckoutItem | null>(null);
+  const [side, setSide] = useState<"preview" | "explore" | "theme" | "pricing" | "checkout" | null>(() =>
     welcomeFrom ? null : (initialSide ?? (firstIsPricing ? "pricing" : null)),
   );
   /** The card whose theme the "theme" panel previews, opened from Explore. */
@@ -293,6 +305,8 @@ export function Thread({
   const [tab, setTab] = useState<"chat" | "side">(() => (side ? "side" : "chat"));
   const [split, setSplit] = useState(SPLIT_DEFAULT);
   const [dragging, setDragging] = useState(false);
+  /** The build's steps while a chosen theme is being generated (`Generating`), or `null`. */
+  const [generating, setGenerating] = useState<readonly string[] | null>(null);
   /** An empty conversation's panel is closing: it slides out and the chat widens, then home. */
   const [closing, setClosing] = useState(false);
   const [draft, setDraftState] = useState("");
@@ -392,6 +406,8 @@ export function Thread({
     lead?: string,
     /** DEMO-ONLY(loading-delay) */
     delayed = false,
+    /** Steps to show as the admin is generated before the reply (`Generating`), after a theme is chosen. */
+    generate?: readonly string[],
   ) => {
     if (busy.current) return;
     update(next);
@@ -400,6 +416,22 @@ export function Thread({
       const marked = all.map((t, i) => (i === open && t.from === "voilet" ? { ...t, answered: next } : t));
       return [...marked, { id: nextId(), from: "reader", text: echo, before: recipe }];
     });
+    if (generate) {
+      /* The reply waits for the build: the steps tick off, then the summary streams in. */
+      window.clearTimeout(timer.current);
+      busy.current = true;
+      setPending(true);
+      setGenerating(generate);
+      timer.current = window.setTimeout(
+        () => {
+          setGenerating(null);
+          const reply = ask(next, lead);
+          void stream(reply, demoChunks(reply.text));
+        },
+        prefersReduced() ? 0 : STEP_MS * (generate.length + 1), // DEMO-ONLY(generate)
+      );
+      return;
+    }
     later(() => ask(next, lead), delayed);
   };
 
@@ -446,11 +478,20 @@ export function Thread({
     later(() => ask(next, lead), asksForDemoDelay(text)); // DEMO-ONLY(loading-delay): 2nd argument
   };
 
+  /**
+   * The summary's Show Preview: the generated admin, running in the panel beside the chat (`Preview`,
+   * scaled to fit), and full-window from there (`LivePreview`, `live`). 2026-10-12, by request.
+   */
+  const [live, setLive] = useState(false);
+  /** The scheme the drawer was showing, so the full window opens the same way. */
+  const [liveScheme, setLiveScheme] = useState<"light" | "dark">("light");
   const openPreview = () => {
     setPreview({ recipe, revision });
     setSide("preview");
     setTab("side");
   };
+  /** The pages a recipe can ship for this account: Free, or Pro when the plan or licence unlocks them. */
+  const shippable = (r: Recipe) => includedPages(r).filter((p) => p.tier === "free" || unlocksPro(account, r.design));
 
   /**
    * Re-asks the newest reply. A fresh id remounts its card, so local picks that were never sent
@@ -466,6 +507,14 @@ export function Thread({
 
   const download = () => {
     if (busy.current) return;
+    /* **Downloading is what needs an account** (business rule, 2026-10-12): everything before it,
+       with Voilet, is open to a guest. Signed out, the sign-in dialog opens and the download carries
+       on once they are in (`pendingDownload`). External models (tokens) are a separate rule, to come. */
+    if (!account) {
+      pendingDownload.current = true;
+      setAuth("signin");
+      return;
+    }
     setTurns((all) => [...all, { id: nextId(), from: "reader", text: "Download", before: recipe }]);
     later(() => ({
       id: nextId(),
@@ -717,9 +766,54 @@ export function Thread({
    * a theme the plan does not allow is asked about by the design step, never switched silently.
    */
   const applyTheme = (theme: MasonryCard["theme"]) => {
-    closeSide();
-    turn(`Use the ${theme.label} theme`, { ...recipe, design: theme.id });
+    /* **No sign-in to apply** (business rule, 2026-10-12): with Voilet, the built-in model, a guest
+       builds freely and is asked to sign in only to download (`download`, below). A guest's account
+       unlocks nothing, so the plan follows the theme alone. */
+    applyChosen(theme, unlocksPro(account, theme.id) ? "pro" : "free");
   };
+  /**
+   * The theme becomes the recipe's design and the reply is the summary (Figma 857:7189). Applied from
+   * Explore, the steps it skipped are filled rather than asked: every style, and the plan the
+   * account and the theme allow (a Pro-only theme is the Pro plan; its Pro pages stay locked for a
+   * Free account, which the summary offers to upgrade).
+   */
+  const applyChosen = (theme: MasonryCard["theme"], plan: "free" | "pro") => {
+    const freeAllowed = THEMES.find((t) => t.id === theme.id)?.tiers.includes("free") ?? true;
+    closeSide();
+    const next: Recipe = {
+      ...recipe,
+      design: theme.id,
+      vibe: recipe.vibe ?? "any",
+      tier: recipe.tier ?? (plan === "pro" || !freeAllowed ? "pro" : "free"),
+    };
+    /* **Choosing a theme starts the build** (2026-10-12, by request): the summary comes after the
+       admin is generated from what the reader asked for, each step naming one of their answers. */
+    const pages = includedPages(next).filter((p) => p.tier === "free" || unlocksPro(account, theme.id)).length;
+    const steps =
+      nextStep(next).kind === "summary"
+        ? [
+            `Reading your requirements: ${useCaseOf(next.useCase)?.label ?? "your"} admin`,
+            `Setting up ${labelOf(next.framework ?? "")} and ${labelOf(next.css ?? "")}`,
+            `Applying the ${theme.label} theme`,
+            `Building ${pages} page${pages === 1 ? "" : "s"}`,
+          ]
+        : undefined;
+    turn(`Use the ${theme.label} theme`, next, undefined, false, steps);
+  };
+  const account = useUser();
+  const authOpen = useAuth();
+  /** A guest pressed Download: it runs the moment they sign in. */
+  const pendingDownload = useRef(false);
+  // biome-ignore lint/correctness/useExhaustiveDependencies: runs when the account arrives, with this render's recipe
+  useEffect(() => {
+    if (!account || !pendingDownload.current) return;
+    pendingDownload.current = false;
+    download();
+  }, [account]);
+  /* The dialog closed without a sign-in: no download, and nothing is said. */
+  useEffect(() => {
+    if (authOpen === null && !account) pendingDownload.current = false;
+  }, [authOpen, account]);
 
   const chat = (
     <div
@@ -807,7 +901,7 @@ export function Thread({
               </div>
             ),
           )}
-          {pending && !streaming ? <Replying /> : null}
+          {generating ? <Generating steps={generating} /> : pending && !streaming ? <Replying /> : null}
           <div ref={foot} className="h-[8px] shrink-0" />
         </div>
       </div>
@@ -867,7 +961,7 @@ export function Thread({
                   onClick={() => setTab(v)}
                   className={`${FONT} cursor-pointer rounded-full px-[14px] py-[5px] text-[length:var(--store-body-3)] font-semibold ${tab === v ? "bg-white text-[var(--store-primary-40)] shadow-[0_1px_3px_color-mix(in_srgb,var(--store-neutral-100)_10%,transparent)]" : "text-[var(--store-neutral-80)]"}`}
                 >
-                  {v === "chat" ? "Chat" : side === "preview" ? "Preview" : side === "pricing" ? "Pricing" : "Themes"}
+                  {v === "chat" ? "Chat" : side === "preview" ? "Preview" : side === "pricing" ? "Pricing" : side === "checkout" ? "Checkout" : "Themes"}
                 </button>
               ))}
             </div>
@@ -924,9 +1018,24 @@ export function Thread({
               className={`${closing ? "tn-panel-out overflow-hidden" : "tn-panel-in"} min-h-0 min-w-0 flex-1 ${tab === "chat" ? "max-lg:hidden" : ""}`}
             >
               {side === "pricing" ? (
-                <PricingPanel onClose={closeSide} onStartChat={startChat} />
+                <PricingPanel
+                  onClose={closeSide}
+                  onStartChat={startChat}
+                  /* Checkout replaces Pricing in the same panel; a licence starts on this recipe's design. */
+                  onCheckout={(item) => {
+                    setCheckout(item.plan === "theme-licence" ? { ...item, themeId: item.themeId ?? recipe.design } : item);
+                    setSide("checkout");
+                  }}
+                />
+              ) : side === "checkout" && checkout ? (
+                <CheckoutPanel
+                  item={checkout}
+                  onBack={() => setSide("pricing")}
+                  onClose={closeSide}
+                  onDone={closeSide}
+                />
               ) : side === "explore" ? (
-                <Explore onClose={closeSide} onPreview={previewTheme} />
+                <Explore onClose={closeSide} onPreview={previewTheme} framework={recipe.framework} css={recipe.css} />
               ) : side === "theme" && themeCard ? (
                 <ThemePreview
                   card={themeCard}
@@ -942,12 +1051,25 @@ export function Thread({
                   onRefresh={() => setPreview({ recipe, revision })}
                   onClose={closeSide}
                   onDownload={download}
+                  pages={shippable(preview.recipe)}
+                  onExpand={(scheme) => {
+                    setLiveScheme(scheme);
+                    setLive(true);
+                  }}
                 />
               ) : null}
             </div>
           </>
         ) : null}
       </div>
+      <LivePreview
+        recipe={preview?.recipe ?? recipe}
+        pages={shippable(preview?.recipe ?? recipe)}
+        open={live}
+        scheme={liveScheme}
+        onClose={() => setLive(false)}
+        onDownload={download}
+      />
     </section>
   );
 }

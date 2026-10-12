@@ -45,7 +45,14 @@ export function useAuth(): AuthMode | null {
  * `localStorage` so a refresh keeps them signed in. **Only a name and an email are kept, never a
  * password**, and nothing leaves the browser.
  */
-export type User = { name: string; email: string };
+export type User = {
+  name: string;
+  email: string;
+  /** Bought in the demo checkout (`checkout-panel.tsx`): the Pro Subscription. */
+  plan?: "pro";
+  /** Bought in the demo checkout: a Theme Licence per theme id, unlocking that theme's Pro pages. */
+  licences?: readonly string[];
+};
 
 const KEY = "voilet-demo-user";
 
@@ -54,7 +61,14 @@ function read(): User | null {
     const raw = window.localStorage.getItem(KEY);
     const parsed = raw ? (JSON.parse(raw) as Partial<User>) : null;
     return parsed && typeof parsed.name === "string" && typeof parsed.email === "string"
-      ? { name: parsed.name, email: parsed.email }
+      ? {
+          name: parsed.name,
+          email: parsed.email,
+          ...(parsed.plan === "pro" ? { plan: "pro" as const } : {}),
+          ...(Array.isArray(parsed.licences)
+            ? { licences: parsed.licences.filter((l): l is string => typeof l === "string") }
+            : {}),
+        }
       : null;
   } catch {
     return null;
@@ -91,6 +105,35 @@ export function initialsOf(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const letters = parts.length > 1 ? `${parts[0]?.[0] ?? ""}${parts.at(-1)?.[0] ?? ""}` : (parts[0]?.slice(0, 1) ?? "");
   return letters.toUpperCase() || "?";
+}
+
+/**
+ * DEMO-ONLY(auth): **the account's plan.** There is no billing, so every account is Free, except an
+ * email whose name starts with "pro" (pro@…, pro.jane@…), so the Pro path can be shown in the demo.
+ * Replace with the plan the account service returns.
+ */
+export function planOf(account: User | null): "free" | "pro" {
+  if (!account) return "free";
+  if (account.plan === "pro") return "pro";
+  return /^pro(?:$|[._+-])/i.test(account.email.split("@")[0] ?? "") ? "pro" : "free";
+}
+
+/** Whether this account may ship a theme's Pro pages: the Pro plan, or that theme's licence. */
+export function unlocksPro(account: User | null, themeId?: string): boolean {
+  return planOf(account) === "pro" || Boolean(themeId && account?.licences?.includes(themeId));
+}
+
+/**
+ * DEMO-ONLY(checkout): **a purchase, recorded on this browser's account** and nothing else: no
+ * payment, no server. Replace with the entitlement the billing service returns after a real charge.
+ */
+export function purchase(item: { plan: "pro-subscription" } | { plan: "theme-licence"; themeId: string }) {
+  if (!user) return;
+  setUser(
+    item.plan === "pro-subscription"
+      ? { ...user, plan: "pro" }
+      : { ...user, licences: [...new Set([...(user.licences ?? []), item.themeId])] },
+  );
 }
 
 export function signIn(next: User) {

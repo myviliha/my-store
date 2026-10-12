@@ -6,13 +6,27 @@ import { useEffect, useState } from "react";
 import { labelOf } from "@/src/configurator-core";
 import { THEMES } from "@/src/data/themes";
 
+import { Bookmark, Share } from "@/app/_vendor/icons";
+
+import { useUser } from "./auth-store";
 import { Glyph } from "./composer";
+import { type Device, LiveFrame } from "./live-frame";
+import { type Scheme, SchemeExpand } from "./preview-controls";
+import { designKey, useSaved } from "./saved-store";
+import { ShareDialog } from "./share-dialog";
+import { shareUrlFor } from "./share-link";
+import { previewUrlFor } from "./live-preview";
 import { includedPages, pagesOf, type Recipe, useCaseOf } from "./recipe";
 import { TierBadge } from "./recipe-ui";
 import { BODY_2, BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
 
 /**
  * The recipe preview, beside the conversation (brief § 6).
+ *
+ * **It runs the generated admin, live, in the panel** (2026-10-12, by request): the same page the
+ * full-window preview shows (`previewUrlFor`), laid out at the device's width and scaled to fit
+ * (`LiveFrame`), so the reader can click its pages and its dark mode here. The page tabs went with
+ * that: the running admin has its own navigation. Expand opens it full-window (`LivePreview`).
  *
  * **What it shows is what the recipe ships**: one tab per included page, each the real capture from
  * `public/gallery/`, not the nearest stock thumbnail. The brief's other contents are here too: the
@@ -30,18 +44,16 @@ import { BODY_2, BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
  * the catalogue says which outputs do.
  */
 
-const DEVICES = [
-  { id: "desktop", label: "Desktop", width: "100%" },
-  { id: "tablet", label: "Tablet", width: "768px" },
-  { id: "mobile", label: "Mobile", width: "390px" },
-] as const;
+const DEVICES: readonly { readonly id: Device; readonly label: string }[] = [
+  { id: "desktop", label: "Desktop" },
+  { id: "tablet", label: "Tablet" },
+  { id: "mobile", label: "Mobile" },
+];
 
-type Device = (typeof DEVICES)[number]["id"];
-
-const SEG = `${BODY_3} rounded-full border px-[12px] py-[5px] font-semibold transition-colors duration-150 cursor-pointer`;
-const SEG_ON = "border-[var(--store-primary-40)] bg-[var(--store-primary-40)] text-white";
-const SEG_OFF =
-  "border-[var(--store-card-border)] bg-white text-[var(--store-neutral-100)] hover:border-[var(--store-primary-40)]";
+/* The shared button scale (`btn` in `globals.css`). */
+const SEG = "btn btn-sm";
+const SEG_ON = "btn-primary";
+const SEG_OFF = "btn-secondary";
 
 export function Preview({
   recipe,
@@ -50,6 +62,8 @@ export function Preview({
   onRefresh,
   onClose,
   onDownload,
+  pages,
+  onExpand,
 }: {
   /** The recipe as it was when this preview was drawn. */
   recipe: Recipe;
@@ -59,34 +73,35 @@ export function Preview({
   onRefresh: () => void;
   onClose: () => void;
   onDownload: () => void;
+  /** The pages to run: what the reader can ship (Free, or Pro when unlocked). */
+  pages: ReturnType<typeof includedPages>;
+  /** Opens the same admin full-window, in the scheme shown here. */
+  onExpand: (scheme: Scheme) => void;
 }) {
-  const pages = includedPages(recipe);
+  const [scheme, setScheme] = useState<Scheme>("light");
+  const [sharing, setSharing] = useState(false);
+  const { saved, toggle } = useSaved(designKey(recipe));
+  const signedIn = useUser() !== null;
+  /** A line under the actions after Save, cleared on its own. */
+  const [note, setNote] = useState<string | null>(null);
+  useEffect(() => {
+    if (!note) return;
+    const t = window.setTimeout(() => setNote(null), 3000);
+    return () => window.clearTimeout(t);
+  }, [note]);
+  const save = async () => {
+    const now = await toggle();
+    setNote(now ? (signedIn ? "Saved to your account." : "Saved in this browser. Sign in to keep it on your account.") : "Removed from your saved designs.");
+  };
   const all = pagesOf(useCaseOf(recipe.useCase));
   const design = THEMES.find((t) => t.id === recipe.design);
   const [device, setDevice] = useState<Device>("desktop");
-  const [page, setPage] = useState(pages[0]?.slug);
-  const [full, setFull] = useState(false);
-  const current = pages.find((p) => p.slug === page) ?? pages[0];
-
-  /* A refreshed preview may have dropped the page on screen. */
-  useEffect(() => {
-    if (!pages.some((p) => p.slug === page)) setPage(pages[0]?.slug);
-  }, [pages, page]);
-
-  /* Escape leaves full screen, as every full-screen surface does. */
-  useEffect(() => {
-    if (!full) return;
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFull(false);
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [full]);
-
-  const width = DEVICES.find((d) => d.id === device)?.width ?? "100%";
+  const url = previewUrlFor(recipe, pages);
 
   return (
     <aside
       aria-label="Preview"
-      className={`flex min-h-0 flex-col gap-[12px] bg-white/80 p-[16px] backdrop-blur ${full ? "fixed inset-0 z-50" : "h-full rounded-[16px] border border-[var(--store-card-border)]"}`}
+      className="flex h-full min-h-0 flex-col gap-[12px] rounded-[16px] border border-[var(--store-card-border)] bg-white/80 p-[16px] backdrop-blur"
     >
       <header className="flex items-start justify-between gap-[12px]">
         <div className="flex min-w-0 flex-col gap-[6px]">
@@ -104,20 +119,6 @@ export function Preview({
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-[4px]">
-          <button
-            type="button"
-            onClick={() => setFull((f) => !f)}
-            aria-label={full ? "Exit full screen" : "Full screen"}
-            className="flex size-[32px] cursor-pointer items-center justify-center rounded-[8px] text-[var(--store-neutral-100)] hover:bg-[var(--store-neutral-30)]"
-          >
-            <Glyph size={18}>
-              {full ? (
-                <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
-              ) : (
-                <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
-              )}
-            </Glyph>
-          </button>
           <button
             type="button"
             onClick={onClose}
@@ -150,37 +151,26 @@ export function Preview({
               type="button"
               aria-pressed={device === d.id}
               onClick={() => setDevice(d.id)}
-              className={`${SEG} ${device === d.id ? SEG_ON : SEG_OFF}`}
+              className={`btn btn-md ${device === d.id ? SEG_ON : SEG_OFF}`}
             >
               {d.label}
             </button>
           ))}
         </div>
-        <span className={`${BODY_3} text-[var(--store-neutral-80)]`}>
-          {labelOf(recipe.framework ?? "")} · {labelOf(recipe.css ?? "")}
-        </span>
+        <SchemeExpand scheme={scheme} onScheme={setScheme} onExpand={() => onExpand(scheme)} />
       </div>
 
-      <div role="tablist" aria-label="Pages" className="flex gap-[6px] overflow-x-auto pb-[2px] [scrollbar-width:thin]">
-        {pages.map((p) => (
-          <button
-            key={p.slug}
-            type="button"
-            role="tab"
-            aria-selected={current?.slug === p.slug}
-            onClick={() => setPage(p.slug)}
-            className={`${SEG} shrink-0 ${current?.slug === p.slug ? SEG_ON : SEG_OFF}`}
-          >
-            {p.title}
-          </button>
-        ))}
-      </div>
 
-      <div className="relative min-h-0 flex-1 overflow-auto rounded-[12px] bg-[var(--store-neutral-30)] p-[12px]">
-        {current ? (
-          <div className="mx-auto overflow-hidden rounded-[10px] border border-[var(--store-card-border)] bg-white shadow-[0_8px_24px_-12px_color-mix(in_srgb,var(--store-neutral-100)_20%,transparent)] transition-[width] duration-300" style={{ width, maxWidth: "100%" }}>
-            <Shot key={current.src} src={current.src} title={current.title} width={current.width} height={current.height} />
-          </div>
+      <div className="relative min-h-0 flex-1 overflow-hidden rounded-[12px] border border-[var(--store-card-border)] bg-[var(--store-neutral-30)]">
+        {pages.length > 0 ? (
+          <LiveFrame
+            url={url}
+            device={device}
+            title={`${design?.label ?? "Admin"} live preview`}
+            placeholder={pages[0]?.src}
+            scheme={scheme}
+            onScheme={setScheme}
+          />
         ) : (
           <p className={`${BODY_2} p-[24px] text-center text-[var(--store-neutral-80)]`}>
             No pages selected. Tick at least one page in the summary to preview it.
@@ -189,9 +179,9 @@ export function Preview({
       </div>
 
       <p className={`${BODY_3} text-[var(--store-neutral-80)]`}>
-        Screens are captured from the Voilet build with demo data
+        Live demo: click the admin&apos;s pages and dark mode here, or expand it. Pages are captures of the
+        Voilet build with demo data
         {design && design.id !== "voilet" ? `; the ${design.label} design is applied in your download` : ""}.
-        {device !== "desktop" ? " Tablet and mobile frames show the desktop capture narrowed; responsive captures aren't available yet." : ""}
       </p>
 
       <footer className="flex flex-wrap items-center justify-between gap-[12px] rounded-[12px] bg-[var(--store-neutral-30)] px-[14px] py-[10px]">
@@ -204,14 +194,40 @@ export function Preview({
             <dt className="text-[var(--store-neutral-80)]">Pages included</dt>
             <dd className="font-semibold text-[var(--store-neutral-100)]">
               {pages.length} of {all.length}
-              {recipe.tier !== "pro" && all.length > pages.length ? " (Pro unlocks all)" : ""}
+              {all.length > pages.length ? " (Pro unlocks all)" : ""}
             </dd>
           </div>
         </dl>
-        <button type="button" onClick={onDownload} className={BUTTON_PRIMARY}>
-          Download
-        </button>
+        <div className="flex items-center gap-[8px]">
+          <button type="button" onClick={() => setSharing(true)} className="btn btn-md btn-secondary">
+            <Share width={14} height={14} aria-hidden="true" />
+            Share
+          </button>
+          {/* A guest's save stays in this browser; a signed-in reader's goes to the account (`saved-store.ts`). */}
+          <button
+            type="button"
+            onClick={() => void save()}
+            aria-pressed={saved}
+            className={`btn btn-md ${saved ? "btn-outline" : "btn-secondary"}`}
+          >
+            <Bookmark width={14} height={14} aria-hidden="true" />
+            {saved ? "Saved" : "Save"}
+          </button>
+          <button type="button" onClick={onDownload} className={BUTTON_PRIMARY}>
+            Download
+          </button>
+        </div>
+        <p role="status" className={`${BODY_3} basis-full text-right text-[var(--store-neutral-80)] ${note ? "" : "sr-only"}`}>
+          {note}
+        </p>
       </footer>
+      <ShareDialog
+        open={sharing}
+        onClose={() => setSharing(false)}
+        /* The store's link, which opens this design in the Preview drawer (`share-link.ts`). */
+        url={shareUrlFor(recipe)}
+        title={`My ${design?.label ?? ""} admin on Voilet`}
+      />
     </aside>
   );
 }

@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from "react";
 
 import type { Tier } from "@/src/entitlement-core";
 
-import { BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY } from "./type";
+import { BODY_3 } from "./type";
 
 export interface MasonryCard {
   readonly key: string;
@@ -206,7 +206,7 @@ export function Masonry({
                       type="button"
                       onClick={() => onPreview(card)}
                       aria-label={`Preview ${card.title}`}
-                      className={`${BUTTON_SECONDARY} min-w-0 flex-1 border-transparent`}
+                      className="btn btn-sm btn-secondary min-w-0 flex-1 border-transparent"
                     >
                       <Eye aria-hidden="true" className="size-[14px] shrink-0" />
                       Preview
@@ -215,7 +215,7 @@ export function Masonry({
                     <Link
                       href={card.href}
                       aria-label={`Preview ${card.title}`}
-                      className={`${BUTTON_SECONDARY} min-w-0 flex-1 border-transparent`}
+                      className="btn btn-sm btn-secondary min-w-0 flex-1 border-transparent"
                     >
                       <Eye aria-hidden="true" className="size-[14px] shrink-0" />
                       Preview
@@ -224,7 +224,7 @@ export function Masonry({
                   <Link
                     href={card.download}
                     aria-label={`Download ${card.title}`}
-                    className={`${BUTTON_PRIMARY} min-w-0 flex-1`}
+                    className="btn btn-sm btn-primary min-w-0 flex-1"
                   >
                     <Download aria-hidden="true" className="size-[14px] shrink-0" />
                     Download

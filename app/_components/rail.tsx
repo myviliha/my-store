@@ -594,7 +594,7 @@ export function Rail() {
           type="button"
           onClick={showPricing}
           title={collapsed ? "Upgrade" : undefined}
-          className={`${FONT} inline-flex w-full shrink-0 cursor-pointer items-center justify-center ${collapsed ? "gap-0" : "gap-[6px]"} rounded-[8px] bg-gradient-to-r from-[var(--tn-accent-blue-solid)] to-[var(--tn-accent-violet-solid)] px-[12px] py-[8px] text-[length:var(--store-body-2)] font-semibold leading-none text-white shadow-[0_6px_16px_-6px_var(--tn-accent-violet-solid)] transition-[filter,transform] duration-150 hover:-translate-y-px hover:brightness-110 active:brightness-95`}
+          className={`btn btn-md w-full font-semibold ${collapsed ? "gap-0 px-0" : ""} bg-gradient-to-r from-[var(--tn-accent-blue-solid)] to-[var(--tn-accent-violet-solid)] text-white shadow-[0_6px_16px_-6px_var(--tn-accent-violet-solid)] transition-[filter,transform] duration-150 hover:-translate-y-px hover:brightness-110 active:brightness-95`}
         >
           <Bolt width={18} height={18} aria-hidden className="shrink-0" />
           {/* `leading-[1.5]` on the word, not the button's `leading-none`: `truncate` clips to the line

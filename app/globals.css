@@ -419,6 +419,139 @@
   }
 }
 
+/* The share dialog's brand colours (`share-dialog.tsx`), from each brand's own guidelines via Simple
+ * Icons (CC0). Third-party colours, so not store tokens: here so no component carries a hex. */
+:root {
+  --brand-messenger: #0866ff;
+  --brand-whatsapp: #25d366;
+  --brand-telegram: #26a5e4;
+  --brand-x: #000000;
+  --brand-linkedin: #0a66c2;
+}
+
+/* ─── Buttons: one scale, declared once (2026-10-12, by request) ──────────────────────────────────
+ *
+ * Every text button is `btn` + a size + a variant, and **no button sets its own height, padding or
+ * text size inline**: they had drifted to nine heights between 29 and 44px. The scale is the
+ * owner's, **32 / 36 / 40px**, all pills:
+ *
+ *   btn-sm  32px · 12px text   chips inside cards, small actions (Upgrade in the summary)
+ *   btn-md  36px · 14px text   the default (Apply, Sign in, Pricing, tabs, choices)
+ *   btn-lg  40px · 14px text   a screen's main action (Download, Show Preview, the sign-in options)
+ *
+ *   btn-primary · btn-secondary · btn-outline · btn-soft · btn-ghost   colour only, never size
+ *   btn-icon    a square of the size's height, for an icon-only button (`aria-label` required)
+ *
+ * Disabled is a grey fill, not opacity (`SD-164`); focus is the border colour only (`SD-220`).
+ * Width, margins and layout stay with the caller. `btn` alone is `btn-md`. */
+@utility btn {
+  --btn-h: 36px;
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: var(--btn-h);
+  padding-inline: 16px;
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  font-family: var(--store-font-body);
+  font-size: var(--store-body-2);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    color 150ms;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--store-primary-40);
+  }
+  &:disabled,
+  &[aria-disabled="true"] {
+    cursor: not-allowed;
+    border-color: transparent;
+    background-color: var(--store-neutral-40);
+    color: var(--store-neutral-70);
+  }
+}
+@utility btn-sm {
+  --btn-h: 32px;
+  gap: 4px;
+  padding-inline: 12px;
+  font-size: var(--store-body-3);
+}
+@utility btn-md {
+  --btn-h: 36px;
+  padding-inline: 16px;
+  font-size: var(--store-body-2);
+}
+@utility btn-lg {
+  --btn-h: 40px;
+  padding-inline: 20px;
+  font-size: var(--store-body-2);
+}
+@utility btn-icon {
+  width: var(--btn-h);
+  /* `!important` because the size utilities set padding too, and which of two utilities wins is the
+     stylesheet's order, not the class list's: a 28px icon button kept btn-sm's 12px a side and
+     squeezed its icon to a sliver. */
+  padding-inline: 0 !important;
+}
+@utility btn-primary {
+  background-color: var(--store-primary-40);
+  color: white;
+  @variant hover {
+    &:not(:disabled) {
+      background-color: var(--store-primary-50);
+    }
+  }
+  &:active:not(:disabled) {
+    background-color: var(--store-primary-60);
+  }
+}
+@utility btn-secondary {
+  border-color: var(--store-control-border);
+  background-color: white;
+  color: var(--store-neutral-100);
+  @variant hover {
+    &:not(:disabled) {
+      border-color: var(--store-primary-40);
+    }
+  }
+}
+@utility btn-outline {
+  border-color: var(--store-primary-40);
+  background-color: transparent;
+  color: var(--store-primary-40);
+  @variant hover {
+    &:not(:disabled) {
+      background-color: var(--store-primary-10);
+    }
+  }
+}
+@utility btn-soft {
+  background-color: var(--store-neutral-40);
+  color: var(--store-neutral-100);
+  @variant hover {
+    &:not(:disabled) {
+      background-color: var(--store-neutral-50);
+    }
+  }
+}
+@utility btn-ghost {
+  background-color: transparent;
+  color: var(--store-neutral-100);
+  @variant hover {
+    &:not(:disabled) {
+      background-color: var(--store-neutral-30);
+    }
+  }
+}
+
 /* The page container, as one utility rather than three classes repeated on 22 routes. */
 @utility page {
   width: 100%;

@@ -2,8 +2,11 @@
 
 import { useState } from "react";
 
+import { type CssId, type FrameworkId, labelOf } from "@/src/configurator-core";
+
 import { Glyph } from "./composer";
 import { Masonry, type MasonryCard } from "./masonry";
+import { designsFor } from "./recipe";
 import { EXPLORE_CARDS, LANDING_CARDS } from "./screen-cards";
 import { FONT } from "./type";
 
@@ -40,19 +43,30 @@ const CATEGORIES: readonly {
   { id: "docker", label: "Docker . soon" },
 ];
 
-const TAB =
-  "inline-flex h-[39px] shrink-0 items-center justify-center rounded-[50px] border bg-white px-[17px] py-[12px] font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap text-[var(--store-neutral-100)] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] disabled:cursor-not-allowed disabled:opacity-40";
+/* The shared button scale (`btn` in `globals.css`); "soon" tabs are disabled, so grey. */
+const TAB = "btn btn-md";
 
 export function Explore({
   onClose,
   onPreview,
+  framework,
+  css,
 }: {
   onClose: () => void;
+  /**
+   * The stack the reader chose. **Only themes built for it are shown** (2026-10-12, by request):
+   * applying one that cannot render it would hand back a design the summary must refuse. The plan is
+   * not a filter here; Free and Pro themes both show, with their tags.
+   */
+  framework?: FrameworkId;
+  css?: CssId;
   /** A card's Preview opens that theme's preview in this same panel (`ThemePreview`). */
   onPreview: (card: MasonryCard) => void;
 }) {
   const [category, setCategory] = useState<Category>("dashboard");
-  const cards = CATEGORIES.find((c) => c.id === category)?.cards ?? [];
+  const fits = new Set(designsFor({ framework, css }).map((t) => t.id));
+  const cards = (CATEGORIES.find((c) => c.id === category)?.cards ?? []).filter((c) => fits.has(c.theme.id));
+  const stack = [framework, css].flatMap((x) => (x ? [labelOf(x)] : [])).join(" + ");
 
   return (
     <aside
@@ -92,7 +106,7 @@ export function Explore({
             disabled={!c.cards}
             title={c.cards ? undefined : "Coming soon"}
             onClick={() => setCategory(c.id)}
-            className={`${TAB} ${category === c.id ? "border-[var(--store-primary-40)] bg-[var(--store-primary-10)]" : "border-[var(--store-control-border)]"}`}
+            className={`${TAB} ${category === c.id ? "border-[var(--store-primary-40)] bg-[var(--store-primary-10)] text-[var(--store-primary-40)]" : "btn-secondary"}`}
           >
             {c.label}
           </button>
@@ -109,7 +123,18 @@ export function Explore({
         role="tabpanel"
         className="-mt-[4px] min-h-0 flex-1 overflow-y-auto overscroll-contain pt-[4px] pr-[2px]"
       >
-        <Masonry key={category} cards={cards} onPreview={onPreview} />
+        {stack ? (
+          <p className={`${FONT} mb-[12px] text-[length:var(--store-body-3)] text-[var(--store-neutral-80)]`}>
+            Themes built for {stack}.
+          </p>
+        ) : null}
+        {cards.length > 0 ? (
+          <Masonry key={category} cards={cards} onPreview={onPreview} />
+        ) : (
+          <p className={`${FONT} py-[24px] text-center text-[length:var(--store-body-2)] text-[var(--store-neutral-80)]`}>
+            No {CATEGORIES.find((c) => c.id === category)?.label} themes are built for {stack} yet.
+          </p>
+        )}
       </div>
     </aside>
   );

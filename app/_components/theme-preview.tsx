@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Glyph } from "./composer";
 import type { MasonryCard } from "./masonry";
 import { relatedScreens, themePages } from "./screen-cards";
+import { type Scheme, SchemeExpand } from "./preview-controls";
 import { FONT } from "./type";
 
 /**
@@ -17,11 +18,13 @@ import { FONT } from "./type";
  *    preview" card** (`1069:2324`) with Apply, so what the theme includes is read first.
  * 2. The page thumbnails (`850:7884`).
  * 3. The device pills with the light/dark + full-screen pill (`850:7921`), then the **preview box**
- *    (`1062:3936`, 13.96px corners) showing the chosen page **whole, at its real shape, never
+ *    (`1062:3936`) showing the chosen page **whole, at its real shape, never
  *    cropped**: the image's own pixels set its height.
  *
- * Every size, colour and font below is the design's, from its tokens where one exists
- * (`--store-success-50`, `--store-neutral-60/70/90`, `--store-primary-50`, Geist for Apply).
+ * Colours and fonts are the design's, from its tokens where one exists (`--store-success-50`,
+ * `--store-neutral-60/70/90`, `--store-primary-50`, Geist for Apply). **Sizes are the storefront's
+ * scale, not the frame's** (2026-10-12, by request, as for the auth modal): the frame is drawn larger
+ * than the home page, so the title is 20px, body 14px, controls 32 to 36px and the gaps 12 to 16px.
  *
  * **A device sets the frame's width only.** It used to force the device's shape (1440:900, 768:1024,
  * 390:844) and crop the capture to fit; the captures are desktop screenshots of the Voilet build, so
@@ -47,18 +50,17 @@ const DEVICES = [
 ] as const;
 type Device = (typeof DEVICES)[number]["id"];
 
-const PILL =
-  "inline-flex h-[39px] shrink-0 cursor-pointer items-center justify-center rounded-[50px] px-[17px] py-[12px] font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap transition-colors duration-150";
-const PILL_ON = "bg-[var(--store-primary-40)] text-white";
-const PILL_OFF =
-  "border border-[var(--store-control-border)] bg-white text-[var(--store-neutral-100)] hover:border-[var(--store-primary-40)]";
+/* The shared button scale (`btn` in `globals.css`). */
+const PILL = "btn btn-md";
+const PILL_ON = "btn-primary";
+const PILL_OFF = "btn-secondary";
 
 /** The summary card's chips (Figma 1069:2330 and 1069:2345). */
 const CHIP =
   "inline-flex items-center justify-center overflow-clip rounded-[9.626px] px-[11.23px] py-[6.417px] font-[family-name:var(--font-inter)] text-[11.23px] font-normal leading-[1.2] whitespace-nowrap";
 const LABEL =
   "font-[family-name:var(--font-inter)] text-[12px] font-normal leading-[1.2] text-[var(--store-neutral-70)]";
-const VALUE = "font-[family-name:var(--font-inter)] text-[14px] font-medium leading-[1.2] text-black";
+const VALUE = "font-[family-name:var(--font-inter)] text-[length:var(--store-body-2)] font-medium leading-[1.2] text-black";
 
 /*
  * ┌─ DEMO-ONLY(pro-pages) ──────────────────────────────────────────────────────────────────────────┐
@@ -95,6 +97,8 @@ export function ThemePreview({
   const [page, setPage] = useState(thumbs[0]?.slug);
   const [device, setDevice] = useState<Device>("desktop");
   const [full, setFull] = useState(false);
+  /** The preview's colour scheme (2026-10-12, by request: the group is usable). */
+  const [scheme, setScheme] = useState<Scheme>("light");
   /* Keyed to the image, not reset in an effect: a cached image can finish loading before an effect
      runs, and a reset after it left the placeholder over a loaded picture. */
   const [loaded, setLoaded] = useState<string | null>(null);
@@ -107,6 +111,7 @@ export function ThemePreview({
     setPage(thumbs[0]?.slug);
   }, [card.slug]);
 
+
   useEffect(() => {
     if (!full) return;
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setFull(false);
@@ -117,7 +122,7 @@ export function ThemePreview({
   return (
     <aside
       aria-label={`Preview of ${card.theme.label}`}
-      className={`flex min-h-0 flex-col gap-[24px] overflow-y-auto overscroll-contain bg-white/80 p-[16px] backdrop-blur ${full ? "fixed inset-0 z-50" : "h-full rounded-[16px] border border-[var(--store-card-border)]"}`}
+      className={`flex min-h-0 flex-col gap-[16px] overflow-y-auto overscroll-contain bg-white/80 p-[16px] backdrop-blur ${full ? "fixed inset-0 z-50" : "h-full rounded-[16px] border border-[var(--store-card-border)]"}`}
     >
       <div className="-mb-[8px] flex items-center justify-between gap-[12px]">
         <button
@@ -143,20 +148,20 @@ export function ThemePreview({
       </div>
 
       {/* 1. The theme's details: the title, then "What's in this preview" with Apply. */}
-      <div className="flex shrink-0 flex-col gap-[24px]">
+      <div className="flex shrink-0 flex-col gap-[16px]">
         <h2
-          className={`${FONT} font-[family-name:var(--store-font-headline)] text-[length:var(--store-headline-10)] font-semibold leading-[1.2] text-[var(--store-neutral-100)]`}
+          className={`${FONT} font-[family-name:var(--store-font-headline)] text-[length:var(--store-headline-12)] font-semibold leading-[1.2] text-[var(--store-neutral-100)]`}
         >
           Preview · {card.theme.label}
         </h2>
         <section
           aria-label="What's in this preview"
-          className="flex flex-col gap-[24px] rounded-[24px] bg-white px-[24px] py-[18px] drop-shadow-[0_0_5px_rgba(0,0,0,0.12)]"
+          className="flex flex-col gap-[16px] rounded-[16px] bg-white p-[16px] drop-shadow-[0_0_5px_rgba(0,0,0,0.12)]"
         >
-          <h3 className="font-[family-name:var(--font-inter)] text-[16px] font-medium leading-[1.2] text-[var(--store-neutral-90)]">
+          <h3 className="font-[family-name:var(--font-inter)] text-[length:var(--store-body-2)] font-medium leading-[1.2] text-[var(--store-neutral-90)]">
             What's in this preview
           </h3>
-          <div className="flex flex-col gap-[16px] sm:flex-row sm:gap-[24px]">
+          <div className="flex flex-col gap-[12px] sm:flex-row sm:gap-[16px]">
             <div className="flex min-w-0 flex-1 flex-col gap-[4px]">
               <p className={LABEL}>Included{free ? "" : " with Pro"}</p>
               <ul className="flex flex-wrap items-center gap-[8.561px]">
@@ -186,7 +191,7 @@ export function ThemePreview({
             </div>
           </div>
           <div className="flex flex-wrap items-end justify-between gap-[16px]">
-            <dl className="flex gap-[24px]">
+            <dl className="flex gap-[16px]">
               <div className="flex flex-col gap-[4px]">
                 <dt className={LABEL}>Format</dt>
                 <dd className={VALUE}>ZIP + setup guide</dd>
@@ -202,7 +207,7 @@ export function ThemePreview({
             <button
               type="button"
               onClick={() => onApply(card.theme)}
-              className="inline-flex h-[42px] shrink-0 cursor-pointer items-center justify-center rounded-[89.505px] bg-[var(--store-primary-50)] px-[24px] font-[family-name:var(--store-font-prompt)] text-[14.321px] font-medium leading-none tracking-[-0.1575px] text-white transition-colors duration-150 hover:bg-[var(--store-primary-60)]"
+              className="btn btn-md btn-primary"
             >
               Apply
             </button>
@@ -211,7 +216,7 @@ export function ThemePreview({
       </div>
 
       {/* 2. The theme's pages (Figma 850:7884), at the design's 260:172 tile and 10.2px corners. */}
-      <div role="tablist" aria-label="Pages" className="grid shrink-0 grid-cols-2 gap-[14.45px] sm:grid-cols-4">
+      <div role="tablist" aria-label="Pages" className="grid shrink-0 grid-cols-2 gap-[12px] sm:grid-cols-4">
         {thumbs.map((p) => (
           <button
             key={p.slug}
@@ -230,9 +235,9 @@ export function ThemePreview({
 
       {/* 3. The chosen page, whole: devices and the light/dark + full-screen pill (Figma 850:7923),
           then the capture at its own shape, never cropped. */}
-      <div className="flex shrink-0 flex-col gap-[16px]">
+      <div className="flex shrink-0 flex-col gap-[12px]">
         <div className="flex flex-wrap items-center justify-between gap-[12px]">
-          <div role="group" aria-label="Device" className="flex flex-wrap items-center gap-[10px]">
+          <div role="group" aria-label="Device" className="flex flex-wrap items-center gap-[8px]">
             {DEVICES.map((d) => (
               <button
                 key={d.id}
@@ -245,39 +250,16 @@ export function ThemePreview({
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-[29.274px] rounded-[100px] border border-black px-[12px] py-[8px]">
-            <div className="flex items-center overflow-clip rounded-[121.974px] bg-white">
-              <span
-                role="img"
-                aria-label="Light"
-                className="flex items-center justify-center bg-[var(--store-primary-40)] px-[9.758px] py-[7.318px]"
-              >
-                {/* biome-ignore lint/performance/noImgElement: the design's 19.5px SVG */}
-                <img src="/recipe/sun.svg" alt="" width={19.5158} height={19.5158} className="block" />
-              </span>
-              <button
-                type="button"
-                disabled
-                title="Dark previews aren't available yet"
-                aria-label="Dark (not available yet)"
-                className="flex cursor-not-allowed items-center justify-center px-[9.758px] py-[7.318px] opacity-50"
-              >
-                {/* biome-ignore lint/performance/noImgElement: the design's 19.5px SVG */}
-                <img src="/recipe/moon.svg" alt="" width={19.5158} height={19.5158} className="block" />
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setFull((f) => !f)}
-              aria-label={full ? "Exit full screen" : "Full screen"}
-              className="flex cursor-pointer items-center justify-center rounded-[6px]"
-            >
-              {/* biome-ignore lint/performance/noImgElement: the design's 24px SVG */}
-              <img src="/recipe/arrows-out.svg" alt="" width={24.3947} height={24.3947} className="block" />
-            </button>
-          </div>
+          {/* One shared group (`SchemeExpand`), as in the live Preview drawer: light, dark and full screen. */}
+          <SchemeExpand
+            scheme={scheme}
+            onScheme={setScheme}
+            onExpand={() => setFull((f) => !f)}
+            expandLabel={full ? "Exit full screen" : "Full screen"}
+            expanded={full}
+          />
         </div>
-        <div className="rounded-[13.96px] bg-[var(--store-neutral-30)] p-[16px] sm:p-[24px]">
+        <div className="rounded-[12px] bg-[var(--store-neutral-30)] p-[12px] sm:p-[16px]">
           {current ? (
             <div
               className={`relative mx-auto overflow-hidden rounded-[10px] border border-[var(--store-card-border)] bg-white shadow-[0_8px_24px_-12px_color-mix(in_srgb,var(--store-neutral-100)_20%,transparent)] transition-[width] duration-300 motion-reduce:transition-none ${frame.width}`}
@@ -294,7 +276,10 @@ export function ThemePreview({
                 priority
                 onLoad={() => setLoaded(current.src)}
                 onError={() => setFailed(current.src)}
-                className="block h-auto w-full"
+                /* DEMO-ONLY(theme-dark): there are no dark captures yet, so dark inverts the light one
+                   and turns its hues back, which keeps blues blue. Replace with the build's dark
+                   screenshots when they exist; the caption below says it is simulated. */
+                className={`block h-auto w-full transition-[filter] duration-300 ${scheme === "dark" ? "[filter:invert(0.92)_hue-rotate(180deg)]" : ""}`}
               />
               {loaded !== current.src && failed !== current.src ? (
                 <div aria-hidden="true" className="absolute inset-0 animate-pulse bg-[var(--store-neutral-40)] motion-reduce:animate-none" />
@@ -311,6 +296,7 @@ export function ThemePreview({
           Demo preview: screens are desktop captures of the Voilet build with demo data, shown under the{" "}
           {card.theme.label} name.
           {device !== "desktop" ? ` The ${frame.label.toLowerCase()} frame shows the whole capture at that width.` : ""}
+          {scheme === "dark" ? " Dark is simulated from the light capture." : ""}
         </p>
       </div>
     </aside>

@@ -79,7 +79,7 @@ const RESEND_SECONDS = 30;
 const INTER = "font-[family-name:var(--font-inter)]";
 const JAKARTA = "font-[family-name:var(--store-font-headline)]";
 /** The options keep the dialog's earlier filled pill (by request, 2026-10-11), not the reference's outline. */
-const OPTION = `${INTER} flex h-[40px] w-full cursor-pointer items-center justify-center gap-[8px] rounded-[100px] bg-[var(--store-neutral-40)] px-[24px] text-[length:var(--store-body-2)] font-medium leading-[1.2] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-neutral-50)]`;
+const OPTION = "btn btn-lg btn-soft w-full gap-[8px]";
 const LABEL = `${INTER} text-[length:var(--store-body-3)] font-medium leading-[1.2] text-[var(--store-neutral-100)]`;
 /**
  * **Focus is the border colour only** (`SD-220`); autofill repaints its ground white and stays inside
@@ -92,7 +92,7 @@ const ERROR_EDGE = "border-[var(--color-error)]";
 const INPUT =
   "h-full min-w-0 flex-1 bg-transparent px-[14px] outline-none placeholder:text-[var(--store-neutral-70)] autofill:shadow-[inset_0_0_0_1000px_white] autofill:[-webkit-text-fill-color:var(--store-neutral-100)]";
 /** Disabled is a grey fill, not opacity (`SD-164`). */
-const PRIMARY = `${INTER} flex h-[44px] w-full cursor-pointer items-center justify-center rounded-[10px] bg-[var(--store-primary-40)] px-[20px] text-[length:var(--store-body-2)] font-semibold leading-[1.2] text-white transition-colors duration-150 hover:bg-[var(--store-primary-50)] disabled:cursor-not-allowed disabled:bg-[var(--store-neutral-50)] disabled:text-[var(--store-neutral-70)]`;
+const PRIMARY = "btn btn-lg btn-primary w-full";
 const SMALL = `${INTER} text-[length:var(--store-body-3)] leading-[1.5]`;
 const LINK = `${INTER} cursor-pointer font-semibold text-[var(--store-primary-40)] hover:underline disabled:cursor-not-allowed disabled:font-medium disabled:text-[var(--store-neutral-70)] disabled:no-underline`;
 /** Well-formed enough to be an address; the real check belongs to the provider. */

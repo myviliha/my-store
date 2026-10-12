@@ -1,0 +1,27 @@
+/* DEMO-ONLY(live-preview): the stand-in admin's look. `--primary` comes from the chosen theme. */
+* { box-sizing: border-box; }
+:root { --primary: #0058ee; --bg: #f5f6f8; --panel: #ffffff; --ink: #111418; --muted: #5f6570; --edge: #e3e6ea; }
+html.dark { --bg: #0f1115; --panel: #171a21; --ink: #eceef2; --muted: #9aa1ad; --edge: #262a33; }
+body { margin: 0; font: 14px/1.5 Inter, system-ui, sans-serif; background: var(--bg); color: var(--ink); }
+.app { display: flex; min-height: 100vh; }
+.side { width: 232px; flex-shrink: 0; background: var(--panel); border-right: 1px solid var(--edge); display: flex; flex-direction: column; padding: 16px 12px; gap: 16px; transition: width .2s, padding .2s; overflow: hidden; }
+.app.collapsed .side { width: 0; padding-inline: 0; border: 0; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; padding: 4px 8px; white-space: nowrap; }
+.mark { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 8px; background: var(--primary); color: #fff; font-size: 14px; }
+.nav { display: flex; flex-direction: column; gap: 2px; }
+.nav button { all: unset; cursor: pointer; padding: 9px 10px; border-radius: 8px; color: var(--muted); white-space: nowrap; }
+.nav button:hover { background: color-mix(in srgb, var(--primary) 8%, transparent); color: var(--ink); }
+.nav button[aria-current="page"] { background: color-mix(in srgb, var(--primary) 14%, transparent); color: var(--primary); font-weight: 600; }
+.nav button:focus-visible { outline: 2px solid var(--primary); }
+.side-foot { margin: auto 0 0; padding: 0 8px; font-size: 12px; color: var(--muted); }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.top { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 12px; height: 60px; padding: 0 20px; background: var(--panel); border-bottom: 1px solid var(--edge); }
+.top h1 { margin: 0; font-size: 18px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search { margin-left: auto; width: 220px; max-width: 30vw; height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--edge); background: var(--bg); color: var(--ink); }
+.icon { cursor: pointer; width: 36px; height: 36px; border-radius: 999px; border: 1px solid var(--edge); background: var(--panel); color: var(--ink); font-size: 16px; }
+.avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 999px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; }
+.content { padding: 20px; }
+.demo { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+#shot { display: block; width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--edge); background: var(--panel); }
+html.dark #shot { filter: invert(.92) hue-rotate(180deg); }
+@media (max-width: 640px) { .side { position: fixed; inset: 0 auto 0 0; z-index: 2; box-shadow: 0 0 40px #0003; } .search { display: none; } }

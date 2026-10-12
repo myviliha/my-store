@@ -25,6 +25,7 @@ import {
   VIBES,
   vibeOf,
 } from "./recipe";
+import { setAuth, unlocksPro, useUser } from "./auth-store";
 import { useOpenPricing } from "./panel-store";
 import { BODY_2, BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
 
@@ -48,7 +49,9 @@ export interface Answer {
   readonly echo: string;
 }
 
-const CHIP = `${BODY_2} inline-flex items-center gap-[6px] rounded-full border border-[var(--store-card-border)] bg-white px-[14px] py-[7px] font-medium text-[var(--store-neutral-100)] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] enabled:hover:text-[var(--store-primary-40)] disabled:cursor-default`;
+/* Choices are buttons of the shared scale (`btn` in `globals.css`); chosen, they take the brand tint. */
+const CHIP = "btn btn-md disabled:cursor-default";
+const CHIP_OFF = "btn-secondary";
 const CHIP_ON =
   "border-[var(--store-primary-40)] bg-[var(--store-primary-10)] text-[var(--store-primary-40)]";
 const CARD =
@@ -115,7 +118,7 @@ export function StepCard({
               type="button"
               disabled={!live}
               onClick={() => onAnswer({ patch: { useCase: u.id }, echo: `${u.label} admin` })}
-              className={`${CHIP} ${shown.useCase === u.id ? CHIP_ON : ""}`}
+              className={`${CHIP} ${shown.useCase === u.id ? CHIP_ON : CHIP_OFF}`}
             >
               {u.label}
             </button>
@@ -131,7 +134,7 @@ export function StepCard({
               type="button"
               disabled={!live}
               onClick={() => onAnswer({ patch: { setup: "recommended" }, echo: "Recommend a setup" })}
-              className={`${CHIP} ${shown.setup === "recommended" ? CHIP_ON : ""}`}
+              className={`${CHIP} ${shown.setup === "recommended" ? CHIP_ON : CHIP_OFF}`}
             >
               Recommend a setup
             </button>
@@ -139,7 +142,7 @@ export function StepCard({
               type="button"
               disabled={!live}
               onClick={() => onAnswer({ patch: { setup: "own" }, echo: "I'll choose my own stack" })}
-              className={`${CHIP} ${shown.setup === "own" ? CHIP_ON : ""}`}
+              className={`${CHIP} ${shown.setup === "own" ? CHIP_ON : CHIP_OFF}`}
             >
               I&apos;ll choose my own stack
             </button>
@@ -179,7 +182,7 @@ export function StepCard({
                   echo: "Use this setup",
                 })
               }
-              className={`${BUTTON_PRIMARY} disabled:opacity-60`}
+              className={BUTTON_PRIMARY}
             >
               <Check width={16} height={16} aria-hidden /> Use this setup
             </button>
@@ -187,7 +190,7 @@ export function StepCard({
               type="button"
               disabled={!live}
               onClick={() => onAnswer({ patch: { setup: "own" }, echo: "Change the setup" })}
-              className={`${BUTTON_SECONDARY} disabled:opacity-60`}
+              className={BUTTON_SECONDARY}
             >
               <Pencil width={14} height={14} aria-hidden /> Change
             </button>
@@ -307,7 +310,7 @@ function StackPicker({
             disabled={!live}
             aria-pressed={css === c}
             onClick={() => setCss(c)}
-            className={`${CHIP} py-[5px] ${css === c ? CHIP_ON : ""}`}
+            className={`${CHIP} ${css === c ? CHIP_ON : CHIP_OFF}`}
           >
             {labelOf(c)}
           </button>
@@ -324,7 +327,7 @@ function StackPicker({
             echo: `Continue with ${labelOf(framework)} + ${labelOf(css)}`,
           })
         }
-        className={`${BUTTON_PRIMARY} w-fit disabled:cursor-not-allowed disabled:opacity-50`}
+        className={`${BUTTON_PRIMARY} w-fit`}
       >
         {framework ? `Continue with ${labelOf(framework)} + ${labelOf(css)} →` : "Choose a framework"}
       </button>
@@ -407,8 +410,7 @@ function TierPicker({
  * A chosen style keeps the brand tint the other choice cards use, since the design shows no
  * selected state; hover is a brand border, as on every other chip in the conversation.
  */
-const STYLE_BUTTON =
-  "inline-flex h-[39px] shrink-0 items-start gap-[9px] rounded-[50px] border border-[var(--store-control-border)] px-[15px] py-[11px] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] disabled:cursor-default";
+const STYLE_BUTTON = "btn btn-md gap-[9px] disabled:cursor-default";
 const STYLE_LABEL =
   "font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap text-[var(--store-neutral-100)]";
 
@@ -432,7 +434,7 @@ function VibePicker({
           disabled={!live}
           title={v.note}
           onClick={() => onAnswer({ patch: { vibe: v.id }, echo: v.label })}
-          className={`${STYLE_BUTTON} ${recipe.vibe === v.id ? "border-[var(--store-primary-40)] bg-[var(--store-primary-10)]" : "bg-white"}`}
+          className={`${STYLE_BUTTON} ${recipe.vibe === v.id ? CHIP_ON : CHIP_OFF}`}
         >
           <span
             aria-hidden="true"
@@ -451,7 +453,7 @@ function VibePicker({
       <button
         type="button"
         onClick={onExplore}
-        className="inline-flex h-[39px] shrink-0 cursor-pointer items-center gap-[8px] rounded-[50px] border border-dashed border-[var(--store-primary-40)] bg-[var(--store-primary-40)] px-[15px] py-[12px] transition-colors duration-150 hover:bg-[var(--store-primary-50)]"
+        className="btn btn-md btn-primary gap-[8px] border-dashed"
       >
         <span aria-hidden="true" className="relative size-[12px] shrink-0">
           {/* The design draws the grid 4.86% past its 12px box on every side (13.17px). */}
@@ -533,97 +535,157 @@ function Summary({
   onPreview: () => void;
   onDownload: () => void;
 }) {
+  /*
+   * **The summary, as Figma "Message" (857:7189)** (2026-10-12, by request): a Setup badge, the
+   * design with its tier, the framework and the CSS, then the pages as round check pills, each with
+   * its Free or Pro badge, and Show Preview beside Download. Sizes are the design's where they match
+   * the storefront's scale (14px body, 40px buttons). Changing an earlier answer is typed, or comes
+   * from the steps above; the design draws no Change links.
+   *
+   * **Pro pages follow the account, not the recipe** (by request): a Free account sees them unticked
+   * and locked, and is offered the upgrade; a Pro account can tick them (`planOf` in `auth-store.ts`).
+   */
+  const account = useUser();
+  /* The Pro plan, or a Theme Licence for this design (bought in the demo checkout). */
+  const pro = unlocksPro(account, recipe.design);
+  const openPricing = useOpenPricing();
   const useCase = useCaseOf(recipe.useCase);
   const design = THEMES.find((t) => t.id === recipe.design);
   const all = pagesOf(useCase);
-  const chosen = new Set(includedPages(recipe).map((p) => p.slug));
-  const rows: { label: string; value: string; reopen: keyof typeof REOPEN }[] = [
-    { label: "Admin", value: `${useCase?.label ?? ""} admin`, reopen: "useCase" },
-    {
-      label: "Style",
-      value: recipe.vibe === "any" ? "All themes" : (vibeOf(recipe.vibe)?.label ?? ""),
-      reopen: "vibe",
-    },
-    { label: "Design", value: design?.label ?? "", reopen: "design" },
-    {
-      label: "Stack",
-      value: `${labelOf(recipe.framework ?? "")} + ${labelOf(recipe.css ?? "")}${recipe.setup === "recommended" ? " (recommended)" : ""}`,
-      reopen: "stack",
-    },
-    { label: "Plan", value: recipe.tier === "pro" ? "Pro" : "Free", reopen: "tier" },
+  const chosen = new Set(
+    includedPages(recipe)
+      .filter((p) => pro || p.tier === "free")
+      .map((p) => p.slug),
+  );
+  const designFree = design?.tiers.includes("free") ?? false;
+  const rows = [
+    { label: "Design", value: design?.label ?? "", tier: designFree ? ("free" as const) : ("pro" as const) },
+    { label: "Framework", value: labelOf(recipe.framework ?? "") },
+    { label: "CSS", value: labelOf(recipe.css ?? "") },
   ];
+  const locksPro = !pro && all.some((p) => p.tier === "pro");
 
   const toggle = (slug: string) => {
     const next = new Set(chosen);
     if (next.has(slug)) next.delete(slug);
     else next.add(slug);
-    onEdit({ ...recipe, pages: all.filter((p) => next.has(p.slug)).map((p) => p.slug) });
+    /* An account that unlocks Pro pages moves the recipe to the Pro plan as soon as one is ticked, or
+       `includedPages` would drop it again (a Free recipe ships Free pages only). */
+    const tier = pro && all.some((p) => p.tier === "pro" && next.has(p.slug)) ? "pro" : recipe.tier;
+    onEdit({ ...recipe, tier, pages: all.filter((p) => next.has(p.slug)).map((p) => p.slug) });
   };
 
   return (
-    <div className={`${CARD} flex flex-col gap-[12px]`}>
-      <dl className="flex flex-col gap-[6px]">
-        {rows.map((r) => (
-          <div key={r.label} className={`${BODY_2} flex items-center justify-between gap-[8px]`}>
-            <dt className="text-[var(--store-neutral-80)]">{r.label}</dt>
-            <dd className="flex items-center gap-[10px] font-semibold text-[var(--store-neutral-100)]">
-              {r.value}
-              {r.label === "Plan" ? <TierBadge tier={recipe.tier === "pro" ? "pro" : "free"} /> : null}
-              <button
-                type="button"
-                disabled={!live}
-                onClick={() => onEdit(REOPEN[r.reopen](recipe), `Change the ${r.label.toLowerCase()}`)}
-                className={`${BODY_3} font-semibold text-[var(--store-primary-40)] enabled:cursor-pointer enabled:hover:underline disabled:opacity-50`}
-              >
-                Change
-              </button>
-            </dd>
+    <div className="flex flex-col gap-[16px]">
+      <div className="flex flex-col gap-[11px] rounded-[15px] border border-[var(--store-card-border)] bg-white p-[16px] text-left">
+        <span className={`${BODY_3} inline-flex h-[22px] w-fit items-center gap-[6px] rounded-full bg-[var(--store-primary-10)] px-[9px] font-bold text-[var(--store-primary-60)]`}>
+          {/* biome-ignore lint/performance/noImgElement: the design's 10px SVG */}
+          <img src="/recipe/summary-setup.svg" alt="" width={9.7} height={9.5} className="block" />
+          Setup
+        </span>
+        <dl className="flex flex-col gap-[11px]">
+          {rows.map((r) => (
+            <div key={r.label} className={`${BODY_2} flex items-center justify-between gap-[8px] leading-[1.2]`}>
+              <dt className="text-[var(--store-neutral-80)]">{r.label}</dt>
+              <dd className="flex items-center gap-[8px] font-medium text-[var(--store-neutral-100)]">
+                {r.value}
+                {"tier" in r && r.tier ? <PlanBadge tier={r.tier} /> : null}
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <hr className="border-[var(--store-neutral-40)]" />
+        <fieldset disabled={!live} className="flex flex-col gap-[11px]">
+          <legend className={`${BODY_2} mb-[11px] font-semibold leading-[1.2] text-[var(--store-neutral-100)]`}>
+            Included pages
+          </legend>
+          <div className="grid gap-[11px] sm:grid-cols-2">
+            {all.map((p) => {
+              const locked = !pro && p.tier === "pro";
+              const on = chosen.has(p.slug);
+              return (
+                <label
+                  key={p.slug}
+                  title={locked ? "Needs a Pro account" : undefined}
+                  className={`${BODY_2} flex h-[39px] items-center gap-[11px] rounded-full border border-[var(--store-neutral-50)] px-[10px] font-medium leading-[1.2] text-[var(--store-neutral-100)] ${locked ? "cursor-not-allowed bg-[var(--store-neutral-30)]" : "cursor-pointer has-[:focus-visible]:border-[var(--store-primary-40)]"}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={on}
+                    disabled={locked}
+                    onChange={() => toggle(p.slug)}
+                    className="sr-only"
+                  />
+                  <span
+                    aria-hidden="true"
+                    className={`flex size-[20px] shrink-0 items-center justify-center rounded-full border ${on ? "border-[var(--store-primary-40)] bg-[var(--store-primary-40)]" : "border-[var(--store-control-border)] bg-white"}`}
+                  >
+                    {on ? (
+                      /* biome-ignore lint/performance/noImgElement: the design's 8px SVG */
+                      <img src="/recipe/summary-check.svg" alt="" width={7.83399} height={5.85462} className="block" />
+                    ) : null}
+                  </span>
+                  <span className="min-w-0 truncate">{p.title}</span>
+                  <PlanBadge tier={p.tier} />
+                </label>
+              );
+            })}
           </div>
-        ))}
-      </dl>
-
-      <fieldset disabled={!live} className="flex flex-col gap-[6px] border-t border-[var(--store-neutral-40)] pt-[10px]">
-        <legend className={`${BODY_2} mb-[6px] font-semibold text-[var(--store-neutral-100)]`}>
-          Included pages · {chosen.size} of {all.length}
-        </legend>
-        <div className="grid gap-[6px] sm:grid-cols-2">
-          {all.map((p) => {
-            const locked = recipe.tier !== "pro" && p.tier === "pro";
-            return (
-              <label
-                key={p.slug}
-                className={`${BODY_2} flex items-center gap-[8px] rounded-[10px] border border-[var(--store-card-border)] px-[10px] py-[7px] ${locked ? "cursor-not-allowed bg-[var(--store-neutral-30)] text-[var(--store-neutral-80)]" : "cursor-pointer"}`}
-                title={locked ? "Included with Pro" : undefined}
-              >
-                <input
-                  type="checkbox"
-                  checked={chosen.has(p.slug)}
-                  disabled={locked}
-                  onChange={() => toggle(p.slug)}
-                  className="size-[15px] accent-[var(--store-primary-40)]"
-                />
-                <span className="min-w-0 flex-1 truncate">{p.title}</span>
-                <TierBadge tier={p.tier} />
-              </label>
-            );
-          })}
-        </div>
-        {recipe.tier !== "pro" && all.some((p) => p.tier === "pro") ? (
-          <p className={`${BODY_3} text-[var(--store-neutral-80)]`}>
-            Pages marked Pro need the Pro plan. You'll see the price before anything is charged.
-          </p>
+        </fieldset>
+        {locksPro ? (
+          /* A Free account is offered the upgrade, never pushed (by request): the pricing panel opens
+             beside the conversation (`panel-store.ts`). */
+          <div className="flex flex-wrap items-center justify-between gap-[8px] rounded-[12px] bg-[var(--store-primary-10)] px-[12px] py-[10px]">
+            <p className={`${BODY_3} text-[var(--store-neutral-100)]`}>Pro pages unlock with a Pro account.</p>
+            <button
+              type="button"
+              onClick={openPricing}
+              className="btn btn-sm btn-primary"
+            >
+              {/* biome-ignore lint/performance/noImgElement: the design's crown */}
+              <img src="/recipe/summary-crown.svg" alt="" width={13.1254} height={10.0637} className="block brightness-0 invert" />
+              Upgrade to Pro
+            </button>
+          </div>
         ) : null}
-      </fieldset>
+      </div>
 
-      <div className="flex flex-wrap gap-[8px]">
-        <button type="button" onClick={onPreview} disabled={chosen.size === 0} className={`${BUTTON_SECONDARY} disabled:opacity-50`}>
-          Preview my admin
+      <div className="flex gap-[12px]">
+        <button
+          type="button"
+          onClick={onPreview}
+          disabled={chosen.size === 0}
+          className="btn btn-lg btn-outline min-w-0 flex-1"
+        >
+          Show Preview
         </button>
-        <button type="button" onClick={onDownload} disabled={chosen.size === 0} className={`${BUTTON_PRIMARY} disabled:opacity-50`}>
+        <button
+          type="button"
+          onClick={onDownload}
+          disabled={chosen.size === 0}
+          className="btn btn-lg btn-primary min-w-0 flex-1"
+        >
           Download
         </button>
       </div>
     </div>
+  );
+}
+
+/** The design's tier badges: Free with a green dot, Pro with a crown (Figma 857:7248, 857:7302). */
+function PlanBadge({ tier }: { tier: "free" | "pro" }) {
+  return tier === "free" ? (
+    <span className={`${BODY_3} inline-flex h-[22px] shrink-0 items-center gap-[6px] rounded-full bg-[var(--store-success-10)] px-[9px] font-bold text-[var(--store-success-50)]`}>
+      {/* biome-ignore lint/performance/noImgElement: the design's 8px dot */}
+      <img src="/recipe/summary-dot.svg" alt="" width={8} height={8} className="block" />
+      Free
+    </span>
+  ) : (
+    <span className={`${BODY_3} inline-flex h-[22px] shrink-0 items-center gap-[6px] rounded-full bg-[var(--store-primary-10)] px-[9px] font-bold text-[var(--store-primary-40)]`}>
+      {/* biome-ignore lint/performance/noImgElement: the design's crown */}
+      <img src="/recipe/summary-crown.svg" alt="" width={13.1254} height={10.0637} className="block" />
+      Pro
+    </span>
   );
 }
 
@@ -635,14 +697,18 @@ function Summary({
  */
 export function DownloadCard({ recipe }: { recipe: Recipe }) {
   const openPricing = useOpenPricing();
+  /* The package follows the account (2026-10-12): a Free account's download has no Pro pages, as
+     the summary showed them locked. */
+  const account = useUser();
+  const pro = unlocksPro(account, recipe.design);
   const design = THEMES.find((t) => t.id === recipe.design);
-  const pages = includedPages(recipe);
+  const pages = includedPages(recipe).filter((p) => pro || p.tier === "free");
   const rows = [
     ["Package", `${design?.label ?? ""} · ${useCaseOf(recipe.useCase)?.label ?? ""} admin`],
     ["Framework", labelOf(recipe.framework ?? "")],
     ["CSS", labelOf(recipe.css ?? "")],
     ["Pages", `${pages.length}: ${pages.map((p) => p.title).join(", ")}`],
-    ["Licence", recipe.tier === "pro" ? "Pro licence" : "Free licence"],
+    ["Licence", pro ? "Pro licence" : "Free licence"],
   ];
   return (
     <div className={`${CARD} flex flex-col gap-[10px]`}>
@@ -656,19 +722,21 @@ export function DownloadCard({ recipe }: { recipe: Recipe }) {
       </dl>
       <div className="flex flex-col gap-[6px] rounded-[10px] bg-[var(--tn-accent-amber-soft)] p-[10px]">
         <p className={`${BODY_2} font-semibold text-[var(--tn-accent-amber-ink)]`}>
-          Downloading needs an account
+          {account ? "Downloads aren't connected yet" : "Downloading needs an account"}
         </p>
         <p className={`${BODY_3} text-[var(--store-neutral-100)]`}>
-          Sign in with Google or GitHub to save this configuration and download it.
-          {recipe.tier === "pro" ? " Pro pages also need the Pro plan." : ""} Sign-in isn&apos;t
-          connected in this demo, so nothing is saved or charged.
+          {account
+            ? "This is a demo: the package above is what you would get, but no file is generated yet."
+            : "Sign in to save this configuration and download it."}
         </p>
       </div>
       <div className="flex flex-wrap gap-[8px]">
-        <button type="button" disabled className={`${BUTTON_PRIMARY} cursor-not-allowed opacity-60`}>
-          Sign in to download
-        </button>
-        {recipe.tier === "pro" ? (
+        {account ? null : (
+          <button type="button" onClick={() => setAuth("signin")} className={BUTTON_PRIMARY}>
+            Sign in to download
+          </button>
+        )}
+        {!pro && recipe.tier === "pro" ? (
           /* Opens the pricing panel beside this conversation (`panel-store.ts`). */
           <button type="button" onClick={openPricing} className={BUTTON_SECONDARY}>
             See Plans &amp; pricing

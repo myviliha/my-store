@@ -42,6 +42,11 @@ first** (`SD-210`), and when nothing rules, ask.
   control is a button calling `useOpenPricing()` (`panel-store.ts`): in a conversation the panel
   opens there; on the home page an empty conversation opens with it; anywhere else it goes home and
   opens it there.
+- **Sign-in waits for Download** (owner, 2026-10-12): with Voilet, the built-in model, a guest builds,
+  applies themes and reaches the summary signed out; Download is the first thing that asks to sign in,
+  and it carries on once they are in. Editing a theme (drag and drop, text) is a later feature and
+  will also ask. External models (ChatGPT, Claude) spend tokens and need payment past a limit: the next
+  rule, not built yet.
 - **Only what the reader types reaches the conversation** (owner, 2026-10-09). A button (Pricing,
   a reply's action) opens its panel silently: no message on the reader's
   behalf and no reply. A typed side intent such as "pricing" shows the reader's words and gets one
@@ -77,7 +82,8 @@ first** (`SD-210`), and when nothing rules, ask.
 - **Theme names** (`PD-898`, `PD-741`): buyers read the label (Voilet, Console, Board, Suite, Desk,
   Rack, Counter, Panel, Flow, Reach, Cloud), never the internal id. `neon`, `jira`, `zoho`, `swift`
   and any other company's brand **never appear on screen**. No third-party marks or logos; demo data
-  uses no real people or companies.
+  uses no real people or companies. **One exception** (owner, 2026-10-12): the share dialog shows each
+  service's own logo (Simple Icons, CC0, `public/share/`) on its brand colour (`--brand-*`).
 - Do not mix **Viliha**, **Voilet** and **VuiAdmin** as product names in the interface (`SD-159`); the
   assistant is "Voilet", not "Voilet AI" (`SD-223`).
 
@@ -99,8 +105,10 @@ first** (`SD-210`), and when nothing rules, ask.
   (`--store-headline-*`, `--store-body-1..4`) and the `FONT`/`BODY_*` constants in
   `app/_components/type.ts`.
 - **Focus** is a border colour change only: no glow ring, no ground change (`SD-220`, by request).
-- **Buttons**: padding sizes a button and a height is a floor (`SD-172`); disabled is a grey fill, not
-  opacity (`SD-164`); an icon-only button always has an `aria-label`.
+- **Buttons** (owner, 2026-10-12): every text button is `btn` + `btn-sm`/`btn-md`/`btn-lg` (32/36/40px,
+  pills) + a colour variant (`btn-primary/secondary/outline/soft/ghost`), defined once in `globals.css`.
+  **Never set a button's height, padding or text size inline.** Disabled is a grey fill, not opacity
+  (`SD-164`, built into `btn`); an icon-only button always has an `aria-label`.
 - **Icons**: from `app/_vendor/icons.tsx`, the repo, or the design. Search before drawing one
   (`SD-168`). Figma assets are downloaded into `public/` and used exactly as drawn.
 - **Motion**: `prefers-reduced-motion` jumps to the end; every animation honours it.
@@ -134,7 +142,7 @@ first** (`SD-210`), and when nothing rules, ask.
   visitor could mistake it for the real thing (`SD-221`, `SD-123`, `SD-178`).
 - Every demo-only piece carries a grep-able marker, `DEMO-ONLY(<name>)`, with a comment that says what
   replaces it: `grep -rn "DEMO-ONLY" app src`. Current ones: `loading-delay`, `theme-names`,
-  `pro-pages`, `auth`, `prices` (`src/data/plans.ts`: sample prices, `mock: true`).
+  `pro-pages`, `auth`, `theme-dark` (the preview's dark mode is the light capture inverted), `generate` (after a theme is chosen, the build's steps tick on a timer before the summary; `generating.tsx`), `live-preview` (Show Preview frames a stand-in admin in `public/live-preview/`; `livePreviewUrl` in `src/data/live-preview.ts` is the one address to swap for the generated build), `save-api` (Save keeps a guest's designs in this browser, and an account's through `accountApi` in `saved-store.ts`, which stores them locally until the API exists; a guest's saves join the account on sign-in), `checkout` (a labelled demo checkout in the side panel: test card, nothing sent or kept; it records the plan or a theme licence on the demo account; owner, 2026-10-12, over `SD-023`), `prices` (`src/data/plans.ts`: sample prices, `mock: true`).
 - Nothing a visitor types leaves the browser in phase 1, and no password is ever stored.
 
 ## Current conflicts with the documents (audit 2026-10-09)
@@ -150,7 +158,7 @@ in the meantime. Remove an item once it is fixed.
    `PD-898`), and "in seconds" is an unmeasured speed claim (`SD-135`, `PD-883`).
 2. Hero "Choose from 200+ templates": a typed, unbacked count (`SD-028`, `PD-899`, §10b).
 3. 22 of 36 gallery cards are titled with a theme that has no Vue/Angular renderer and still tagged
-   Vue and Angular (`PD-1005`); random titles put another theme's name on Voilet's screenshot
+   Vue and Angular (`PD-1005`; `THEMES` now honours it, so Explore and the design step filter by framework); random titles put another theme's name on Voilet's screenshot
    (`SD-141`, `SD-170`).
 4. Theme preview lists invented Pro pages, "Notifications" and "Authentication" (`SD-157`,
    `PD-1196`).

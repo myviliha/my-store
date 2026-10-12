@@ -17,7 +17,8 @@ import { useRouter } from "next/navigation";
  *
  * The same module-store pattern as `drawer-store.ts`: the callers are siblings the server lays out.
  */
-export type Panel = "pricing";
+/** "preview" is a shared design's link opening on the home page (`share-link.ts`). */
+export type Panel = "pricing" | "preview";
 
 const listeners = new Set<(panel: Panel) => void>();
 let pending: Panel | null = null;

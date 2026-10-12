@@ -1,0 +1,39 @@
+<!doctype html>
+<!--
+  DEMO-ONLY(live-preview): a stand-in for the generated admin, so the "Show Preview" flow can be
+  clicked through before there is generated source. The storefront frames this page with the
+  recipe in the URL's hash (`livePreviewUrl` in src/data/live-preview.ts); replace that function's
+  address with the real build's and delete this folder.
+-->
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Live preview</title>
+    <link rel="stylesheet" href="./app.css" />
+  </head>
+  <body>
+    <div class="app" id="app">
+      <aside class="side">
+        <div class="brand"><span class="mark" id="mark">V</span><span class="brand-name" id="brand">Admin</span></div>
+        <nav class="nav" id="nav" aria-label="Pages"></nav>
+        <p class="side-foot" id="stack"></p>
+      </aside>
+      <div class="main">
+        <header class="top">
+          <button class="icon" id="toggle-side" type="button" aria-label="Toggle sidebar">☰</button>
+          <h1 id="title">Page</h1>
+          <input class="search" type="search" placeholder="Search…" aria-label="Search" />
+          <button class="icon" id="toggle-dark" type="button" aria-label="Toggle dark mode" aria-pressed="false">◐</button>
+          <span class="avatar" aria-hidden="true">JD</span>
+        </header>
+        <main class="content">
+          <p class="demo">Demo preview: the page below is a capture of the Voilet build. The generated pages will run here.</p>
+          <img id="shot" alt="" />
+        </main>
+      </div>
+    </div>
+    <script src="./app.js"></script>
+  </body>
+</html>

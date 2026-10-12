@@ -6,6 +6,7 @@ import { formatPrice, type SamplePrice } from "@/src/plans-core";
 
 import { Glyph } from "./composer";
 import { FONT } from "./type";
+import type { CheckoutItem } from "./checkout-panel";
 
 /**
  * **Pricing, beside the conversation** (Figma "AI Builder - Guest - pricing", node 852:9393;
@@ -40,7 +41,6 @@ import { FONT } from "./type";
 const JAKARTA = "font-[family-name:var(--store-font-headline)]";
 const INTER = "font-[family-name:var(--font-inter)]";
 /** Disabled is a grey fill, never opacity (`SD-164`). */
-const DISABLED = "disabled:bg-[var(--store-neutral-40)] disabled:text-[var(--store-neutral-70)]";
 const PILL = `${INTER} inline-flex items-center rounded-full px-[8px] py-[2px] text-[length:var(--store-body-4)] font-semibold leading-[1.4]`;
 const SAMPLE_TAG = `${PILL} bg-[var(--tn-accent-amber-soft)] text-[var(--tn-accent-amber-ink)]`;
 const GREY_TAG = `${PILL} bg-[var(--store-neutral-40)] text-[var(--store-neutral-80)]`;
@@ -85,10 +85,16 @@ function SmallTick() {
 export function PricingPanel({
   onClose,
   onStartChat,
+  onCheckout,
 }: {
   onClose: () => void;
   /** Free's action: back to the conversation, with the composer focused. */
   onStartChat: () => void;
+  /**
+   * The demo checkout, in this same panel (`checkout-panel.tsx`, 2026-10-12, by request). Without it
+   * the paid plans' buttons stay as they were: disabled, checkout not open.
+   */
+  onCheckout?: (item: CheckoutItem) => void;
 }) {
   const ready = EDITIONS.filter((e) => e.status !== "waitlist").map((e) => e.framework);
   const soon = EDITIONS.filter((e) => e.status === "waitlist").map((e) => e.framework);
@@ -160,11 +166,12 @@ export function PricingPanel({
 
           <button
             type="button"
-            disabled
-            title={`Choose ${licence.name}: checkout isn't open yet`}
-            className={`${INTER} flex min-h-[40px] w-full items-center justify-center rounded-[40px] bg-[var(--store-primary-40)] px-[24px] py-[10px] text-[length:var(--store-body-2)] font-semibold leading-[1.2] text-white ${DISABLED}`}
+            disabled={!onCheckout}
+            onClick={() => onCheckout?.({ plan: "theme-licence" })}
+            title={onCheckout ? undefined : `Choose ${licence.name}: checkout isn't open yet`}
+            className="btn btn-lg btn-primary w-full"
           >
-            Checkout isn't open yet
+            {onCheckout ? `Buy a ${licence.name} (demo)` : "Checkout isn't open yet"}
           </button>
 
           {/* "Key Features" (Figma 853:9622), now what each plan entitles: a table when the panel is
@@ -236,7 +243,7 @@ export function PricingPanel({
               >
                 <div className="flex items-center justify-between gap-[8px]">
                   <h3 className={`${JAKARTA} text-[length:var(--store-body-1)] font-semibold leading-[1.2] text-black`}>{plan.name}</h3>
-                  {available ? null : <span className={GREY_TAG}>Not available yet</span>}
+                  {available || (plan.id === "pro-subscription" && onCheckout) ? null : <span className={GREY_TAG}>Not available yet</span>}
                 </div>
                 <p className="flex flex-wrap items-center gap-[6px]">
                   <span className={`${JAKARTA} text-[length:var(--store-headline-11)] font-semibold leading-none text-[var(--store-neutral-100)]`}>
@@ -263,15 +270,23 @@ export function PricingPanel({
                   <button
                     type="button"
                     onClick={onStartChat}
-                    className={`${INTER} mt-auto flex min-h-[40px] w-full items-center justify-center rounded-[24px] border border-[var(--store-neutral-100)] px-[20px] py-[10px] text-[length:var(--store-body-2)] font-medium leading-[1.2] text-[var(--store-neutral-100)] transition-colors duration-150 hover:bg-[var(--store-neutral-30)]`}
+                    className="btn btn-lg btn-secondary mt-auto w-full"
                   >
                     Start free in the chat
+                  </button>
+                ) : plan.id === "pro-subscription" && onCheckout ? (
+                  <button
+                    type="button"
+                    onClick={() => onCheckout({ plan: "pro-subscription" })}
+                    className="btn btn-lg btn-primary mt-auto w-full"
+                  >
+                    Subscribe to Pro (demo)
                   </button>
                 ) : (
                   <button
                     type="button"
                     disabled
-                    className={`${INTER} mt-auto flex min-h-[40px] w-full items-center justify-center rounded-[24px] px-[20px] py-[10px] text-[length:var(--store-body-2)] font-medium leading-[1.2] ${DISABLED}`}
+                    className="btn btn-lg mt-auto w-full"
                   >
                     Not available yet
                   </button>

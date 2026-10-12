@@ -78,6 +78,9 @@ export interface Theme {
 
 const screens = ASSETS.filter((a) => a.kind === "page").length || ASSETS.length;
 
+/** The designs with Vue and Angular renderers, by buyer-facing label (`PD-1005`). */
+const VUE_ANGULAR_RENDERERS = new Set(["Voilet", "Console", "Board", "Suite"]);
+
 export const THEMES: readonly Theme[] = DESIGNS.map((design) => {
   const rows = AVAILABLE;
   return {
@@ -93,7 +96,14 @@ export const THEMES: readonly Theme[] = DESIGNS.map((design) => {
      * Free is Voilet only, and `tiersOf` is the one place that says so.
      */
     tiers: tiersOf(design.id),
-    frameworks: [...new Set(rows.map((r) => r.framework))],
+    /*
+     * **Vue and Angular only where a renderer exists** (`PD-1005`): Voilet, Console, Board and Suite.
+     * The rows are the same for every design, so without this every theme claimed Vue and Angular and
+     * the Explore panel could not narrow by framework (2026-10-12).
+     */
+    frameworks: [...new Set(rows.map((r) => r.framework))].filter(
+      (f) => (f !== "vue" && f !== "angular") || VUE_ANGULAR_RENDERERS.has(design.label),
+    ),
     css: [...new Set(rows.map((r) => r.css))],
     screens,
     overrides: Object.keys(design.tokens).length,

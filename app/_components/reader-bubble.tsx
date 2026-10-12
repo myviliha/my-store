@@ -4,7 +4,7 @@ import { Edit } from "@/app/_vendor/icons";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Actions, useCopyAction } from "./message-actions";
-import { BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
+import { FONT } from "./type";
 
 /**
  * A message the reader sent, **editable where it stands** (2026-10-08). Edit used to copy the text
@@ -98,13 +98,13 @@ export function ReaderBubble({
             className={`${FONT} max-h-[240px] min-h-[52px] w-full resize-none bg-transparent px-[8px] py-[4px] text-[length:var(--store-body-2)] leading-[1.6] text-[var(--store-neutral-100)] outline-none [field-sizing:content]`}
           />
           <div className="flex justify-end gap-[8px]">
-            <button type="button" onClick={close} className={BUTTON_SECONDARY}>
+            <button type="button" onClick={close} className="btn btn-sm btn-secondary">
               Cancel
             </button>
             <button
               type="submit"
               disabled={!changed}
-              className={`${BUTTON_PRIMARY} disabled:cursor-not-allowed disabled:bg-[var(--store-primary-30)]`}
+              className="btn btn-sm btn-primary"
             >
               Send
             </button>
