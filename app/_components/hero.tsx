@@ -37,14 +37,18 @@ const EXAMPLES = [
 export function Hero({
   onStart,
   casting = false,
+  returning = false,
 }: {
   onStart: (prompt: string, card: CardRect | null) => void;
   /** The prompt has been sent: the text around the card is leaving. */
   casting?: boolean;
+  /** Back from a closed panel: the welcome and the card glide in (`Conversation`), so they do not
+      also replay their entrance. */
+  returning?: boolean;
 }) {
   const [prompt, setPrompt] = useState("");
   const card = useRef<HTMLFormElement>(null);
-  const leave = casting ? "tn-leave" : "tn-rise";
+  const leave = casting ? "tn-leave" : returning ? "" : "tn-rise";
   const start = () => {
     const r = card.current?.getBoundingClientRect();
     onStart(
@@ -68,7 +72,7 @@ export function Hero({
         formRef={card}
         placeholder="Describe the admin theme you want: a CRM in a calm blue, dense tables, dark mode"
         examples={EXAMPLES}
-        className="tn-rise mt-[var(--tn-space-md)] max-w-[720px]"
+        className={`${returning ? "" : "tn-rise"} mt-[var(--tn-space-md)] max-w-[720px]`}
         style={{ ["--i" as string]: 2 }}
       />
     </section>

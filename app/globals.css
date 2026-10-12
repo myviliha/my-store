@@ -1033,6 +1033,33 @@ html:has(dialog:modal) {
   animation: tn-slide-back 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+/* The reverse of `.tn-panel-in`: a panel closing on an empty conversation slides out to the right
+ * while the chat widens (`Thread`), and holds its last frame until the home screen replaces it. */
+@keyframes tn-panel-out {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+.tn-panel-out {
+  animation: tn-panel-out 200ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+/* The reverse of `.tn-drop-out`: back from a closed panel, the sections under the hero slide up into
+ * place once the welcome and the card have glided home (`--delay`). `backwards`, so they wait hidden
+ * and nothing stays applied after. */
+@keyframes tn-drop-in {
+  from {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}
+
+.tn-drop-in {
+  animation: tn-drop-in 380ms cubic-bezier(0.4, 0, 0.2, 1) var(--delay, 0ms) backwards;
+}
+
 @keyframes tn-modal-in {
   from {
     opacity: 0;

@@ -4,7 +4,6 @@ import { VoiletWordmark } from "@/app/_vendor/voilet-wordmark";
 import {
   Bolt,
   Box,
-  CheckCircle,
   Code,
   Cube,
   Dashboard,
@@ -135,8 +134,7 @@ const MAIN: readonly Item[] = [
 
 const MORE: readonly Item[] = [
   /* No Pricing row (removed 2026-10-09): Upgrade below opens the pricing panel. */
-  /* The "why buy" section (`SD-225`), a section of the home page since 2026-10-11, not a route. */
-  { label: "Standards", href: "/#standards", icon: CheckCircle },
+  /* No Standards row (removed 2026-10-12, by request): it is a section of the home page. */
   { label: "Downloads", href: "/download", icon: Download },
   { label: "Account", href: "/account", icon: Person },
 ];
@@ -496,20 +494,26 @@ export function Rail() {
             />
           ))}
         </nav>
-        <Divider />
-        <nav aria-label="Account and pricing" className="flex flex-col gap-[2px]">
-          {MORE.map((item, i) => (
-            <RailItem
-              key={item.label}
-              item={item}
-              collapsed={collapsed}
-              index={i}
-              /* Offset so these three do not repeat the first three colours of the list above. */
-              accent={i + 3}
-              active={item.label === activeMore}
-            />
-          ))}
-        </nav>
+        {/* Downloads and Account belong to a signed-in reader (2026-10-12, by request): signed out,
+            the group and its divider are not drawn. */}
+        {user ? (
+          <>
+            <Divider />
+            <nav aria-label="Account" className="flex flex-col gap-[2px]">
+              {MORE.map((item, i) => (
+                <RailItem
+                  key={item.label}
+                  item={item}
+                  collapsed={collapsed}
+                  index={i}
+                  /* Offset so these three do not repeat the first three colours of the list above. */
+                  accent={i + 3}
+                  active={item.label === activeMore}
+                />
+              ))}
+            </nav>
+          </>
+        ) : null}
       </div>
 
       <div className="mt-auto flex flex-col gap-[8px] pt-[12px]">

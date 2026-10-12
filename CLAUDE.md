@@ -173,8 +173,8 @@ glass on the Standards section, the sidebar card's glow, `ScatterGlow` behind th
 glows (`SD-217`, `SD-132`, `SD-203` differ). The sidebar card's shadow is a hex again because of it.
 Do not "fix" these.
 
-**Fixed 2026-10-09:** Standards restored (`SD-225`; a section of the home page with no route since
-2026-10-11, the sidebar linking to `/#standards`), and pricing
+**Fixed 2026-10-09:** Standards restored (`SD-225`; a section of the home page with no route and no
+sidebar item since 2026-10-12), and pricing
 made a panel of the home screen with no route (owner's call, over `SD-228`'s `/pricing` page); top bar search, Pricing and Sign in back (`SD-208`); one
 scrolling chip row (`SD-206`); sign-in is one dialog: logo, title, then Google, GitHub and Email options, Email
 swapping in an email and password form, plus sign up (with Google and GitHub too) and a three-step

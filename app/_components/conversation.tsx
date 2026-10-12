@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { ChatGlow } from "./aurora";
 import { Hero } from "./hero";
@@ -35,6 +35,15 @@ import { Thread } from "./thread";
 
 /** How long the home screen takes to leave. Matches `.tn-leave` in `globals.css`. */
 const LEAVE_MS = 260;
+/**
+ * Coming back from a closed panel: the welcome and the card glide home in `RETURN_MS`, and the
+ * sections start up (`.tn-drop-in`) `SECTIONS_AT` into it, so the three steps overlap into one
+ * movement (2026-10-12, by request). The glide eases in as well as out: it picks up from the chat
+ * still widening, and a curve that starts at full speed jolted at the hand-over.
+ */
+const RETURN_MS = 340;
+const RETURN_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
+const SECTIONS_AT = 160;
 /** How long the sections under the hero take to slide down before a panel opens (`.tn-drop-out`). */
 const DROP_MS = 180;
 
@@ -106,6 +115,34 @@ export function Conversation({ children }: { children: ReactNode }) {
   /** The prompt that has been sent and is waiting out the leave, with where its card was. */
   const [leaving, setLeaving] = useState<{ prompt: string; from: CardRect | null } | null>(null);
 
+  /** Where the closed panel's conversation left the welcome and the card (`Thread`'s `closeSide`). */
+  const [returning, setReturning] = useState<{ welcome: CardRect | null; box: CardRect | null } | null>(null);
+  const home = useRef<HTMLDivElement>(null);
+  /* **Home, the way it came, in reverse** (2026-10-12, by request): the welcome and the card start
+     where the conversation had them and glide to the hero's places; the sections follow up after
+     them (`.tn-drop-in`, delayed by `RETURN_MS`). */
+  useLayoutEffect(() => {
+    const root = home.current;
+    if (!returning || !root) return;
+    const glide = (el: Element | null | undefined, from: CardRect | null) => {
+      if (!(el instanceof HTMLElement) || !from) return null;
+      const to = el.getBoundingClientRect();
+      const dx = from.left + from.width / 2 - (to.left + to.width / 2);
+      const dy = from.top - to.top;
+      return el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], {
+        duration: RETURN_MS,
+        easing: RETURN_EASE,
+      });
+    };
+    const moves = [
+      glide(root.querySelector("[data-welcome]"), returning.welcome),
+      glide(root.querySelector("#prompt")?.closest("form"), returning.box),
+    ];
+    return () => {
+      for (const m of moves) m?.cancel();
+    };
+  }, [returning]);
+
   useEffect(() => {
     if (leaving === null) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -130,21 +167,34 @@ export function Conversation({ children }: { children: ReactNode }) {
           from={first.from}
           initialSide={side}
           welcomeFrom={first.welcome ?? null}
-          onBack={() => {
+          onBack={(from) => {
             setFirst(null);
             setSide(null);
+            setReturning(from ?? null);
           }}
         />
       ) : (
-        <>
+        <div ref={home}>
           <Hero
             onStart={(prompt, from) => setLeaving({ prompt, from })}
             casting={leaving !== null}
+            returning={returning !== null}
           />
-          <div className={leaving !== null ? "tn-leave" : dropping !== null ? "tn-drop-out" : undefined}>
+          <div
+            className={
+              leaving !== null
+                ? "tn-leave"
+                : dropping !== null
+                  ? "tn-drop-out"
+                  : returning !== null
+                    ? "tn-drop-in"
+                    : undefined
+            }
+            style={returning !== null ? { ["--delay" as string]: `${SECTIONS_AT}ms` } : undefined}
+          >
             {children}
           </div>
-        </>
+        </div>
       )}
     </div>
   );

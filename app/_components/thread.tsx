@@ -83,6 +83,12 @@ const DOCK_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
 /** The Pricing sequence runs quicker than a Generate dock (the owner, 2026-10-11: "too slow"): the
  * welcome and box centre in CENTRE_MS, the panel opens PANEL_AT in, and pushes them in PUSH_MS. */
 const CENTRE_MS = 260;
+/**
+ * Closing an empty conversation's panel hands over to the home screen this far into the widening
+ * (of `PUSH_MS`), so the glide home starts while the chat is still settling and the two read as one
+ * movement rather than two with a pause between (2026-10-12, by request).
+ */
+const HAND_OFF_MS = 150;
 const PANEL_AT = 200;
 const PUSH_MS = 300;
 /** The first message waits this long, so it rises behind the card rather than ahead of it. */
@@ -174,7 +180,9 @@ export function Thread({
   /** Where the home card was when Generate was pressed. The dock slides from here; `null` docks it
       in place, which is what reduced motion and a Back-then-return both get. */
   from?: CardRect | null;
-  onBack: () => void;
+  /** Leave the conversation. Closing an empty one's panel passes where the welcome and the prompt
+      box stand, so the home screen can slide them back into place (`Conversation`). */
+  onBack: (from?: { welcome: CardRect | null; box: CardRect | null }) => void;
   /** A panel to open with the conversation (a Pricing button). */
   initialSide?: "pricing" | null;
   /** Where the home screen's welcome was: the empty conversation's slides from there. */
@@ -285,6 +293,8 @@ export function Thread({
   const [tab, setTab] = useState<"chat" | "side">(() => (side ? "side" : "chat"));
   const [split, setSplit] = useState(SPLIT_DEFAULT);
   const [dragging, setDragging] = useState(false);
+  /** An empty conversation's panel is closing: it slides out and the chat widens, then home. */
+  const [closing, setClosing] = useState(false);
   const [draft, setDraftState] = useState("");
   /**
    * The draft, readable and clearable the instant it is sent (2026-10-08). `send` read `draft` from
@@ -662,6 +672,28 @@ export function Thread({
     setTab("side");
   };
   const closeSide = () => {
+    /* An empty conversation was only ever there for its panel: closing the panel goes home, **the
+       way it came, in reverse** (2026-10-12, by request). The panel slides out while the chat widens
+       back to the whole width (`closing`); then the welcome and the box are measured where they
+       stand and handed to the home screen, which glides them back and brings its sections up. */
+    if (turns.length === 0) {
+      if (prefersReduced() || closing) {
+        onBack();
+        return;
+      }
+      setClosing(true);
+      window.setTimeout(() => {
+        const rect = (el: Element | null | undefined): CardRect | null => {
+          const r = el?.getBoundingClientRect();
+          return r ? { top: r.top, left: r.left, width: r.width, height: r.height } : null;
+        };
+        onBack({
+          welcome: rect(list.current?.querySelector("[data-welcome]")),
+          box: rect(document.getElementById("prompt")?.closest("form")),
+        });
+      }, HAND_OFF_MS);
+      return;
+    }
     setSide(null);
     setTab("chat");
   };
@@ -691,7 +723,10 @@ export function Thread({
 
   const chat = (
     <div
-      className={`flex min-h-0 min-w-0 flex-1 flex-col ${turns.length === 0 ? "justify-center" : ""} ${split2 && tab === "side" ? "max-lg:hidden" : ""}`}
+      /* Empty, it centres on the **window**, not on the space under the top bar (2026-10-12, by
+         request): padding the foot by the bar's height moves the centre up by half of it. Below `lg`
+         a panel adds the Chat/Pricing tab row above (34px and its margin), so that is padded too. */
+      className={`flex min-h-0 min-w-0 flex-1 flex-col ${turns.length === 0 ? `justify-center pb-[var(--tn-h-topbar)] ${split2 ? "max-lg:pb-[calc(var(--tn-h-topbar)+34px+var(--tn-space-2xs))]" : ""}` : ""} ${split2 && tab === "side" ? "max-lg:hidden" : ""}`}
     >
       {/* Empty, the list takes only the welcome's height and the column centres it with the composer
           under it, as on the home page (2026-10-09, by request); the first message lets the list fill
@@ -796,38 +831,49 @@ export function Thread({
     <section
       className={`mx-auto flex h-[calc(100dvh_-_var(--tn-h-topbar))] w-full flex-col px-[var(--tn-space-sm)] pt-[var(--tn-space-sm)] pb-[var(--tn-space-sm)] ${split2 ? "max-w-none" : "max-w-[900px]"}`}
     >
-      <div className="mb-[var(--tn-space-2xs)] flex shrink-0 items-center justify-between gap-[12px]">
-        <button
-          type="button"
-          onClick={onBack}
-          className={`${FONT} flex cursor-pointer items-center gap-[6px] text-[length:var(--store-body-2)] font-medium text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)]`}
+      {/* **Back only once there is a conversation to leave** (2026-10-12, by request): a conversation a
+          button opened (Pricing) has no message yet, so it shows no Back, and closing its panel takes
+          the reader home instead (`closeSide`). Without Back the row holds only the phone's tabs. */}
+      {turns.length > 0 || split2 ? (
+        <div
+          className={`mb-[var(--tn-space-2xs)] flex shrink-0 items-center justify-between gap-[12px] ${turns.length === 0 ? "lg:hidden" : ""}`}
         >
-          <Glyph size={20}>
-            <path d="M14 6l-6 6 6 6" />
-          </Glyph>
-          Back
-        </button>
-        {split2 ? (
-          <div
-            role="tablist"
-            aria-label="View"
-            className="flex gap-[4px] rounded-full bg-[var(--store-neutral-30)] p-[3px] lg:hidden"
-          >
-            {(["chat", "side"] as const).map((v) => (
-              <button
-                key={v}
-                type="button"
-                role="tab"
-                aria-selected={tab === v}
-                onClick={() => setTab(v)}
-                className={`${FONT} cursor-pointer rounded-full px-[14px] py-[5px] text-[length:var(--store-body-3)] font-semibold ${tab === v ? "bg-white text-[var(--store-primary-40)] shadow-[0_1px_3px_color-mix(in_srgb,var(--store-neutral-100)_10%,transparent)]" : "text-[var(--store-neutral-80)]"}`}
-              >
-                {v === "chat" ? "Chat" : side === "preview" ? "Preview" : side === "pricing" ? "Pricing" : "Themes"}
-              </button>
-            ))}
-          </div>
-        ) : null}
-      </div>
+          {turns.length > 0 ? (
+            <button
+              type="button"
+              onClick={() => onBack()}
+              className={`${FONT} flex cursor-pointer items-center gap-[6px] text-[length:var(--store-body-2)] font-medium text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)]`}
+            >
+              <Glyph size={20}>
+                <path d="M14 6l-6 6 6 6" />
+              </Glyph>
+              Back
+            </button>
+          ) : (
+            <span />
+          )}
+          {split2 ? (
+            <div
+              role="tablist"
+              aria-label="View"
+              className="flex gap-[4px] rounded-full bg-[var(--store-neutral-30)] p-[3px] lg:hidden"
+            >
+              {(["chat", "side"] as const).map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === v}
+                  onClick={() => setTab(v)}
+                  className={`${FONT} cursor-pointer rounded-full px-[14px] py-[5px] text-[length:var(--store-body-3)] font-semibold ${tab === v ? "bg-white text-[var(--store-primary-40)] shadow-[0_1px_3px_color-mix(in_srgb,var(--store-neutral-100)_10%,transparent)]" : "text-[var(--store-neutral-80)]"}`}
+                >
+                  {v === "chat" ? "Chat" : side === "preview" ? "Preview" : side === "pricing" ? "Pricing" : "Themes"}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
 
       {/* Each new reply, once, for a screen reader. */}
       <p aria-live="polite" className="sr-only">
@@ -847,8 +893,11 @@ export function Thread({
           /* Always a basis, so opening a panel animates it from the whole width to the split (the
              panel pushes the chat left) instead of jumping. */
           style={{
-            flexBasis: split2 ? `${split}%` : "100%",
-            transition: dragging || prefersReduced() ? "none" : `flex-basis ${welcomeFrom ? PUSH_MS : DOCK_MS}ms ${DOCK_EASE}`,
+            flexBasis: split2 && !closing ? `${split}%` : "100%",
+            transition:
+              dragging || prefersReduced()
+                ? "none"
+                : `flex-basis ${welcomeFrom || closing ? PUSH_MS : DOCK_MS}ms ${DOCK_EASE}`,
           }}
         >
           {chat}
@@ -865,14 +914,14 @@ export function Thread({
               tabIndex={0}
               onPointerDown={drag}
               onKeyDown={nudge}
-              className="group mx-[6px] hidden w-[12px] shrink-0 cursor-col-resize touch-none items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-[var(--store-primary-40)] lg:flex"
+              className={`${closing ? "invisible" : ""} group mx-[6px] hidden w-[12px] shrink-0 cursor-col-resize touch-none items-center justify-center rounded-full focus-visible:outline-2 focus-visible:outline-[var(--store-primary-40)] lg:flex`}
             >
               <span className="h-[48px] w-[4px] rounded-full bg-[var(--store-neutral-50)] transition-colors group-hover:bg-[var(--store-primary-40)]" />
             </div>
             {/* Slides in when it opens (`.tn-panel-in`); `key` replays it when the panel changes. */}
             <div
               key={side}
-              className={`tn-panel-in min-h-0 min-w-0 flex-1 ${tab === "chat" ? "max-lg:hidden" : ""}`}
+              className={`${closing ? "tn-panel-out overflow-hidden" : "tn-panel-in"} min-h-0 min-w-0 flex-1 ${tab === "chat" ? "max-lg:hidden" : ""}`}
             >
               {side === "pricing" ? (
                 <PricingPanel onClose={closeSide} onStartChat={startChat} />
