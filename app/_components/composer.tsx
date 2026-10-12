@@ -281,7 +281,7 @@ export function Composer({
                 </span>
               )}
               <span
-                className={`${FONT} absolute inset-x-0 bottom-0 truncate bg-[#0c0c0c99] px-[6px] py-[4px] text-[length:var(--store-body-3)] font-medium text-white`}
+                className={`${FONT} absolute inset-x-0 bottom-0 truncate bg-[color-mix(in_srgb,var(--store-neutral-100)_60%,transparent)] px-[6px] py-[4px] text-[length:var(--store-body-3)] font-medium text-white`}
               >
                 {file.name}
               </span>
@@ -289,7 +289,7 @@ export function Composer({
                 type="button"
                 aria-label={`Remove ${file.name}`}
                 onClick={() => drop(i)}
-                className="absolute right-[4px] top-[4px] flex size-[22px] cursor-pointer items-center justify-center rounded-full bg-[#0c0c0c99] text-white opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
+                className="absolute right-[4px] top-[4px] flex size-[22px] cursor-pointer items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--store-neutral-100)_60%,transparent)] text-white opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100 [@media(hover:none)]:opacity-100"
               >
                 <Glyph size={14}>
                   <path d="M6 6l12 12M18 6L6 18" />

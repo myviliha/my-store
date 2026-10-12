@@ -1,12 +1,9 @@
 "use client";
 
-import { Check, Copy, Edit, Reload } from "@/app/_vendor/icons";
 import {
   type KeyboardEvent as ReactKeyboardEvent,
-  type ReactNode,
   type PointerEvent as ReactPointerEvent,
   useEffect,
-  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -15,12 +12,18 @@ import {
 import { Composer, Glyph } from "./composer";
 import type { CardRect } from "./conversation";
 import { Explore } from "./explore";
+import { Welcome } from "./hero";
+import { onPanelRequest } from "./panel-store";
+import { PricingPanel } from "./pricing-panel";
+import { ReaderBubble } from "./reader-bubble";
+import { ReplyActions } from "./message-actions";
+import { Replying } from "./replying";
 import type { MasonryCard } from "./masonry";
 import { Preview } from "./preview";
 import { ThemePreview } from "./theme-preview";
 import { nextStep, parse, promptFor, type Recipe, type Step } from "./recipe";
 import { type Answer, DownloadCard, StepCard } from "./recipe-ui";
-import { BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
+import { FONT } from "./type";
 
 /**
  * The conversation, once the reader has sent something (`SD-216`): **a guided recipe**, not a chat
@@ -67,322 +70,21 @@ type Turn =
 
 /* ─── The actions under a message ─────────────────────────────────────────────────────────── */
 
-/**
- * The actions under a message (`SD-217`), **one component for both sides of the conversation**.
- *
- * It was one component until the guided-recipe rewrite (`b5fdb7f`) dropped the system reply's row
- * and left the reader's written out inline; restored 2026-10-08 so both rows share one button, one
- * size and one hover, and a change to either is made once.
- *
- * **No card.** The glyphs sit on the page in grey under the message they belong to, ChatGPT's way,
- * which the dev chose over the first reference's floating white surface. **Both rows are always
- * shown** (2026-10-08, by request), not revealed on hover or focus.
- *
- * **Copy and Edit do their jobs. The two votes do not leave the browser**, and that is the honest
- * state rather than a toast thanking nobody for their feedback. They toggle, so a reader can see
- * the click registered, and the moment there is somewhere to send a vote this is the one place
- * that changes.
- *
- * **Try again re-asks the newest question, fresh** (restored 2026-10-08). Replies come from the
- * guided recipe, so it cannot word an answer differently; what it does is redraw the question's card
- * from the recipe as it stands, which clears anything half-chosen (a framework picked but not
- * continued) and keeps every answer already given. Only the newest reply has it: retrying an older
- * one would discard every turn after it, and a button that quietly deletes four messages is worse
- * than no button.
- */
-interface Action {
-  readonly label: string;
-  readonly icon: ReactNode;
-  readonly onClick: () => void;
-  /** Drawn as held down. The votes use it; copy uses its own tick instead. */
-  readonly active?: boolean;
-  /** Shown but not usable, with the reason as its tooltip (Edit while a reply is on its way). */
-  readonly disabled?: string;
-}
-
-const ACTION_BUTTON =
-  "flex size-[28px] cursor-pointer items-center justify-center rounded-[6px] text-[var(--store-neutral-80)] transition-colors duration-150 hover:bg-[var(--store-neutral-30)] hover:text-[var(--store-neutral-100)]";
-
-function Actions({
-  items,
-  align,
-}: {
-  items: readonly Action[];
-  align: "start" | "end";
-}) {
-  return (
-    <div
-      className={`flex items-center gap-[4px] ${align === "end" ? "justify-end" : "justify-start"}`}
-    >
-      {items.map((item) => (
-        <button
-          key={item.label}
-          type="button"
-          aria-label={item.label}
-          aria-pressed={item.active}
-          onClick={item.onClick}
-          disabled={Boolean(item.disabled)}
-          title={item.disabled}
-          className={`${ACTION_BUTTON} disabled:cursor-not-allowed disabled:opacity-40 ${item.active ? "text-[var(--store-primary-40)]" : ""}`}
-        >
-          {item.icon}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-/** Copies, and says so for a moment. The tick is the whole confirmation; a toast for a copy is noise. */
-function useCopy(text: string) {
-  const [copied, setCopied] = useState(false);
-  useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), 1400);
-    return () => clearTimeout(timer);
-  }, [copied]);
-  return {
-    copied,
-    copy: () => {
-      void navigator.clipboard?.writeText(text).then(() => setCopied(true));
-    },
-  };
-}
-
-/** Copy, with its tick while the copy is fresh. Both rows lead with it. */
-function useCopyAction(text: string): Action {
-  const { copied, copy } = useCopy(text);
-  return {
-    label: copied ? "Copied" : "Copy",
-    icon: copied ? (
-      <Check width={16} height={16} />
-    ) : (
-      <Copy width={16} height={16} />
-    ),
-    onClick: copy,
-  };
-}
-
-/**
- * **Radix ships no thumb**, and neither does the reference page, so these two are drawn here and
- * nowhere else; swap them for the real pair the moment there is one (`SD-217`). Every other glyph on
- * these rows is `@viliha/vui-react/icons`, which is where an icon belongs.
- */
-function Thumb({ down = false }: { down?: boolean }) {
-  return (
-    <svg
-      width={16}
-      height={16}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      className={`shrink-0 ${down ? "rotate-180 scale-x-[-1]" : ""}`}
-    >
-      <path d="M7 21V10l4.5-7a2 2 0 0 1 2 2.6L12.5 9h5.3a2.2 2.2 0 0 1 2.1 2.7l-1.8 7A2.2 2.2 0 0 1 16 20.4H7z" />
-      <path d="M7 10H4.8A1.8 1.8 0 0 0 3 11.8v7.4A1.8 1.8 0 0 0 4.8 21H7" />
-    </svg>
-  );
-}
-
-/** Under a system reply: copy its words, rate it, and on the newest one, try again. */
-function ReplyActions({ text, onRetry }: { text: string; onRetry?: () => void }) {
-  const copy = useCopyAction(text);
-  const [vote, setVote] = useState<"up" | "down" | null>(null);
-  return (
-    <Actions
-      align="start"
-      items={[
-        copy,
-        {
-          label: "Good answer",
-          icon: <Thumb />,
-          active: vote === "up",
-          onClick: () => setVote((v) => (v === "up" ? null : "up")),
-        },
-        {
-          label: "Bad answer",
-          icon: <Thumb down />,
-          active: vote === "down",
-          onClick: () => setVote((v) => (v === "down" ? null : "down")),
-        },
-        ...(onRetry
-          ? [{ label: "Try again", icon: <Reload width={16} height={16} />, onClick: onRetry }]
-          : []),
-      ]}
-    />
-  );
-}
-
-/**
- * A message the reader sent, **editable where it stands** (2026-10-08). Edit used to copy the text
- * down into the composer, which left the original in place and the reader unsure which one counted.
- * Now the bubble becomes a text box with Cancel and Send: Enter sends, Shift+Enter breaks the line,
- * Escape cancels, and focus returns to the Edit button on the way out. Send is disabled while the
- * text is empty or unchanged, because neither is an edit. What Send does to the conversation is
- * `editAt` in `Thread`.
- */
-function ReaderBubble({
-  text,
-  spaced,
-  delay,
-  onEdit,
-  locked = false,
-}: {
-  text: string;
-  /** Every message but the first opens a new turn and wants air above it. */
-  spaced: boolean;
-  /** How long it waits before rising, in ms; the first waits for the card to start moving away. */
-  delay: number;
-  /** The edited text, sent. */
-  onEdit: (text: string) => void;
-  /** A reply is on its way: editing now would rewind under it, so Edit waits. */
-  locked?: boolean;
-}) {
-  const copy = useCopyAction(text);
-  const [editing, setEditing] = useState(false);
-  const fieldId = useId();
-  const [value, setValue] = useState(text);
-  const field = useRef<HTMLTextAreaElement>(null);
-  const row = useRef<HTMLDivElement>(null);
-  const changed = value.trim() !== "" && value.trim() !== text.trim();
-
-  /* Into the box with the caret at the end, as if the reader had clicked after the last word. */
-  useEffect(() => {
-    if (!editing) return;
-    const el = field.current;
-    el?.focus();
-    el?.setSelectionRange(el.value.length, el.value.length);
-  }, [editing]);
-
-  const close = () => {
-    setEditing(false);
-    setValue(text);
-    /* Back to Edit, so a keyboard reader is where they started rather than at the top of the page. */
-    requestAnimationFrame(() =>
-      row.current?.querySelector<HTMLButtonElement>('button[aria-label="Edit"]')?.focus(),
-    );
-  };
-  const submit = () => {
-    if (!changed) return;
-    setEditing(false);
-    onEdit(value.trim());
-  };
-
-  return (
-    <div
-      ref={row}
-      className={`tn-message-in flex flex-col items-end gap-[4px] ${spaced ? "mt-[var(--tn-space-2xs)]" : ""}`}
-      style={{ ["--delay" as string]: `${delay}ms` }}
-    >
-      {editing ? (
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            submit();
-          }}
-          className="flex w-full max-w-[80%] flex-col gap-[8px] rounded-[20px] border border-[var(--store-primary-40)] bg-white p-[12px] shadow-[0_0_0_3px_var(--store-primary-10)]"
-        >
-          <label htmlFor={fieldId} className="sr-only">
-            Edit your message
-          </label>
-          <textarea
-            id={fieldId}
-            ref={field}
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            onKeyDown={(e) => {
-              /* An input method's Enter commits its word; it does not send (see `Composer`). */
-              if (e.nativeEvent.isComposing || e.keyCode === 229) return;
-              if (e.key === "Escape") {
-                e.preventDefault();
-                close();
-              } else if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                submit();
-              }
-            }}
-            rows={2}
-            className={`${FONT} max-h-[240px] min-h-[52px] w-full resize-none bg-transparent px-[8px] py-[4px] text-[length:var(--store-body-2)] leading-[1.6] text-[var(--store-neutral-100)] outline-none [field-sizing:content]`}
-          />
-          <div className="flex justify-end gap-[8px]">
-            <button type="button" onClick={close} className={BUTTON_SECONDARY}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!changed}
-              className={`${BUTTON_PRIMARY} disabled:cursor-not-allowed disabled:bg-[var(--store-primary-30)]`}
-            >
-              Send
-            </button>
-          </div>
-        </form>
-      ) : (
-        <div
-          className={`${FONT} w-fit max-w-[80%] whitespace-pre-line rounded-[20px] bg-[var(--store-primary-10)] px-[20px] py-[12px] text-[length:var(--store-body-2)] font-normal leading-[1.6] text-[var(--store-neutral-100)]`}
-        >
-          {text}
-        </div>
-      )}
-      {/* Hidden rather than removed while editing, so the gap down to the reply stays the height of
-          this row instead of closing up under the edit box. `inert` keeps it out of reach. */}
-      <div className={editing ? "invisible" : undefined} inert={editing}>
-        <Actions
-          align="end"
-          items={[
-            copy,
-            {
-              label: "Edit",
-              icon: <Edit width={16} height={16} />,
-              onClick: () => setEditing(true),
-              disabled: locked ? "Wait for the reply to finish" : undefined,
-            },
-          ]}
-        />
-      </div>
-    </div>
-  );
-}
-
-/**
- * **The loading state**: where the next reply will appear, while it is on its way.
- *
- * Three dots in the reply's own card, so the reply replaces it in place rather than arriving
- * somewhere else. `role="status"` with "Voilet is replying" for a screen reader; the dots are
- * decorative and stand still under reduced motion (`.tn-typing` in `globals.css`). No percentage and
- * no invented steps: it says a reply is coming and nothing it cannot back.
- */
-function Replying() {
-  return (
-    <div
-      role="status"
-      className="tn-message-in mt-[var(--tn-space-2xs)] flex w-fit items-center gap-[5px] rounded-[16px] border border-[var(--store-card-border)] bg-white/75 px-[16px] py-[14px] backdrop-blur-sm"
-    >
-      <span className="sr-only">Voilet is replying</span>
-      {[0, 1, 2].map((d) => (
-        <span
-          key={d}
-          aria-hidden="true"
-          className="tn-typing size-[7px] rounded-full bg-[var(--store-primary-40)]"
-          style={{ ["--d" as string]: `${d * 160}ms` }}
-        />
-      ))}
-    </div>
-  );
-}
-
 /* ─── Timing and layout ──────────────────────────────────────────────────────────────────────── */
 
 function prefersReduced(): boolean {
-  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  /* Also read during render (the column's transition), so it must not assume a window. */
+  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
 /** The card's slide from the home position to the dock: the rail's own decelerating curve. */
 const DOCK_MS = 560;
 const DOCK_EASE = "cubic-bezier(0.32, 0.72, 0, 1)";
+/** The Pricing sequence runs quicker than a Generate dock (the owner, 2026-10-11: "too slow"): the
+ * welcome and box centre in CENTRE_MS, the panel opens PANEL_AT in, and pushes them in PUSH_MS. */
+const CENTRE_MS = 260;
+const PANEL_AT = 200;
+const PUSH_MS = 300;
 /** The first message waits this long, so it rises behind the card rather than ahead of it. */
 const FIRST_MESSAGE_DELAY = 160;
 /*
@@ -416,8 +118,8 @@ const asksForDemoDelay = (text: string): boolean => new RegExp(DEMO_DELAY_WORD.s
 /** DEMO-ONLY(loading-delay): the message without the trigger word, so it is not read as a request. */
 const withoutDemoDelay = (text: string): string =>
   text.replace(DEMO_DELAY_WORD, " ").replace(/\s+/g, " ").trim();
-/** DEMO-ONLY(loading-delay): how fast the demo stream adds a word. */
-const DEMO_WORD_MS = 35;
+/** DEMO-ONLY(loading-delay): how fast the demo stream adds a word: `SD-216`'s 18ms a word. */
+const DEMO_WORD_MS = 18;
 /**
  * DEMO-ONLY(loading-delay): a stand-in for an API's text stream, a word at a time. The reply's text
  * is already complete here, so this is the simulated typing the brief rules out and it only runs
@@ -440,16 +142,43 @@ const SPLIT_DEFAULT = 46;
 const SPLIT_MIN = 32;
 const SPLIT_MAX = 68;
 
+/**
+ * **A message about pricing opens the pricing panel** (2026-10-09) and gets one sentence back, and
+ * **only that sentence** (the owner, 2026-10-09): no recipe question is attached and the recipe is
+ * not read from it, so the conversation picks up where it was when the reader answers the question
+ * still open above. Only what the reader **types** reaches the conversation: a Pricing button opens
+ * the panel and adds nothing (`panel-store.ts`, and `/pricing` opens an empty conversation).
+ */
+const ASKS_PRICING = /\b(pric(e|es|ed|ing)|costs?|plans?|licen[cs]es?)\b/i;
+const PRICING_LEAD = "Pricing is open beside the chat. Ask me anything about it, or carry on here.";
+
+/** The newest message that asks a question, or -1. */
+function activeQuestion(turns: readonly Turn[]): number {
+  for (let i = turns.length - 1; i >= 0; i--) {
+    const t = turns[i];
+    if (t?.from === "voilet" && t.step) return i;
+  }
+  return -1;
+}
+
 export function Thread({
   first,
   from = null,
   onBack,
+  initialSide = null,
+  welcomeFrom = null,
 }: {
-  first: string;
+  /** The reader's opening message, or `null` for a conversation opened by a button (`/pricing`):
+      it starts empty, and nothing is said on the reader's behalf. */
+  first: string | null;
   /** Where the home card was when Generate was pressed. The dock slides from here; `null` docks it
       in place, which is what reduced motion and a Back-then-return both get. */
   from?: CardRect | null;
   onBack: () => void;
+  /** A panel to open with the conversation (a Pricing button). */
+  initialSide?: "pricing" | null;
+  /** Where the home screen's welcome was: the empty conversation's slides from there. */
+  welcomeFrom?: CardRect | null;
 }) {
   const ids = useRef(0);
   const nextId = () => ++ids.current;
@@ -501,11 +230,19 @@ export function Thread({
    * effect also sets: the first thread learned that from StrictMode appending its answer twice.
    */
   /* DEMO-ONLY(loading-delay): whether the opening prompt asked to see the loading state. */
-  const [firstDelayed] = useState(() => asksForDemoDelay(first));
-  const [recipe, setRecipe] = useState<Recipe>(() => read(first, {}).next);
+  const [firstDelayed] = useState(() => (first ? asksForDemoDelay(first) : false));
+  /** The opening message asked about pricing: it gets `pricingReply` and leaves the recipe alone. */
+  const firstIsPricing = first !== null && ASKS_PRICING.test(first);
+  /** The one-sentence answer to a pricing message: no question, no recipe change. */
+  const pricingReply = (): Turn => ({ id: nextId(), from: "voilet", text: PRICING_LEAD });
+  const [recipe, setRecipe] = useState<Recipe>(() =>
+    first && !firstIsPricing ? read(first, {}).next : {},
+  );
   const [turns, setTurns] = useState<Turn[]>(() => {
+    if (first === null) return [];
     const opening: Turn = { id: nextId(), from: "reader", text: first, before: {} };
     if (firstDelayed) return [opening];
+    if (firstIsPricing) return [opening, pricingReply()];
     const { next, lead } = read(first, {});
     return [opening, ask(next, lead)];
   });
@@ -536,12 +273,18 @@ export function Thread({
    * What the space beside the conversation shows: the recipe's preview, the Explore Themes panel
    * (opened from the style step), or nothing. One at a time, in the same resizable split.
    */
-  const [side, setSide] = useState<"preview" | "explore" | "theme" | null>(null);
+  /* A panel asked for from the hero opens once the welcome and box have reached the centre (the
+     effect below); otherwise it is open from the start. */
+  const [side, setSide] = useState<"preview" | "explore" | "theme" | "pricing" | null>(() =>
+    welcomeFrom ? null : (initialSide ?? (firstIsPricing ? "pricing" : null)),
+  );
   /** The card whose theme the "theme" panel previews, opened from Explore. */
   const [themeCard, setThemeCard] = useState<MasonryCard | null>(null);
-  /** Below `lg` the chat and the side panel share the screen as tabs. */
-  const [tab, setTab] = useState<"chat" | "side">("chat");
+  /** Below `lg` the chat and the side panel share the screen as tabs. A panel opened with the
+      conversation is the tab shown first; "Chat" is one tap away. */
+  const [tab, setTab] = useState<"chat" | "side">(() => (side ? "side" : "chat"));
   const [split, setSplit] = useState(SPLIT_DEFAULT);
+  const [dragging, setDragging] = useState(false);
   const [draft, setDraftState] = useState("");
   /**
    * The draft, readable and clearable the instant it is sent (2026-10-08). `send` read `draft` from
@@ -623,9 +366,9 @@ export function Thread({
      mount schedules it once rather than twice. */
   // biome-ignore lint/correctness/useExhaustiveDependencies: once, for the opening prompt
   useEffect(() => {
-    if (!firstDelayed) return;
+    if (!firstDelayed || first === null) return;
     const { next, lead } = read(first, {});
-    later(() => ask(next, lead), true);
+    later(() => (firstIsPricing ? pricingReply() : ask(next, lead)), true);
     return () => {
       window.clearTimeout(timer.current);
       run.current++;
@@ -643,11 +386,8 @@ export function Thread({
     if (busy.current) return;
     update(next);
     setTurns((all) => {
-      const marked = all.map((t, i) =>
-        i === all.length - 1 && t.from === "voilet" && t.step
-          ? { ...t, answered: next }
-          : t,
-      );
+      const open = activeQuestion(all);
+      const marked = all.map((t, i) => (i === open && t.from === "voilet" ? { ...t, answered: next } : t));
       return [...marked, { id: nextId(), from: "reader", text: echo, before: recipe }];
     });
     later(() => ask(next, lead), delayed);
@@ -661,6 +401,14 @@ export function Thread({
     if (text === "" || busy.current) return;
     setDraft("");
     const { next, lead } = read(text, recipe);
+    if (ASKS_PRICING.test(withoutDemoDelay(text))) {
+      /* The reader's words and one sentence back; the open question stays open, the recipe as it was. */
+      openPricing();
+      if (busy.current) return;
+      setTurns((all) => [...all, { id: nextId(), from: "reader", text, before: recipe }]);
+      later(pricingReply, asksForDemoDelay(text)); // DEMO-ONLY(loading-delay): the second argument
+      return;
+    }
     turn(text, next, lead, asksForDemoDelay(text)); // DEMO-ONLY(loading-delay): the last argument
   };
 
@@ -739,7 +487,7 @@ export function Thread({
     void el.offsetHeight;
     const frame = requestAnimationFrame(() => {
       s.transition = ["transform", "width", "height"]
-        .map((p) => `${p} ${DOCK_MS}ms ${DOCK_EASE}`)
+        .map((p) => `${p} ${welcomeFrom ? CENTRE_MS : DOCK_MS}ms ${DOCK_EASE}`)
         .join(", ");
       s.transform = "translate(0px, 0px)";
       s.width = `${to.width}px`;
@@ -758,6 +506,34 @@ export function Thread({
     };
   }, [from]);
 
+  /* **The welcome moves with the prompt box** (2026-10-09): from where the home screen showed it to
+     where the empty conversation centres it, on the same curve and time as the box. */
+  useLayoutEffect(() => {
+    const el = list.current?.querySelector<HTMLElement>("[data-welcome]");
+    if (!welcomeFrom || !el || prefersReduced()) return;
+    const to = el.getBoundingClientRect();
+    const dx = welcomeFrom.left + welcomeFrom.width / 2 - (to.left + to.width / 2);
+    const dy = welcomeFrom.top - to.top;
+    const move = el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], {
+      duration: CENTRE_MS,
+      easing: DOCK_EASE,
+    });
+    return () => move.cancel();
+  }, [welcomeFrom]);
+
+  /* **Step 3**: with the welcome and box centred, the panel opens, and the chat column's width
+     animates down to its split so the panel pushes them left (`flex-basis`, below). */
+  // biome-ignore lint/correctness/useExhaustiveDependencies: once, on mount
+  useEffect(() => {
+    if (!welcomeFrom || !initialSide) return;
+    const timer = setTimeout(() => {
+      setSide(initialSide);
+      setTab("side");
+    }, prefersReduced() ? 0 : PANEL_AT);
+    return () => clearTimeout(timer);
+  }, []);
+
+
   /* Focus lands in the thread's own prompt box, not on Back: Back drew a focus ring on every send,
      because the reader had just pressed Enter and the browser took the move as keyboard focus. */
   useEffect(() => {
@@ -771,6 +547,16 @@ export function Thread({
       delete document.documentElement.dataset.thread;
     };
   }, []);
+
+  /* A Pricing link in the rail, the bar or a reply opens the panel here rather than leaving the
+     conversation (`panel-store.ts`). */
+  useEffect(
+    () =>
+      onPanelRequest((panel) => {
+        if (panel === "pricing") openPricing();
+      }),
+    [],
+  );
 
   /* Once per turn, and again when the loading bubble appears: the newest thing scrolls into view. */
   // biome-ignore lint/correctness/useExhaustiveDependencies: a turn, not a render
@@ -842,11 +628,14 @@ export function Thread({
     const box = body.current?.getBoundingClientRect();
     if (!box) return;
     e.currentTarget.setPointerCapture(e.pointerId);
+    /* The column's width animates when a panel opens; a drag follows the pointer with none. */
+    setDragging(true);
     const move = (ev: PointerEvent) => {
       const pct = ((ev.clientX - box.left) / box.width) * 100;
       setSplit(Math.min(SPLIT_MAX, Math.max(SPLIT_MIN, pct)));
     };
     const up = () => {
+      setDragging(false);
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
     };
@@ -862,6 +651,9 @@ export function Thread({
 
   const last = turns.length - 1;
   const latest = turns[last];
+  /* The question whose choices are live: the newest one asked, which a pricing reply after it does not
+     replace. */
+  const active = activeQuestion(turns);
   /* Announced once, when complete: a streaming reply is not read out word by word. */
   const announce = latest?.from === "voilet" && !streaming ? latest.text : "";
   const split2 = side !== null;
@@ -872,6 +664,15 @@ export function Thread({
   const closeSide = () => {
     setSide(null);
     setTab("chat");
+  };
+  function openPricing() {
+    setSide("pricing");
+    setTab("side");
+  }
+  /** Free's action in the pricing panel: back to the chat (the panel stays open on a wide screen). */
+  const startChat = () => {
+    setTab("chat");
+    requestAnimationFrame(() => document.getElementById("prompt")?.focus());
   };
   const previewTheme = (card: MasonryCard) => {
     setThemeCard(card);
@@ -890,9 +691,24 @@ export function Thread({
 
   const chat = (
     <div
-      className={`flex min-h-0 min-w-0 flex-1 flex-col ${split2 && tab === "side" ? "max-lg:hidden" : ""}`}
+      className={`flex min-h-0 min-w-0 flex-1 flex-col ${turns.length === 0 ? "justify-center" : ""} ${split2 && tab === "side" ? "max-lg:hidden" : ""}`}
     >
-      <div ref={list} className="flex min-h-0 flex-1 flex-col overflow-y-auto scroll-smooth">
+      {/* Empty, the list takes only the welcome's height and the column centres it with the composer
+          under it, as on the home page (2026-10-09, by request); the first message lets the list fill
+          the column again and the composer docks at the foot. */}
+      <div
+        ref={list}
+        className={`flex min-h-0 flex-col overflow-y-auto scroll-smooth ${turns.length === 0 ? "flex-none" : "flex-1"}`}
+      >
+        {/* **An empty conversation greets the reader as the home page does** (2026-10-09, by request):
+            one opened by a button (`/pricing`) has said nothing yet, so the welcome sits where the
+            messages will be and goes with the first one. An `h2`: such a route has its own `h1`. */}
+        {turns.length === 0 ? (
+          <div className="flex flex-1 flex-col items-center justify-center px-[var(--tn-space-sm)] pb-[var(--tn-space-sm)] text-center">
+            {/* Arriving by a slide, it does not also replay its entrance. */}
+            <Welcome as="h2" leave={welcomeFrom ? "" : "tn-rise"} />
+          </div>
+        ) : null}
         <div className="mx-auto flex w-full max-w-[780px] flex-col">
           {turns.map((t, i) =>
             t.from === "reader" ? (
@@ -936,9 +752,9 @@ export function Thread({
                       step={t.step}
                       /* The live question always shows the live recipe, so a page ticked in the summary
                          stays ticked; an answered one shows the recipe it was answered with. */
-                      asked={i === last ? recipe : t.asked}
-                      answered={i === last ? undefined : t.answered}
-                      live={i === last}
+                      asked={i === active ? recipe : t.asked}
+                      answered={i === active ? undefined : t.answered}
+                      live={i === active}
                       onAnswer={answer}
                       onEdit={(next, echo) =>
                         echo ? turn(echo, next) : update(next)
@@ -1004,9 +820,9 @@ export function Thread({
                 role="tab"
                 aria-selected={tab === v}
                 onClick={() => setTab(v)}
-                className={`${FONT} cursor-pointer rounded-full px-[14px] py-[5px] text-[length:var(--store-body-3)] font-semibold ${tab === v ? "bg-white text-[var(--store-primary-40)] shadow-[0_1px_3px_#0c0c0c1a]" : "text-[var(--store-neutral-80)]"}`}
+                className={`${FONT} cursor-pointer rounded-full px-[14px] py-[5px] text-[length:var(--store-body-3)] font-semibold ${tab === v ? "bg-white text-[var(--store-primary-40)] shadow-[0_1px_3px_color-mix(in_srgb,var(--store-neutral-100)_10%,transparent)]" : "text-[var(--store-neutral-80)]"}`}
               >
-                {v === "chat" ? "Chat" : side === "preview" ? "Preview" : "Themes"}
+                {v === "chat" ? "Chat" : side === "preview" ? "Preview" : side === "pricing" ? "Pricing" : "Themes"}
               </button>
             ))}
           </div>
@@ -1028,7 +844,12 @@ export function Thread({
             into half a phone. */}
         <div
           className={`flex min-h-0 min-w-0 ${split2 ? `max-lg:flex-1 ${tab === "side" ? "max-lg:hidden" : ""}` : "flex-1"}`}
-          style={split2 ? { flexBasis: `${split}%` } : undefined}
+          /* Always a basis, so opening a panel animates it from the whole width to the split (the
+             panel pushes the chat left) instead of jumping. */
+          style={{
+            flexBasis: split2 ? `${split}%` : "100%",
+            transition: dragging || prefersReduced() ? "none" : `flex-basis ${welcomeFrom ? PUSH_MS : DOCK_MS}ms ${DOCK_EASE}`,
+          }}
         >
           {chat}
         </div>
@@ -1053,7 +874,9 @@ export function Thread({
               key={side}
               className={`tn-panel-in min-h-0 min-w-0 flex-1 ${tab === "chat" ? "max-lg:hidden" : ""}`}
             >
-              {side === "explore" ? (
+              {side === "pricing" ? (
+                <PricingPanel onClose={closeSide} onStartChat={startChat} />
+              ) : side === "explore" ? (
                 <Explore onClose={closeSide} onPreview={previewTheme} />
               ) : side === "theme" && themeCard ? (
                 <ThemePreview

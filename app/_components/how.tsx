@@ -1,3 +1,4 @@
+import { GLASS_SURFACE } from "./glass";
 import { H2, LEAD, SECTION } from "./type";
 
 /**
@@ -22,7 +23,7 @@ export function How() {
         </p>
       </div>
       <div
-        className="tn-reveal w-full max-w-[850px] overflow-hidden rounded-[var(--tn-radius-2xl)] border border-[var(--store-neutral-50)]"
+        className={`tn-reveal ${GLASS_SURFACE} w-full max-w-[850px]`}
         style={{ ["--i" as string]: 1 }}
       >
         <div

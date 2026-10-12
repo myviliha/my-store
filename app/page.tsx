@@ -7,6 +7,7 @@ import { How } from "./_components/how";
 import { Outputs } from "./_components/outputs";
 import { Proof } from "./_components/proof";
 import { Search } from "./_components/search";
+import { Standards } from "./_components/standards";
 
 /**
  * The landing page, as a server component end to end: no section here needs state. The FAQ
@@ -24,6 +25,7 @@ export default function HomePage() {
       <How />
       <Outputs />
       <Proof />
+      <Standards />
       <Capabilities />
       <Faq />
       <Closing />

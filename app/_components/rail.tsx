@@ -4,6 +4,7 @@ import { VoiletWordmark } from "@/app/_vendor/voilet-wordmark";
 import {
   Bolt,
   Box,
+  CheckCircle,
   Code,
   Cube,
   Dashboard,
@@ -17,7 +18,6 @@ import {
   Person,
   Reader,
   Rocket,
-  Star,
 } from "@/app/_vendor/icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -27,6 +27,7 @@ import { ASSETS } from "@/src/data/assets";
 
 import { initialsOf, setAuth, signOut, useUser } from "./auth-store";
 import { setDrawer, useDrawer } from "./drawer-store";
+import { useOpenPricing } from "./panel-store";
 import { accentAt, FONT } from "./type";
 
 /**
@@ -133,7 +134,9 @@ const MAIN: readonly Item[] = [
 ];
 
 const MORE: readonly Item[] = [
-  { label: "Pricing", href: "/pricing", icon: Star },
+  /* No Pricing row (removed 2026-10-09): Upgrade below opens the pricing panel. */
+  /* The "why buy" section (`SD-225`), a section of the home page since 2026-10-11, not a route. */
+  { label: "Standards", href: "/#standards", icon: CheckCircle },
   { label: "Downloads", href: "/download", icon: Download },
   { label: "Account", href: "/account", icon: Person },
 ];
@@ -143,7 +146,7 @@ const ROW_IDLE =
   "font-normal text-[var(--store-neutral-100)] hover:bg-white/70 focus-visible:bg-white/70";
 /* The current page: a white pill lifted off the ground, the label in brand blue at 600. */
 const ROW_ACTIVE =
-  "bg-white font-semibold text-[var(--store-primary-40)] shadow-[0_1px_3px_#0c0c0c14,0_0_0_1px_#0058ee14]";
+  "bg-white font-semibold text-[var(--store-primary-40)] shadow-[0_1px_3px_color-mix(in_srgb,var(--store-neutral-100)_8%,transparent),0_0_0_1px_color-mix(in_srgb,var(--store-primary-40)_8%,transparent)]";
 
 /** Pro screens that exist today, for the upgrade card. Counted, never typed. */
 const PRO_SCREENS = ASSETS.filter((asset) => asset.tier === "pro").length;
@@ -310,6 +313,12 @@ export function Rail() {
   const [phone, setPhone] = useState(false);
   const drawer = useDrawer();
   const user = useUser();
+  const openPricing = useOpenPricing();
+  /** Pricing and Upgrade: the panel opens (here or on the home page) and a phone's drawer closes. */
+  const showPricing = () => {
+    setDrawer(false);
+    openPricing();
+  };
   const closeButton = useRef<HTMLButtonElement>(null);
   const collapsed = !phone && folded;
   const path = usePathname() ?? "/";
@@ -355,7 +364,7 @@ export function Rail() {
     <div
       aria-hidden="true"
       onClick={() => setDrawer(false)}
-      className={`fixed inset-0 z-40 bg-[#0c0c0c66] transition-opacity duration-300 motion-reduce:transition-none md:hidden ${drawer ? "opacity-100" : "pointer-events-none opacity-0"}`}
+      className={`fixed inset-0 z-40 bg-[color-mix(in_srgb,var(--store-neutral-100)_40%,transparent)] transition-opacity duration-300 motion-reduce:transition-none md:hidden ${drawer ? "opacity-100" : "pointer-events-none opacity-0"}`}
     />
     <aside
       id="rail"
@@ -363,7 +372,7 @@ export function Rail() {
       onClick={(e) => {
         if ((e.target as HTMLElement).closest("a")) setDrawer(false);
       }}
-      className={`sticky top-0 flex h-dvh shrink-0 flex-col overflow-clip bg-gradient-to-b from-[var(--store-primary-10)] via-[var(--store-primary-10)] to-[var(--tn-accent-violet-soft)] px-[8px] py-[16px] shadow-[inset_-1px_0_0_var(--store-primary-20)] ${RAIL_MOTION} ${collapsed ? RAIL_COLLAPSED : RAIL_EXPANDED} max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:w-[264px] max-md:shadow-[0_0_40px_-8px_#0c0c0c40] max-md:transition-transform max-md:duration-300 ${drawer ? "max-md:translate-x-0" : "max-md:-translate-x-full"}`}
+      className={`sticky top-0 flex h-dvh shrink-0 flex-col overflow-clip bg-gradient-to-b from-[var(--store-primary-10)] via-[var(--store-primary-10)] to-[var(--tn-accent-violet-soft)] px-[8px] py-[16px] shadow-[inset_-1px_0_0_var(--store-primary-20)] ${RAIL_MOTION} ${collapsed ? RAIL_COLLAPSED : RAIL_EXPANDED} max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:w-[264px] max-md:shadow-[0_0_40px_-8px_color-mix(in_srgb,var(--store-neutral-100)_25%,transparent)] max-md:transition-transform max-md:duration-300 ${drawer ? "max-md:translate-x-0" : "max-md:-translate-x-full"}`}
     >
       {/*
        * **Collapsed, the brand slot is the toggle** (`SD-212`). The reference shows its square
@@ -576,8 +585,10 @@ export function Rail() {
             middle of it. The icon and the label are sized with it, 18 and 14 against the 14 and 12
             they were, because a call to action set smaller than the navigation above it reads as a
             footnote (`SD-223`). */}
-        <Link
-          href="/pricing"
+        {/* Opens the pricing panel (`panel-store.ts`): pricing is not a route. */}
+        <button
+          type="button"
+          onClick={showPricing}
           title={collapsed ? "Upgrade" : undefined}
           className={`${FONT} inline-flex w-full shrink-0 cursor-pointer items-center justify-center ${collapsed ? "gap-0" : "gap-[6px]"} rounded-[8px] bg-gradient-to-r from-[var(--tn-accent-blue-solid)] to-[var(--tn-accent-violet-solid)] px-[12px] py-[8px] text-[length:var(--store-body-2)] font-semibold leading-none text-white shadow-[0_6px_16px_-6px_var(--tn-accent-violet-solid)] transition-[filter,transform] duration-150 hover:-translate-y-px hover:brightness-110 active:brightness-95`}
         >
@@ -587,7 +598,7 @@ export function Rail() {
           <Label collapsed={collapsed} grow={false} className="leading-[1.5]">
             Upgrade
           </Label>
-        </Link>
+        </button>
       </div>
     </aside>
     </>

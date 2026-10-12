@@ -1,6 +1,12 @@
 import { BRAND, SKUS, type Sku } from "./catalogue";
 
 /**
+ * > **Superseded by `src/data/plans.ts`** (`PD-1246`, 2026-10-09). The plans are now Free, a Theme
+ * > Licence and a Pro Subscription, with Agent Credits and Deployment Services as add-ons, and their
+ * > entitlements and sample prices live there. Nothing renders from this file any more except
+ * > `content.ts`'s unused FAQ strings, which still read `LICENCE_TIERS`. Kept, not deleted, so the
+ * > history of the One Edition / All Editions model stays readable; do not build on it.
+ *
  * The commercial model: **one-time lifetime licences, priced per framework**.
  *
  * Confirmed by the dev on 2026-08-14, and it replaces both of the models this site has carried:
@@ -43,6 +49,13 @@ export interface LicenceTier {
   redistribution: boolean;
 }
 
+/**
+ * **What a purchase buys in updates** (`PD-1230`, 2026-10-08, superseding the 12-month window this
+ * file used to state): a one-time purchase owns **the major it was bought in**, every patch and minor
+ * inside it, forever, and the next major is a new purchase. Never "lifetime updates".
+ */
+const UPDATES = "Every patch and minor release of the major you buy";
+
 /** The three licences. Identical across frameworks: what differs is which framework you get. */
 /**
  * **Two cards, `$49` and `$99`, from the pricing strategy in `odin/product/PRODUCT.md`.**
@@ -72,7 +85,7 @@ export const LICENCE_TIERS: readonly LicenceTier[] = [
     cadence: "One-time payment",
     description: "The framework edition you build in, as source you own.",
     scope: "The edition you select",
-    included: "12 months of updates and regeneration",
+    included: UPDATES,
     redistribution: false,
   },
   {
@@ -86,7 +99,7 @@ export const LICENCE_TIERS: readonly LicenceTier[] = [
     featured: true,
     /** "It does not promise frameworks built later", in the requirement's own words. */
     scope: "Every edition available on the purchase date",
-    included: "12 months of updates and regeneration",
+    included: UPDATES,
     redistribution: false,
   },
 ];
@@ -116,9 +129,9 @@ export const LICENCE_FEATURES: readonly LicenceFeatureRow[] = [
    *  - **Email support** by duration: the requirement includes a service period rather than a support
    *    tier, so it is one row about what the period covers.
    *  - **Figma design source**: §24.3, no distributable Figma product exists.
-   *  - **Lifetime free updates**: replaced by the real term, which is 12 months of updates, hosted
-   *    configuration and regeneration, after which downloaded source keeps working forever. Calling that
-   *    "lifetime updates" was the claim §24 asks to correct.
+   *  - **Lifetime free updates**: replaced by the real term, now `PD-1230`'s: the major you buy, every
+   *    patch and minor inside it, and downloaded source keeps working forever. (A 12-month window stood
+   *    here until 2026-10-09.) Calling it "lifetime updates" was the claim §24 asks to correct.
    */
   { label: "Licence covers", icon: "components", values: LICENCE_TIERS.map((t) => t.scope) },
   {
@@ -133,11 +146,7 @@ export const LICENCE_FEATURES: readonly LicenceFeatureRow[] = [
   },
   { label: "Client projects", icon: "seats", values: LICENCE_TIERS.map(() => true) },
   { label: "Ordinary hosted SaaS products", icon: "saas", values: LICENCE_TIERS.map(() => true) },
-  {
-    label: "Updates, hosted configuration and regeneration",
-    icon: "updates",
-    values: LICENCE_TIERS.map((t) => t.included),
-  },
+  { label: "Updates", icon: "updates", values: LICENCE_TIERS.map((t) => t.included) },
   {
     /** Sales-assisted from `$199` per product (§15.3), so it is never a tick on a checkout card. */
     label: "Redistribution licence",
@@ -271,9 +280,10 @@ export const READY_MADE = {
   cadence: "One-time payment, when it ships",
   description: "A finished portal rather than a starting point. Named, not yet on sale.",
   scope: "One ready-made portal",
-  included: "12 months of updates and regeneration",
+  included: UPDATES,
   /** The absence of a checkout is the point, so it is a field rather than an omission. */
   purchasable: false,
   href: "/waitlist?edition=ready-made",
   action: "Join the waitlist",
 } as const;
+

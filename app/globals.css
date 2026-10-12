@@ -925,6 +925,21 @@ html[data-thread="open"] [data-chrome="footer"] {
  *
  * `.tn-leave` is declared after `.tn-rise` and `.tn-reveal` so it wins on the elements that carry
  * both: the headline enters with one and leaves with the other. */
+/* **Pricing from the home screen, step 1** (2026-10-09): the search, the gallery and the sections
+ * under the hero slide down and fade (`.tn-drop-out`) while the hero stays; then the conversation
+ * centres the welcome and the prompt box, and the panel slides in and pushes them left
+ * (`Conversation`, `Thread`). The global reduced-motion clamp makes it instant. */
+@keyframes tn-drop-out {
+  to {
+    transform: translateY(32px);
+    opacity: 0;
+  }
+}
+
+.tn-drop-out {
+  animation: tn-drop-out 180ms cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
 @keyframes tn-leave {
   to {
     transform: translateY(-8px);
@@ -961,6 +976,63 @@ html[data-thread="open"] [data-chrome="footer"] {
 /* The sign-in modal opening (2026-10-09): up 12px and in from 98% while it fades, on the panel's
  * curve. `backwards` for the same reason as `.tn-panel-in`. The file's reduced-motion clamp flattens
  * it like every other animation. */
+/* The sign-in dialog's email form rises into the options' place (`auth-modal.tsx`), a little further
+ * and slower than a message, so the swap reads as one movement. The reduced-motion clamp makes it
+ * instant. */
+@keyframes tn-auth-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tn-auth-up {
+  animation: tn-auth-up 360ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+/* **A modal holds the page still** (by request, 2026-10-11): while a `<dialog>` is open with
+ * `showModal()` the page behind is inert but would still scroll under a wheel or a swipe, so the
+ * document stops scrolling until it closes. The dialog scrolls its own content. */
+html:has(dialog:modal) {
+  overflow: hidden;
+}
+
+/* Sign in and sign up trade places sideways (`auth-modal.tsx`): going on to sign up the new title and
+ * form come in from the right, going back they come in from the left. The dialog clips its sides. */
+@keyframes tn-slide-next {
+  from {
+    opacity: 0;
+    transform: translateX(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes tn-slide-back {
+  from {
+    opacity: 0;
+    transform: translateX(-40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.tn-slide-next {
+  animation: tn-slide-next 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.tn-slide-back {
+  animation: tn-slide-back 320ms cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
 @keyframes tn-modal-in {
   from {
     opacity: 0;

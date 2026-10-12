@@ -41,7 +41,7 @@ const CATEGORIES: readonly {
 ];
 
 const TAB =
-  "inline-flex h-[39px] shrink-0 items-center justify-center rounded-[50px] border bg-white px-[17px] py-[12px] font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap text-[#111418] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] disabled:cursor-not-allowed disabled:opacity-40";
+  "inline-flex h-[39px] shrink-0 items-center justify-center rounded-[50px] border bg-white px-[17px] py-[12px] font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap text-[var(--store-neutral-100)] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] disabled:cursor-not-allowed disabled:opacity-40";
 
 export function Explore({
   onClose,
@@ -92,7 +92,7 @@ export function Explore({
             disabled={!c.cards}
             title={c.cards ? undefined : "Coming soon"}
             onClick={() => setCategory(c.id)}
-            className={`${TAB} ${category === c.id ? "border-[var(--store-primary-40)] bg-[var(--store-primary-10)]" : "border-[#d3d7dd]"}`}
+            className={`${TAB} ${category === c.id ? "border-[var(--store-primary-40)] bg-[var(--store-primary-10)]" : "border-[var(--store-control-border)]"}`}
           >
             {c.label}
           </button>

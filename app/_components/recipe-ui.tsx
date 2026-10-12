@@ -25,6 +25,7 @@ import {
   VIBES,
   vibeOf,
 } from "./recipe";
+import { useOpenPricing } from "./panel-store";
 import { BODY_2, BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
 
 /**
@@ -407,9 +408,9 @@ function TierPicker({
  * selected state; hover is a brand border, as on every other chip in the conversation.
  */
 const STYLE_BUTTON =
-  "inline-flex h-[39px] shrink-0 items-start gap-[9px] rounded-[50px] border border-[#d3d7dd] px-[15px] py-[11px] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] disabled:cursor-default";
+  "inline-flex h-[39px] shrink-0 items-start gap-[9px] rounded-[50px] border border-[var(--store-control-border)] px-[15px] py-[11px] transition-colors duration-150 enabled:cursor-pointer enabled:hover:border-[var(--store-primary-40)] disabled:cursor-default";
 const STYLE_LABEL =
-  "font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap text-[#111418]";
+  "font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap text-[var(--store-neutral-100)]";
 
 function VibePicker({
   recipe,
@@ -435,7 +436,7 @@ function VibePicker({
         >
           <span
             aria-hidden="true"
-            className="relative size-[17px] shrink-0 rounded-[5px] border border-[#c9ced6]"
+            className="relative size-[17px] shrink-0 rounded-[5px] border border-[var(--store-card-border)]"
           >
             {/* biome-ignore lint/performance/noImgElement: a 10x4 static SVG from the design */}
             <img src="/recipe/style-chip-bar.svg" alt="" width={10} height={4} className="absolute left-[3px] top-[9px] block" />
@@ -492,7 +493,7 @@ function DesignPicker({
           >
             <span
               aria-hidden="true"
-              className="mt-[2px] size-[18px] shrink-0 rounded-[6px] shadow-[inset_0_0_0_1px_#0000001a]"
+              className="mt-[2px] size-[18px] shrink-0 rounded-[6px] shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--store-neutral-100)_10%,transparent)]"
               style={{ backgroundColor: swatchOf(t) }}
             />
             <span className="flex min-w-0 flex-col gap-[2px]">
@@ -633,6 +634,7 @@ function Summary({
  * pricing, which a guest may read without signing in (§ 8).
  */
 export function DownloadCard({ recipe }: { recipe: Recipe }) {
+  const openPricing = useOpenPricing();
   const design = THEMES.find((t) => t.id === recipe.design);
   const pages = includedPages(recipe);
   const rows = [
@@ -667,9 +669,10 @@ export function DownloadCard({ recipe }: { recipe: Recipe }) {
           Sign in to download
         </button>
         {recipe.tier === "pro" ? (
-          <Link href="/pricing" className={BUTTON_SECONDARY}>
+          /* Opens the pricing panel beside this conversation (`panel-store.ts`). */
+          <button type="button" onClick={openPricing} className={BUTTON_SECONDARY}>
             See Plans &amp; pricing
-          </Link>
+          </button>
         ) : null}
       </div>
     </div>

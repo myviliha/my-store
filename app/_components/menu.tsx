@@ -19,6 +19,9 @@ import { FONT } from "./type";
  * and opens above it when there is not, which is the docked composer at the foot of the thread, and
  * it slides left rather than run off the right edge of the screen.
  *
+ * **No shadow** (by request, 2026-10-11): `--shadow-float`, 30px at 12%, read as the page darkening
+ * around an open menu. The panel's border is what separates it from the page.
+ *
  * **Scrolling stays inside it** (`overscroll-contain`, 2026-10-08): a long list such as the model
  * picker, scrolled to its end, used to hand the rest of the wheel to the page behind it, so the whole
  * home page moved under an open menu. The search panel's list does the same.
@@ -100,7 +103,7 @@ export function Panel({
       role="dialog"
       aria-label={label}
       style={{ width, left: place.shift, maxWidth: "calc(100vw - 32px)", maxHeight: place.max }}
-      className={`absolute z-50 overflow-y-auto overscroll-contain rounded-[16px] border border-[var(--store-card-border)] bg-white p-[8px] shadow-[var(--shadow-float)] ${
+      className={`absolute z-50 overflow-y-auto overscroll-contain rounded-[16px] border border-[var(--store-card-border)] bg-white p-[8px] ${
         place.up ? "tn-drop-up bottom-full mb-[8px]" : "tn-drop top-full mt-[8px]"
       }`}
     >

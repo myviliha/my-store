@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { PricingButton } from "./pricing-button";
+
 import { AVAILABLE, labelOf } from "@/src/configurator-core";
 import { STYLE_PAGES } from "@/src/data/styles";
 import { THEMES } from "@/src/data/themes";
@@ -26,7 +28,8 @@ const FRAMEWORKS = [...new Set(AVAILABLE.map((row) => row.framework))].map((id) 
   href: "/themes",
 }));
 
-const GROUPS: readonly { title: string; links: readonly { label: string; href: string }[] }[] = [
+/** `href: null` is a control that opens the pricing panel: pricing has no route (`panel-store.ts`). */
+const GROUPS: readonly { title: string; links: readonly { label: string; href: string | null }[] }[] = [
   { title: "Frameworks", links: FRAMEWORKS },
   {
     title: "CSS Systems",
@@ -40,8 +43,8 @@ const GROUPS: readonly { title: string; links: readonly { label: string; href: s
     title: "Product",
     links: [
       { label: "Free", href: "/themes" },
-      { label: "Pro", href: "/pricing" },
-      { label: "Pricing", href: "/pricing" },
+      { label: "Pro", href: null },
+      { label: "Pricing", href: null },
       { label: "Download", href: "/download" },
       { label: "Platform", href: "/platform" },
       { label: "Compare", href: "/compare" },
@@ -84,6 +87,8 @@ const GROUPS: readonly { title: string; links: readonly { label: string; href: s
   },
 ];
 
+const LINK = `${FONT} mt-[var(--tn-space-2xs)] inline-block text-[length:var(--store-body-3)] font-normal leading-5 text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)]`;
+
 export function Footer() {
   return (
     <footer
@@ -101,12 +106,13 @@ export function Footer() {
             <ul className="mt-[var(--tn-space-2xs)]">
               {group.links.map((link) => (
                 <li key={link.label} className="whitespace-nowrap">
-                  <Link
-                    href={link.href}
-                    className={`${FONT} mt-[var(--tn-space-2xs)] inline-block text-[length:var(--store-body-3)] font-normal leading-5 text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)]`}
-                  >
-                    {link.label}
-                  </Link>
+                  {link.href === null ? (
+                    <PricingButton className={LINK}>{link.label}</PricingButton>
+                  ) : (
+                    <Link href={link.href} className={LINK}>
+                      {link.label}
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

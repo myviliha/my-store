@@ -45,8 +45,11 @@ const PANEL_ROW = `${BODY_2} flex items-center gap-[10px] rounded-[8px] px-[12px
  * (`GalleryWall`). Choosing the chosen one again shows all. They used to be the theme names, which
  * linked to `/themes/[id]`, a route this app does not have.
  *
- * **The row wraps**, as `CLAUDE.md` asks of chip rows: it was a sideways-scrolling strip with its
- * scrollbar hidden, the set-up that made the cursor flicker over the Explore panel's tabs.
+ * **One row that never wraps** (`SD-206`): `flex-nowrap` inside `overflow-x: auto` with the
+ * scrollbar hidden, so a long strip scrolls sideways rather than growing a second line (it wrapped
+ * from 2026-10-08 until the docs were put first, 2026-10-09). 2px of padding inside the strip keeps a
+ * focused chip's outline from being clipped by the scroll edge. The page itself never scrolls
+ * sideways (`SD-073`): only the strip does, inside its own width.
  */
 const DOMAIN_CHIP = `${BODY_2} inline-flex cursor-pointer items-center gap-[6px] whitespace-nowrap rounded-[8px] border bg-white px-[12px] py-[8px] font-medium text-[var(--store-neutral-100)] transition-colors duration-150`;
 
@@ -82,9 +85,9 @@ export function Search() {
           them made the chips beside this one dodge out of the way for no reason. */}
       {/* **Near full width, laid out by grid** rather than a 1180px flex row, with the same small
           side margin as the gallery so their edges line up. Below `xl` the field takes the whole
-          row and the domain chips wrap on the lines under it; from `xl` (2026-10-08, was `md`) the
-          field is a column of up to 390px, the reference's width, and the chips take the rest. At
-          `md` the chips' column was so narrow they wrapped into six rows. */}
+          row and the domain chips run in one scrolling line under it; from `xl` (2026-10-08, was
+          `md`) the field is a column of up to 390px, the reference's width, and the chips take the
+          rest. */}
       <div className="relative min-w-0">
         <form action="/themes" method="get" role="search" className="relative">
           <label htmlFor="search" className="sr-only">
@@ -108,7 +111,7 @@ export function Search() {
         </form>
 
         {open && (
-          <div className="tn-fall absolute inset-x-0 top-[48px] z-10 overflow-hidden rounded-[8px] border border-[var(--store-card-border)] bg-white shadow-[0px_16px_32px_0px_#1f21241f]">
+          <div className="tn-fall absolute inset-x-0 top-[48px] z-10 overflow-hidden rounded-[8px] border border-[var(--store-card-border)] bg-white shadow-[var(--shadow-float)]">
             <div className="flex items-center gap-[8px] border-b border-[var(--store-neutral-40)] px-[12px] py-[8px]">
               {["All", "Frameworks", "Your downloads"].map((tag, i) => (
                 <span
@@ -161,8 +164,8 @@ export function Search() {
       </div>
 
       <div role="group" aria-label="Filter themes by domain" className="min-w-0 flex-1">
-        <ul className="flex flex-wrap items-center gap-[8px]">
-          <li>
+        <ul className="flex flex-nowrap items-center gap-[8px] overflow-x-auto overscroll-x-contain p-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <li className="shrink-0">
             <button
               type="button"
               aria-pressed={domain === null}
@@ -173,7 +176,7 @@ export function Search() {
             </button>
           </li>
           {USE_CASES.map((u, i) => (
-            <li key={u.id}>
+            <li key={u.id} className="shrink-0">
               {/* Each chip keeps a dot in the next accent, and the hover tints it in that accent. */}
               <button
                 type="button"

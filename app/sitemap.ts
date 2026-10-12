@@ -27,7 +27,8 @@ const STATIC_ROUTES = [
      "what is this product" for a search engine. */
   "/platform",
   "/products",
-  "/pricing",
+  /* No "/pricing": pricing is a panel of the home screen's conversation, not a route (2026-10-09). */
+  /* The "why buy" page (`SD-225`). */
   "/components",
   "/blocks",
   // `/download` was missing here while `STORE_PAGES` listed it, so `seo.spec.ts`'s "the sitemap

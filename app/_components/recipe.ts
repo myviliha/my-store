@@ -156,10 +156,10 @@ export const VIBES: readonly {
 
 export const vibeOf = (id: Recipe["vibe"]) => VIBES.find((v) => v.id === id);
 
-/** The design's own primary, for its swatch. Two designs inherit the store's blue. */
+/** The design's own primary, for its swatch. Two designs inherit the store's blue, by its token. */
 export const swatchOf = (theme: Theme): string => {
   const tokens = (DESIGN_TOKENS[theme.id] ?? {}) as Record<string, string>;
-  return tokens["--primary"] ?? "#0058ee";
+  return tokens["--primary"] ?? "var(--store-primary-40)";
 };
 const DESIGN_TOKENS: Record<string, unknown> = Object.fromEntries(
   DESIGNS.map((d) => [d.id, (d as { tokens?: unknown }).tokens ?? {}]),

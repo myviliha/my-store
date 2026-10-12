@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { initialsOf, setAuth, signOut, useUser } from "./auth-store";
 import { setDrawer, useDrawer } from "./drawer-store";
 import { Panel } from "./menu";
+import { useOpenPricing } from "./panel-store";
 import { BUTTON_PRIMARY, FONT } from "./type";
 
 /**
@@ -44,6 +45,7 @@ export function TopBar() {
   const [open, setOpen] = useState(false);
   const drawer = useDrawer();
   const user = useUser();
+  const openPricing = useOpenPricing();
   const field = useRef<HTMLInputElement>(null);
 
   /* Focus follows the expansion rather than racing it: a field focused while its box is still zero
@@ -63,15 +65,8 @@ export function TopBar() {
       <Link href="/" aria-label="Voilet home" className="flex items-center md:hidden">
         <VoiletWordmark size="rail" />
       </Link>
-      {/*
-       * HIDDEN FOR NOW (2026-10-09, by request), kept to bring back later: the search, a field that
-       * unrolls to the left of its icon. To restore, delete this note (from its opening brace to the
-       * blank line under it) and the closing brace line after the button. `open`, `field` and the
-       * effect that focuses the field stay in place for it.
-       *
-       * The field's box is `justify-end` inside, so its right edge stays under the icon and it grows
-       * to the left rather than pushing the controls beside it.
-
+      {/* `justify-end` inside, so the field's right edge stays under the icon and the box grows to
+          the left rather than pushing the controls beside it. */}
       <div
         className={`flex justify-end overflow-hidden max-md:hidden transition-[width] duration-150 ease-[cubic-bezier(.4,0,.2,1)] motion-reduce:transition-none ${open ? "w-[320px] max-w-[50vw]" : "w-0"}`}
       >
@@ -106,23 +101,12 @@ export function TopBar() {
           />
         </svg>
       </button>
-      */}
 
-      {/*
-       * HIDDEN FOR NOW (2026-10-09, by request), kept to bring back later: the Pricing button and the
-       * account control (Sign up when signed out, the avatar menu when signed in). To restore, delete
-       * this note (from its opening brace to the blank line under it) and the closing brace line after
-       * the account block. Everything they use stays in place: `AccountMenu`
-       * below, `useUser`, `setAuth`, `Panel` and `BUTTON_PRIMARY`. Sign in is still in the rail.
-       *
-       * Pricing: the crown is the reference's own mark for the paid tier, and it is a generic glyph
-       * rather than anybody's brand, so it stays. Account: signed out it opens the auth modal on
-       * sign-up (`AuthModal`), which links back to sign-in; signed in it is the avatar and its menu.
-
-      <Link
-        href="/pricing"
-        className={`${BUTTON_PRIMARY} max-md:hidden`}
-      >
+      {/* The crown is the reference's own mark for the paid tier, and it is a generic glyph rather
+          than anybody's brand, so it stays. */}
+      {/* A button, not a link: pricing is a panel of the home screen's conversation, opened here or
+          on the home page (`panel-store.ts`). */}
+      <button type="button" onClick={openPricing} className={`${BUTTON_PRIMARY} max-md:hidden`}>
         <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true">
           <path
             d="M2.5 5.5 5 9l4-5.5L13 9l2.5-3.5v7.25a1.25 1.25 0 0 1-1.25 1.25H3.75A1.25 1.25 0 0 1 2.5 12.75V5.5Z"
@@ -132,20 +116,21 @@ export function TopBar() {
           />
         </svg>
         Pricing
-      </Link>
+      </button>
 
+      {/* Signed out: opens the sign-in dialog (`AuthModal`; there is no separate sign up, as Google
+          and GitHub create the account on first sign-in). Signed in: the avatar and its menu. */}
       {user ? (
         <AccountMenu name={user.name} email={user.email} />
       ) : (
         <button
           type="button"
-          onClick={() => setAuth("signup")}
+          onClick={() => setAuth("signin")}
           className={`${FONT} shrink-0 cursor-pointer text-[length:var(--store-body-2)] font-medium leading-[1.5] text-[var(--store-neutral-100)] transition-colors duration-150 hover:text-[var(--store-primary-40)] max-md:hidden`}
         >
-          Sign up
+          Sign in
         </button>
       )}
-      */}
 
       <button
         id="rail-menu-button"

@@ -1,3 +1,4 @@
+import { GLASS_SURFACE, SHEEN } from "./glass";
 import { accentAt, BODY_2, FONT, H2, SECTION } from "./type";
 
 /**
@@ -30,9 +31,10 @@ export function Proof() {
         {QUOTES.map((item, index) => (
           <li
             key={index}
-            className={`tn-reveal relative flex h-full flex-col gap-[var(--tn-space-xs)] overflow-hidden rounded-[var(--tn-radius-xl)] border border-[var(--store-neutral-50)] bg-white p-[var(--tn-space-xs)] text-left transition-colors duration-200 ${accentAt(index).border}`}
+            className={`tn-reveal ${GLASS_SURFACE} flex h-full flex-col gap-[var(--tn-space-xs)] p-[var(--tn-space-xs)] text-left`}
             style={{ ["--i" as string]: index }}
           >
+            <span aria-hidden="true" className={SHEEN} />
             <span
               aria-hidden="true"
               className={`${FONT} ${accentAt(index).ink} -mb-[var(--tn-space-xs)] block text-[48px] font-extrabold leading-none`}

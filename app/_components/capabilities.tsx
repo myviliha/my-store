@@ -1,3 +1,4 @@
+import { GLASS_SURFACE, SHEEN } from "./glass";
 import { accentAt, BODY_2, FONT, H2, LEAD, SECTION } from "./type";
 
 /**
@@ -5,8 +6,9 @@ import { accentAt, BODY_2, FONT, H2, LEAD, SECTION } from "./type";
  *
  * Each card is a number tile, a title and one sentence. The reference's cards carry an illustration
  * each; ours carry the step number as text, in a token-coloured tile, rather than imagery we do not
- * have. **Each card takes the next accent** for its tile, the bar along its top edge and its hover
- * border, so the five read as five things. Every sentence states something the product does and nothing it does not: **the last one
+ * have. **Each card takes the next accent** for its tile, so the five read as five things, on the
+ * home page's glass card (`glass.ts`, 2026-10-11, which dropped the accent bar and hover border).
+ * Every sentence states something the product does and nothing it does not: **the last one
  * says it is frontend only, because discovering that after payment is a refund.**
  */
 const CARDS = [
@@ -46,13 +48,10 @@ export function Capabilities() {
         {CARDS.map((card, index) => (
           <li
             key={card.title}
-            className={`tn-reveal relative flex flex-col gap-[var(--tn-space-2xs)] overflow-hidden rounded-[var(--tn-radius-2xl)] border border-[var(--store-neutral-50)] bg-white p-[var(--tn-space-sm)] text-left transition-colors duration-200 ${accentAt(index).border}`}
+            className={`tn-reveal ${GLASS_SURFACE} flex flex-col gap-[var(--tn-space-2xs)] p-[var(--tn-space-sm)] text-left`}
             style={{ ["--i" as string]: index }}
           >
-            <span
-              aria-hidden="true"
-              className={`${accentAt(index).solid} absolute inset-x-0 top-0 h-[4px]`}
-            />
+            <span aria-hidden="true" className={SHEEN} />
             <span
               aria-hidden="true"
               className={`${FONT} ${accentAt(index).soft} ${accentAt(index).ink} grid size-10 place-items-center rounded-[var(--tn-radius-xl)] text-[length:var(--store-body-1)] font-bold`}

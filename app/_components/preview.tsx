@@ -178,7 +178,7 @@ export function Preview({
 
       <div className="relative min-h-0 flex-1 overflow-auto rounded-[12px] bg-[var(--store-neutral-30)] p-[12px]">
         {current ? (
-          <div className="mx-auto overflow-hidden rounded-[10px] border border-[var(--store-card-border)] bg-white shadow-[0_8px_24px_-12px_#0c0c0c33] transition-[width] duration-300" style={{ width, maxWidth: "100%" }}>
+          <div className="mx-auto overflow-hidden rounded-[10px] border border-[var(--store-card-border)] bg-white shadow-[0_8px_24px_-12px_color-mix(in_srgb,var(--store-neutral-100)_20%,transparent)] transition-[width] duration-300" style={{ width, maxWidth: "100%" }}>
             <Shot key={current.src} src={current.src} title={current.title} width={current.width} height={current.height} />
           </div>
         ) : (

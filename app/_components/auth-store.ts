@@ -3,15 +3,15 @@
 import { useSyncExternalStore } from "react";
 
 /**
- * Which auth modal is open, if any (2026-10-09): `"signin"`, `"signup"`, `"forgot"` (password reset,
- * from sign-in's "Forgot Password?"), or `null`.
+ * Whether the sign-in dialog is open, and on which screen (2026-10-11): `"signin"`, `"signup"` or
+ * `null`. Sign up and forgot password are back by the owner's ruling, with email and password
+ * (2026-10-11); forgot password is reached from inside the dialog, so it is not a mode here.
  *
- * The rail's "Sign in" opens sign-in, the top bar's "Sign up" opens sign-up, and the modal switches
- * between the two from its own footer links. The modal is drawn once by `app/layout.tsx`; all three
- * are siblings the server lays out, so, as with `drawer-store.ts`, a small module store lets them
- * share one value without making the layout a client component.
+ * The rail's "Sign in" and the top bar's "Sign in" both open it. The modal is drawn once by
+ * `app/layout.tsx`; all three are siblings the server lays out, so, as with `drawer-store.ts`, a small
+ * module store lets them share one value without making the layout a client component.
  */
-export type AuthMode = "signin" | "signup" | "forgot";
+export type AuthMode = "signin" | "signup";
 
 let mode: AuthMode | null = null;
 const listeners = new Set<() => void>();
@@ -40,8 +40,8 @@ export function useAuth(): AuthMode | null {
  * │ REPLACE WITH THE AUTH SERVICE'S SESSION. Find every piece with:                                 │
  * │   grep -rn "DEMO-ONLY(auth)" app                                                                │
  * └─────────────────────────────────────────────────────────────────────────────────────────────────┘
- * **Who is signed in, for the full-flow demo** (2026-10-09, by request): any email and password sign
- * in, sign up, Google, GitHub and a reset all "succeed". The user is kept in this browser's
+ * **Who is signed in, for the full-flow demo** (2026-10-09, by request): Google and GitHub both
+ * "succeed" as a demo account. The user is kept in this browser's
  * `localStorage` so a refresh keeps them signed in. **Only a name and an email are kept, never a
  * password**, and nothing leaves the browser.
  */

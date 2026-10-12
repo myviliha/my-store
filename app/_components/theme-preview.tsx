@@ -51,7 +51,7 @@ const PILL =
   "inline-flex h-[39px] shrink-0 cursor-pointer items-center justify-center rounded-[50px] px-[17px] py-[12px] font-[family-name:var(--font-inter)] text-[14px] font-normal leading-[1.2] whitespace-nowrap transition-colors duration-150";
 const PILL_ON = "bg-[var(--store-primary-40)] text-white";
 const PILL_OFF =
-  "border border-[#d3d7dd] bg-white text-[#111418] hover:border-[var(--store-primary-40)]";
+  "border border-[var(--store-control-border)] bg-white text-[var(--store-neutral-100)] hover:border-[var(--store-primary-40)]";
 
 /** The summary card's chips (Figma 1069:2330 and 1069:2345). */
 const CHIP =
@@ -280,7 +280,7 @@ export function ThemePreview({
         <div className="rounded-[13.96px] bg-[var(--store-neutral-30)] p-[16px] sm:p-[24px]">
           {current ? (
             <div
-              className={`relative mx-auto overflow-hidden rounded-[10px] border border-[var(--store-card-border)] bg-white shadow-[0_8px_24px_-12px_#0c0c0c33] transition-[width] duration-300 motion-reduce:transition-none ${frame.width}`}
+              className={`relative mx-auto overflow-hidden rounded-[10px] border border-[var(--store-card-border)] bg-white shadow-[0_8px_24px_-12px_color-mix(in_srgb,var(--store-neutral-100)_20%,transparent)] transition-[width] duration-300 motion-reduce:transition-none ${frame.width}`}
             >
               {/* `h-auto` with the capture's own pixels sets the height, so the page is shown in full
                   at its real shape; 1440x900 is only the placeholder's shape while it loads. */}

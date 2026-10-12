@@ -1,13 +1,17 @@
-import type { Metadata } from "next";
-
-import { accentAt, BODY_2, BODY_3, FONT, H2, LEAD, SECTION } from "../_components/type";
+import { GLASS_SURFACE, SHEEN } from "./glass";
+import { accentAt, BODY_2, BODY_3, FONT, H2, LEAD, SECTION } from "./type";
 
 /**
- * `/standards`: the page that answers "why buy this rather than the free one" (`SD-225`).
+ * **Standards**: the section that answers "why buy this rather than the free one" (`SD-225`).
+ *
+ * **A section of the home page, not a route** (the owner, 2026-10-11): it was `/standards`, its own
+ * page with a sidebar item; now it sits in the home page's scroll (`app/page.tsx`) and the sidebar's
+ * Standards row is a link to `/#standards`. Its headings moved down a level under the hero's `h1`;
+ * the words are unchanged.
  *
  * **A screenshot cannot answer the three questions a serious buyer asks** — is it accessible, will
  * an update break my build, is it maintained — and we can answer all three with a command. That is
- * the selling point and the reason this page exists rather than a paragraph on the home page.
+ * the selling point, and why this is a whole section rather than a paragraph.
  *
  * **Three rules a review may reject this page for** (`PD-1235`):
  *
@@ -23,12 +27,6 @@ import { accentAt, BODY_2, BODY_3, FONT, H2, LEAD, SECTION } from "../_component
  * found: the card edge at 1.57:1 was being used as the boundary of five controls, where 1.4.11 asks
  * for 3:1. That is why `--store-control-border` exists.
  */
-
-export const metadata: Metadata = {
-  title: "Standards",
-  description:
-    "How Voilet themes are built: requirements to ISO/IEC/IEEE 29148, interfaces to WCAG 2.2 AA and ISO 9241, quality measured against ISO/IEC 25010, and releases versioned to SemVer 2.0.0.",
-};
 
 /** The three questions a screenshot cannot answer, with the evidence for each. */
 const QUESTIONS = [
@@ -145,9 +143,9 @@ const NOT_CLAIMED = [
 ] as const;
 
 /*
- * **Presentation only below this line** (2026-10-09). The page now lives at `/pricing` and wears the
- * home page's look: the site's glow and the moving gradient headline, every card and table in the
- * same frosted glass (`GLASS_SURFACE`), and the `tn-rise` / `tn-reveal` entrances. Every sentence,
+ * **Presentation only below this line** (2026-10-09). It wears the home page's look: the site's
+ * glow and the moving gradient headline, every card and table in the same frosted glass
+ * (`GLASS_SURFACE`), and the `tn-reveal` entrances. Every sentence,
  * number and row above is unchanged and still the source of the text.
  *
  * **Responsive** (`CLAUDE.md`): from `md` the two tables are tables; below `md` each row becomes a
@@ -155,9 +153,6 @@ const NOT_CLAIMED = [
  */
 const TH = `${BODY_2} px-[16px] py-[12px] text-left font-semibold text-[var(--store-neutral-100)]`;
 const TD = `${BODY_2} px-[16px] py-[14px] align-top`;
-/** Frosted glass over the site's glow: every card and table on the page is one of these. */
-const GLASS_SURFACE =
-  "relative overflow-hidden rounded-[12px] border border-white/70 bg-gradient-to-br from-white/60 to-white/25 shadow-[inset_0_1px_0_#ffffffcc,0_8px_24px_-12px_#7c3aed59] backdrop-blur-xl backdrop-saturate-150";
 /** The question and "do not claim" cards: the surface, laid out as a column. */
 const GLASS = `tn-reveal ${GLASS_SURFACE} flex flex-col gap-[8px] p-[12px]`;
 /**
@@ -167,25 +162,16 @@ const GLASS = `tn-reveal ${GLASS_SURFACE} flex flex-col gap-[8px] p-[12px]`;
 const GLASS_HEAD =
   "bg-gradient-to-r from-[var(--tn-accent-violet-soft)]/80 via-[var(--tn-accent-blue-soft)]/80 to-[var(--tn-accent-pink-soft)]/80";
 const GLASS_ROW = "border-t border-white/70 transition-colors duration-150 hover:bg-white/40";
-const SHEEN =
-  "pointer-events-none absolute inset-x-0 top-0 -z-10 h-1/2 bg-gradient-to-b from-white/50 to-transparent";
 
-export default function StandardsPage() {
+export function Standards() {
   return (
-    /* The background (`Aurora`, `ScatterGlow`) is the root layout's, behind every page. */
-    <div className="pb-[var(--tn-space-3xl)]">
+    /* `scroll-mt` so the sidebar's link lands with the heading clear of the top bar. */
+    <div id="standards" className="mt-[var(--tn-space-3xl)] scroll-mt-[calc(var(--tn-h-topbar)+16px)]">
 
-      <section className={`${SECTION} pt-[var(--tn-space-xl)]`}>
-        <h1
-          className={`${FONT} tn-rise text-[length:var(--store-headline-11)] font-extrabold leading-[1.3] lg:text-[length:var(--store-headline-9)]`}
-          style={{ ["--i" as string]: 0 }}
-        >
-          <span className="tn-gradient-text">Built to standards you can check</span>
-        </h1>
-        <p
-          className={`${LEAD} tn-rise mt-[var(--tn-space-2xs)] max-w-[760px]`}
-          style={{ ["--i" as string]: 1 }}
-        >
+      <section className={SECTION}>
+        {/* Plain ink like the other sections' titles (2026-10-11, by request): the hero keeps the gradient. */}
+        <h2 className={`${H2} tn-reveal`}>Built to standards you can check</h2>
+        <p className={`${LEAD} tn-reveal mt-[var(--tn-space-2xs)] max-w-[760px]`}>
           Anyone can show you a screenshot. These are the three questions a screenshot cannot
           answer, and the evidence for each.
         </p>
@@ -202,11 +188,11 @@ export default function StandardsPage() {
             >
               {/* Glass sheen: a soft light across the top edge, decoration only. */}
               <span aria-hidden="true" className={SHEEN} />
-              <h2
+              <h3
                 className={`${FONT} text-[length:var(--store-headline-12)] font-semibold leading-[1.4] text-[var(--store-neutral-100)]`}
               >
                 {item.q}
-              </h2>
+              </h3>
               <p className={`${BODY_2} text-[var(--store-neutral-80)]`}>{item.a}</p>
               <p
                 className={`${BODY_2} mt-auto border-t border-white/70 pt-[8px] font-medium text-[var(--store-primary-50)]`}
@@ -219,7 +205,7 @@ export default function StandardsPage() {
       </section>
 
       <section className={`${SECTION} mt-[var(--tn-space-3xl)]`}>
-        <h2 className={`${H2} tn-reveal`}>What we build to</h2>
+        <h3 className={`${H2} tn-reveal`}>What we build to</h3>
         <p
           className={`${BODY_2} tn-reveal mt-[var(--tn-space-2xs)] max-w-[700px] text-[var(--store-neutral-80)]`}
         >
@@ -274,7 +260,7 @@ export default function StandardsPage() {
       </section>
 
       <section className={`${SECTION} mt-[var(--tn-space-3xl)]`}>
-        <h2 className={`${H2} tn-reveal`}>The contrast, measured</h2>
+        <h3 className={`${H2} tn-reveal`}>The contrast, measured</h3>
         <p
           className={`${BODY_2} tn-reveal mt-[var(--tn-space-2xs)] max-w-[700px] text-[var(--store-neutral-80)]`}
         >
@@ -336,7 +322,7 @@ export default function StandardsPage() {
       </section>
 
       <section className={`${SECTION} mt-[var(--tn-space-3xl)]`}>
-        <h2 className={`${H2} tn-reveal`}>What we do not claim</h2>
+        <h3 className={`${H2} tn-reveal`}>What we do not claim</h3>
         <p
           className={`${BODY_2} tn-reveal mt-[var(--tn-space-2xs)] max-w-[700px] text-[var(--store-neutral-80)]`}
         >
@@ -347,11 +333,11 @@ export default function StandardsPage() {
           {NOT_CLAIMED.map((item, i) => (
             <li key={item.title} className={GLASS} style={{ ["--i" as string]: i }}>
               <span aria-hidden="true" className={SHEEN} />
-              <h3
+              <h4
                 className={`${FONT} text-[length:var(--store-body-1)] font-semibold leading-[1.4] text-[var(--store-neutral-100)]`}
               >
                 {item.title}
-              </h3>
+              </h4>
               <p className={`${BODY_2} text-[var(--store-neutral-80)]`}>{item.body}</p>
             </li>
           ))}

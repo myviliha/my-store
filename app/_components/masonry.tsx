@@ -192,7 +192,7 @@ export function Masonry({
                   );
                 })()}
                 <span
-                  className={`${BODY_3} ${TAG[card.tier].className} pointer-events-none absolute right-[8px] top-[8px] z-[1] rounded-full border px-[8px] py-[1px] font-semibold shadow-[0_2px_6px_#0c0c0c1f]`}
+                  className={`${BODY_3} ${TAG[card.tier].className} pointer-events-none absolute right-[8px] top-[8px] z-[1] rounded-full border px-[8px] py-[1px] font-semibold shadow-[0_2px_6px_color-mix(in_srgb,var(--store-neutral-100)_12%,transparent)]`}
                 >
                   {TAG[card.tier].label}
                 </span>

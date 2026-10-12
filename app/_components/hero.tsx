@@ -57,32 +57,7 @@ export function Hero({
      `z-index` cannot lift it above a later sibling of its parent (`SD-212`, twice now). */
   return (
     <section className="relative z-30 mx-auto flex w-full flex-col items-center px-[var(--tn-space-sm)] pt-[var(--tn-space-md)] pb-[var(--tn-space-lg)] text-center">
-      {/* The waving robot above the headline (`hello-bot.tsx`). It enters with the headline and
-          leaves with it on Generate, so it is never left behind on its own. */}
-      <HelloBot className={`${leave} mb-[var(--tn-space-2xs)]`} />
-      {/* **18px at 500, at every width** (`--tn-text-lg`, 2026-10-08, by request). It was 24px at
-          800; before that the reference's 23px stepping up to 32px at `lg`. One size, so the
-          headline is the same beside the 720px card on a phone and on a desktop. */}
-      <h1
-        className={`${FONT} ${leave} text-[length:var(--tn-text-lg)] font-medium leading-[1.5] text-[var(--store-neutral-100)]`}
-        style={{ ["--i" as string]: 0 }}
-      >
-        {/* The gradient sits on a span, not the h1, so it spans the words rather than the full row,
-            and `box-decoration-clone` gives each line its own full ramp when it wraps on a phone.
-            Ink to brand blue to its deep step, all from our own tokens, panning slowly back and
-            forth; `.tn-gradient-text` in `globals.css` holds the gradient and the motion. */}
-        <span className="tn-gradient-text">
-          Describe your app. Get full-stack templates in seconds
-        </span>
-      </h1>
-      {/* The reference's `.page-description`: 14px (`--store-body-2`) at 400, capped at 850px, wider
-          than the 720px card. Their ink is #1f2124, not in our palette; `--store-neutral-100` is nearest. */}
-      <p
-        className={`${BODY_2} ${leave} mt-[var(--tn-space-2xs)] max-w-[850px] font-normal text-[var(--store-neutral-100)]`}
-        style={{ ["--i" as string]: 1 }}
-      >
-        Choose from 200+ templates or build your own with a single prompt
-      </p>
+      <Welcome leave={leave} />
 
       <Composer
         tall
@@ -97,5 +72,49 @@ export function Hero({
         style={{ ["--i" as string]: 2 }}
       />
     </section>
+  );
+}
+
+/**
+ * **The welcome: the waving robot, the headline and the line under it** (2026-10-09). The home page's
+ * hero above its prompt card, and **the empty conversation's** too (by request): a conversation opened
+ * by a button (`/pricing`) has said nothing yet, so it greets the reader exactly as the home page does,
+ * and the welcome goes the moment the first message is sent. One component, so the two cannot drift.
+ *
+ * `as` is the heading level: the hero's is the page's `h1`; inside a conversation on a route that has
+ * its own `h1` it is an `h2`, one `h1` per page (`STORE.md`).
+ */
+export function Welcome({ leave = "tn-rise", as: Heading = "h1" }: { leave?: string; as?: "h1" | "h2" }) {
+  /* One element, `data-welcome`, so a Pricing click on the home screen can measure it here and slide
+     the conversation's welcome from this spot (`Conversation`, `Thread`). */
+  return (
+    <div data-welcome className="flex flex-col items-center">
+      {/* The waving robot above the headline (`hello-bot.tsx`). It enters with the headline and
+          leaves with it on Generate, so it is never left behind on its own. */}
+      <HelloBot className={`${leave} mb-[var(--tn-space-2xs)]`} />
+      {/* **18px at 500, at every width** (`--tn-text-lg`, 2026-10-08, by request). It was 24px at
+          800; before that the reference's 23px stepping up to 32px at `lg`. One size, so the
+          headline is the same beside the 720px card on a phone and on a desktop. */}
+      <Heading
+        className={`${FONT} ${leave} text-[length:var(--tn-text-lg)] font-medium leading-[1.5] text-[var(--store-neutral-100)]`}
+        style={{ ["--i" as string]: 0 }}
+      >
+        {/* The gradient sits on a span, not the h1, so it spans the words rather than the full row,
+            and `box-decoration-clone` gives each line its own full ramp when it wraps on a phone.
+            Ink to brand blue to its deep step, all from our own tokens, panning slowly back and
+            forth; `.tn-gradient-text` in `globals.css` holds the gradient and the motion. */}
+        <span className="tn-gradient-text">
+          Describe your app. Get full-stack templates in seconds
+        </span>
+      </Heading>
+      {/* The reference's `.page-description`: 14px (`--store-body-2`) at 400, capped at 850px, wider
+          than the 720px card. Their ink is #1f2124, not in our palette; `--store-neutral-100` is nearest. */}
+      <p
+        className={`${BODY_2} ${leave} mt-[var(--tn-space-2xs)] max-w-[850px] font-normal text-[var(--store-neutral-100)]`}
+        style={{ ["--i" as string]: 1 }}
+      >
+        Choose from 200+ templates or build your own with a single prompt
+      </p>
+    </div>
   );
 }
