@@ -61,7 +61,6 @@ export function SchemeExpand({
         onClick={onExpand}
         aria-label={expandLabel}
         aria-pressed={expanded}
-        aria-haspopup={expanded === undefined ? "dialog" : undefined}
         className="btn btn-sm btn-ghost btn-icon h-[28px] w-[28px] px-0"
       >
         {/* biome-ignore lint/performance/noImgElement: the design's 24px SVG */}

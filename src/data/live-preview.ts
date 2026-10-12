@@ -15,6 +15,8 @@ export interface LivePreviewInput {
   /** "React + Tailwind CSS", shown in the shell's foot. */
   readonly stack: string;
   readonly pages: readonly { readonly slug: string; readonly title: string; readonly src: string }[];
+  /** The theme's details, as label and value rows, for the admin's "Theme details" page. */
+  readonly details: readonly { readonly label: string; readonly value: string }[];
 }
 
 export const livePreviewUrl = (input: LivePreviewInput): string =>

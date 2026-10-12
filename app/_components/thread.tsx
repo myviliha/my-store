@@ -23,11 +23,11 @@ import { PricingPanel } from "./pricing-panel";
 import { ReaderBubble } from "./reader-bubble";
 import { ReplyActions } from "./message-actions";
 import { Generating, STEP_MS } from "./generating";
-import { LivePreview } from "./live-preview";
 import { Replying } from "./replying";
 import type { MasonryCard } from "./masonry";
 import { Preview } from "./preview";
 import { ThemePreview } from "./theme-preview";
+import { previewPageFor } from "./share-link";
 import { includedPages, nextStep, parse, promptFor, type Recipe, type Step, useCaseOf } from "./recipe";
 import { type Answer, DownloadCard, StepCard } from "./recipe-ui";
 import { FONT } from "./type";
@@ -480,11 +480,8 @@ export function Thread({
 
   /**
    * The summary's Show Preview: the generated admin, running in the panel beside the chat (`Preview`,
-   * scaled to fit), and full-window from there (`LivePreview`, `live`). 2026-10-12, by request.
+   * scaled to fit), and in its own tab from there (`/preview`). 2026-10-12, by request.
    */
-  const [live, setLive] = useState(false);
-  /** The scheme the drawer was showing, so the full window opens the same way. */
-  const [liveScheme, setLiveScheme] = useState<"light" | "dark">("light");
   const openPreview = () => {
     setPreview({ recipe, revision });
     setSide("preview");
@@ -1052,24 +1049,15 @@ export function Thread({
                   onClose={closeSide}
                   onDownload={download}
                   pages={shippable(preview.recipe)}
-                  onExpand={(scheme) => {
-                    setLiveScheme(scheme);
-                    setLive(true);
-                  }}
+                  /* Expand opens the preview's own page in a new tab (2026-10-12, by request), so the
+                     conversation stays where it is in this one. */
+                  onExpand={(scheme) => window.open(previewPageFor(preview.recipe, scheme), "_blank", "noopener")}
                 />
               ) : null}
             </div>
           </>
         ) : null}
       </div>
-      <LivePreview
-        recipe={preview?.recipe ?? recipe}
-        pages={shippable(preview?.recipe ?? recipe)}
-        open={live}
-        scheme={liveScheme}
-        onClose={() => setLive(false)}
-        onDownload={download}
-      />
     </section>
   );
 }

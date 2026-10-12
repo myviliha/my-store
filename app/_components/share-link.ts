@@ -19,6 +19,14 @@ const toBase64Url = (text: string) =>
 const fromBase64Url = (code: string) =>
   decodeURIComponent(escape(atob(code.replace(/-/g, "+").replace(/_/g, "/"))));
 
+/**
+ * The preview's own page, in a new tab (`/preview`, `preview-screen.tsx`): the drawer's expand opens
+ * it (2026-10-12, by request), in the scheme the drawer was showing.
+ */
+export function previewPageFor(recipe: Recipe, scheme: "light" | "dark"): string {
+  return `/preview?${PARAM}=${toBase64Url(JSON.stringify(recipe))}${scheme === "dark" ? "&scheme=dark" : ""}`;
+}
+
 /** The link to share a design: the home page, which opens it in the Preview drawer. */
 export function shareUrlFor(recipe: Recipe): string {
   const origin = typeof window === "undefined" ? "" : window.location.origin;

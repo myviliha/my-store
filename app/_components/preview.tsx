@@ -15,7 +15,7 @@ import { type Scheme, SchemeExpand } from "./preview-controls";
 import { designKey, useSaved } from "./saved-store";
 import { ShareDialog } from "./share-dialog";
 import { shareUrlFor } from "./share-link";
-import { previewUrlFor } from "./live-preview";
+import { previewUrlFor } from "./preview-url";
 import { includedPages, pagesOf, type Recipe, useCaseOf } from "./recipe";
 import { TierBadge } from "./recipe-ui";
 import { BODY_2, BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
@@ -26,7 +26,7 @@ import { BODY_2, BODY_3, BUTTON_PRIMARY, BUTTON_SECONDARY, FONT } from "./type";
  * **It runs the generated admin, live, in the panel** (2026-10-12, by request): the same page the
  * full-window preview shows (`previewUrlFor`), laid out at the device's width and scaled to fit
  * (`LiveFrame`), so the reader can click its pages and its dark mode here. The page tabs went with
- * that: the running admin has its own navigation. Expand opens it full-window (`LivePreview`).
+ * that: the running admin has its own navigation. Expand opens it in its own tab (`/preview`).
  *
  * **What it shows is what the recipe ships**: one tab per included page, each the real capture from
  * `public/gallery/`, not the nearest stock thumbnail. The brief's other contents are here too: the
@@ -157,7 +157,7 @@ export function Preview({
             </button>
           ))}
         </div>
-        <SchemeExpand scheme={scheme} onScheme={setScheme} onExpand={() => onExpand(scheme)} />
+        <SchemeExpand scheme={scheme} onScheme={setScheme} onExpand={() => onExpand(scheme)} expandLabel="Open in a new tab" />
       </div>
 
 
